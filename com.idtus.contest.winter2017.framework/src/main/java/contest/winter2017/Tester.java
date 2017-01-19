@@ -122,6 +122,7 @@ public class Tester {
 			// figuring out where the entry-point (main class) is in the jar under test
 			Attributes attr = null;
 			attr = jarURLconn.getMainAttributes();
+			// TODO: what if no main class?
 			String mainClassName = attr.getValue(Attributes.Name.MAIN_CLASS);
 			
 			// loading the TestBounds class from the jar under test
@@ -130,6 +131,7 @@ public class Tester {
 			try {
 				mainClassTestBounds = cl.loadClass(mainClassTestBoundsName);
 			} catch (ClassNotFoundException e) {
+				// TODO: better error handling for our Jar
 				e.printStackTrace();
 			}
 
@@ -216,8 +218,7 @@ public class Tester {
 		System.out.println("basic test results: " + (passCount + failCount) + " total, " + passCount + " pass, " + failCount + " fail, " + percentCovered + " percent covered");
 		System.out.println(HORIZONTAL_LINE);
 	}
-	
-	
+
 	/**
 	 * This is the half of the framework that IDT has not completed. We want you to implement your exploratory 
 	 * security vulnerability testing here.
@@ -226,105 +227,14 @@ public class Tester {
 	 * provided some example code in the method. The examples only demonstrate how to use existing functionality. 
 	 */
 	public void executeSecurityTests() {
-		
-		/////////// START EXAMPLE CODE /////////////
-		
-		// This example demonstrates how to use the ParameterFactory to figure out the parameter types of parameters
-		// for each of the jars under test - this can be a difficult task because of the concepts of fixed and
-		// dependent parameters (see the explanation at the top of the ParameterFactory class). As we figure out 
-		// what each parameter type is, we are assigning it a simple (dumb) value so that we can use those parameters 
-		// to execute the black-box jar. By the time we finish this example, we will have an array of concrete 
-		// parameters that we can use to execute the black-box jar.
-		List<String> previousParameterStrings = new ArrayList<String>(); // start with a blank parameter list since we are going to start with the first parameter
-		List<Parameter> potentialParameters = this.parameterFactory.getNext(previousParameterStrings);
-		Parameter potentialParameter;
-		while (!potentialParameters.isEmpty()) {
-			String parameterString = "";
-			potentialParameter = potentialParameters.get(0); 
-			
-			//if(potentialParameter.isOptional())  //TODO? - your team might want to look at this flag and handle it as well!
-			
-			// an enumeration parameter is one that has multiple options
-			if (potentialParameter.isEnumeration()) {
-				parameterString = potentialParameter.getEnumerationValues().get(0) + " "; // dumb logic - given a list of options, always use the first one
-				
-				// if the parameter has internal format (eg. "<number>:<number>PM EST")
-				if(potentialParameter.isFormatted()) {
-					
-					// loop over the areas of the format that must be replaced and choose values
-					List<Object> formatVariableValues = new ArrayList<Object>();
-					for(Class type :potentialParameter.getFormatVariables(parameterString)) {
-						if (type == Integer.class){ 
-							formatVariableValues.add(new Integer(1)); // dumb logic - always use '1' for an Integer
-						} else if (type == String.class) {
-							formatVariableValues.add(new String("one")); // dumb logic - always use 'one' for a String
-						}
-					}
-					
-					//build the formatted parameter string with the chosen values (eg. 1:1PM EST)
-					parameterString =
-							potentialParameter.getFormattedParameter(
-									parameterString, formatVariableValues);
-				}
-				previousParameterStrings.add(parameterString);
-			// if it is not an enumeration parameter, it is either an Integer, Double, or String
-			} else {
-				if (potentialParameter.getType() == Integer.class){ 
-					parameterString = Integer.toString(1) + " ";	// dumb logic - always use '1' for an Integer
-					previousParameterStrings.add(parameterString);
-				} else if (potentialParameter.getType() == Double.class) {
-					parameterString = Double.toString(1.0) + " ";	// dumb logic - always use '1.0' for a Double
-					previousParameterStrings.add(parameterString);
-				} else if (potentialParameter.getType() == String.class) {
-
-					// if the parameter has internal format (eg. "<number>:<number>PM EST")
-					if(potentialParameter.isFormatted()) {
-
-						// loop over the areas of the format that must be replaced and choose values
-						List<Object> formatVariableValues = new ArrayList<Object>();
-						for(Class type : potentialParameter.getFormatVariables()) {
-							if (type == Integer.class){ 
-								formatVariableValues.add(new Integer(1)); // dumb logic - always use '1' for an Integer
-							} else if (type == String.class) {
-								formatVariableValues.add(new String("one")); // dumb logic - always use 'one' for a String
-							}
-						}
-						
-						//build the formatted parameter string with the chosen values (eg. 1:1PM EST)
-						parameterString =
-								potentialParameter.getFormattedParameter(formatVariableValues);
-					}
-					else {
-						parameterString = "one ";		// dumb logic - always use 'one' for a String
-					}
-
-					previousParameterStrings.add(parameterString);
-				} else {
-					parameterString = "unknown type";
-				}
-			}
-			// because of the challenge associated with dependent parameters, we must go one parameter
-			// at a time, building up the parameter list - getNext is the method that we are using 
-			// to get the next set of options, given an accumulating parameter list. 
-			potentialParameters = this.parameterFactory.getNext(previousParameterStrings);
-		}
-		Object[] parameters = previousParameterStrings.toArray();
-		
-		// This example demonstrates how to execute the black-box jar with concrete parameters
-		// and how to access (print to screen) the standard output and error from the run
-		Output output = instrumentAndExecuteCode(parameters);
-		printBasicTestOutput(output); 
-		
-		// We do not intend for this example code to be part of your output. We are only
-		// including the example to show you how you might tap into the code coverage
-		// results that we are generating with jacoco
-		showCodeCoverageResultsExample();
+		BlackBoxExplorer blackBoxExplorer = new BlackBoxExplorer(jarToTestPath, parameterFactory);
+		blackBoxExplorer.exploreByFizzing();
+		//showCodeCoverageResultsExample();
 
 		/////////// END EXAMPLE CODE ////////////// 
-		
 	}
-	
-	
+
+
 	//////////////////////////////////////////
 	// PRIVATE METHODS
 	//////////////////////////////////////////
@@ -342,9 +252,9 @@ public class Tester {
 	 * @return Output representation of the standard out and standard error associated with the run
 	 */
 	private Output instrumentAndExecuteCode(Object[] parameters) {
-			
+		
 		Process process = null;
-		Output output = null;	
+		Output output = null;
 		
 		// we are building up a command line statement that will use java -jar to execute the jar
 		// and uses jacoco to instrument that jar and collect code coverage metrics
@@ -359,7 +269,7 @@ public class Tester {
 			// show the user the command to run and prepare the process using the command
 			System.out.println("command to run: "+command);
 			process = Runtime.getRuntime().exec(command);
-		
+			
 			// prepare the stream needed to capture standard output
 			InputStream isOut = process.getInputStream();
 			InputStreamReader isrOut = new InputStreamReader(isOut);
@@ -414,7 +324,7 @@ public class Tester {
 					}
 				}
 			}	
-			
+
 			// we now have the output as an object from the run of the black-box jar
 			// this output object contains both the standard output and the standard error
 			output = new Output(stdOutBuff.toString(), stdErrBuff.toString());
@@ -518,7 +428,7 @@ public class Tester {
 			for (final IClassCoverage cc : coverageBuilder.getClasses()) {
 				
 				// report code coverage from all classes that are not the TestBounds class within the jar
-				if(cc.getName().endsWith("TestBounds") == false) {
+				if(! cc.getName().endsWith("TestBounds") && ! cc.getPackageName().startsWith("contest.winter2017")) {
 					total += cc.getInstructionCounter().getTotalCount();
 					total += cc.getBranchCounter().getTotalCount();
 					total += cc.getLineCounter().getTotalCount();

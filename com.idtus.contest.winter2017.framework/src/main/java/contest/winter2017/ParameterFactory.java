@@ -1,8 +1,15 @@
 package contest.winter2017;
 
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.Map.Entry;
+
+import org.omg.CORBA.PUBLIC_MEMBER;
 
 /**	
  *	 Parameters used to execute jars are tricky things (think command line flags), so we developed a ParameterFactory 
@@ -34,8 +41,9 @@ public class ParameterFactory {
 	@SuppressWarnings("rawtypes")
 	private Map inputMap;
 	private Map<String, Object> dependentParametersMap;
+	private List<ParameterList> possibleParamLists;
 	private boolean bounded;
-
+	
 	
 	/**
 	 * ctr for Parameter Factory class
@@ -50,9 +58,49 @@ public class ParameterFactory {
 			this.bounded = false;
 		}
 		this.dependentParametersMap = (Map) this.inputMap.get("dependent parameters");
+		
+		/* Testing Code */
+
+		System.out.println("______DEBUG______");
+		if (dependentParametersMap == null) {
+			System.out.println("FIXED");
+			printList((List) this.inputMap.get("fixed parameter list"));
+		} else {
+			System.out.println("DEPENDENT");
+			printMap(dependentParametersMap, "$: ");
+		}
+		System.out.println("______DEBUG______");
+
 	}
 
-	
+	private void printList(List list) {
+		for (Object obj : list) {
+			if (obj instanceof Map) {
+				printMap((Map)obj, "$: ");
+			} else {
+				System.out.print(obj);				
+			}
+		}
+		System.out.println();
+	}
+
+	private void printMap(Map m, String lvl) {
+
+		for (Entry<Object, Object> e: (Set<Entry<Object, Object>>) m.entrySet()) {
+			System.out.println(lvl + e.getKey());
+			lvl = "   " + lvl; 
+			if (e.getValue() instanceof Map) {
+				printMap((Map)e.getValue(), lvl);
+			} else if (e.getValue() instanceof Iterable) {
+				System.out.println(e.getValue());
+			} else {
+				System.out.println(lvl + e.getValue());
+			}
+			lvl = lvl.substring(3);
+		}
+
+	}
+
 	/**
 	 * Method to test if the parameters associated with this jar are fixed (aka bounded)
 	 * @return true if the parameters are fixed (bounded) and false if they are not
@@ -61,43 +109,62 @@ public class ParameterFactory {
 		return this.bounded;
 	}
 
-	
 	/**
 	 * Method to deal with the complexity of dependent parameters. Also handles fixed parameters.
 	 * For more information about dependent and fixed parameters, see explanation at the top of this
 	 * class. We are essentially determining the potential parameters for a given index, and that index  
-	 * is determined by the values in previous ParameterValues (hence, we call this iteratively and build
-	 * the definition). This code is certainly fair game for change. 
+	 * is determined by Parameters in previousParameterValues (hence, we call this iteratively and build
+	 * the definition).
 	 * 
 	 * @param previousParameterValues - since this method is used iteratively to build up the parameter
 	 *        definitions, this is the accumulated parameters that have been passed in until now
 	 * @return List of Parameter objects containing all metadata known about the each Parameter
 	 */
 	@SuppressWarnings({ "rawtypes", "unchecked" })
-	public List<Parameter> getNext(List<String> previousParameterValues) {
+	public List<Parameter> getNext(ParameterList previousParameterValues) {
 		
-		// ultimately we are returning all possible parameters for a given index (since we could be dealing with dependent parameters 
-		// and enumeration parameters)
+		// we are returning all possible parameters for a given index
 		List<Parameter> possibleParamsList = new ArrayList<Parameter>();
 
-		StringBuffer sb = new StringBuffer();
-		for (String paramString : previousParameterValues) {
-			sb.append(" " + paramString);
+		// keep track of used parameters
+		Set<Parameter> oldParams = new HashSet<Parameter>();
+		for (Parameter parameter : previousParameterValues) {
+			oldParams.add(parameter);
 		}
-		String currentParamsString = sb.toString();
 
 		// process all dependent parameters
 		if (this.dependentParametersMap != null) {
 
 			for (Map.Entry<String, Object> mapEntry : this.dependentParametersMap.entrySet()) {
+				boolean validParam = false;
 
-				if (currentParamsString.matches(mapEntry.getKey())|| (mapEntry.getKey().isEmpty() && currentParamsString.isEmpty())) {
+				// if this parameter is the first paramter of the parameter list
+				if (mapEntry.getKey().isEmpty() && previousParameterValues.size() == 0) {
+					validParam = true;
+				} else {
+					// if this parameter's key is in the parameter list
+					for (Parameter p : previousParameterValues) {
+						if (("" + p).matches(mapEntry.getKey())) {
+							validParam = true;
+							break;
+						}
+					}
+				}
+
+				// check if the one or more parameters already used
+				if (validParam) {
 					Object obj = mapEntry.getValue();
 					if (obj instanceof Map) {
-						possibleParamsList.add(new Parameter((Map) mapEntry.getValue()));
+						Parameter p = new Parameter((Map) mapEntry.getValue());
+						if (!oldParams.contains(p)) {
+							possibleParamsList.add(new Parameter((Map) mapEntry.getValue()));
+						}
 					} else {
 						for (Map paramMap : (List<Map>) obj) {
-							possibleParamsList.add(new Parameter(paramMap));
+							Parameter p = new Parameter(paramMap);
+							if (!oldParams.contains(p)) {
+								possibleParamsList.add(new Parameter(paramMap));
+							}
 						}
 					}
 				}
@@ -106,7 +173,6 @@ public class ParameterFactory {
 		// if there are no dependent parameters, process the fixed parameters
 		} else {
 			List fixedParamList = (List) this.inputMap.get("fixed parameter list");
-
 			if (previousParameterValues.size() < fixedParamList.size()) {
 				Map paramMap = (Map) fixedParamList.get(previousParameterValues.size());
 				possibleParamsList.add(new Parameter(paramMap));
@@ -116,5 +182,54 @@ public class ParameterFactory {
 		// return the list of possible parameters for this index
 		return possibleParamsList;
 	}
-	
+
+	/**
+	 * Method to return a list of possible parameter lists.
+	 * Currently ignores optional parameters.
+	 * 
+	 * @return list of possile parameter lists
+	 */
+	public List<ParameterList> possibleParamLists() {
+		if (this.possibleParamLists != null) {
+			return this.possibleParamLists;
+		} else {
+			this.possibleParamLists = new LinkedList<ParameterList>();
+			LinkedList<ParameterList> toProcess = new LinkedList<ParameterList>();
+			toProcess.add(new ParameterList());
+			while (!toProcess.isEmpty()) {
+				ParameterList curr = toProcess.removeFirst();
+				List<Parameter> possibleParameters = getNext(curr);
+				// add non-optional parameters
+				boolean moreParams = false;
+				for (Parameter parameter : possibleParameters) {
+					if (!parameter.isOptional()) {
+						moreParams = true;
+						if (parameter.isEnumeration()) {
+							for (Parameter subParameter: parameter.getSubParameters()) {
+								curr.addParameter(subParameter);
+							}
+						} else {
+							curr.addParameter(parameter);
+						}
+					}
+				}
+				// if there might be more parameters
+				// schedule the list for re-processing
+				if (moreParams) {
+					toProcess.addLast(curr);
+				} else {
+					this.possibleParamLists.add(curr);
+				}
+			}
+
+			return this.possibleParamLists;
+		}
+	}
 }
+
+
+
+
+
+
+

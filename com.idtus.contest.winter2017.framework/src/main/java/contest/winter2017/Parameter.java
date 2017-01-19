@@ -1,6 +1,8 @@
 package contest.winter2017;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -12,6 +14,7 @@ import java.util.regex.Pattern;
  * @author IDT
  */
 public class Parameter {
+	private String toString = null;
 
 	/**
 	 * Input Map associated with this parameter
@@ -202,4 +205,74 @@ public class Parameter {
 		return sb.toString();
 	}
 
+	/**
+	 * A method to get the sub parameters of this parameter.
+	 * An enumerated parameter has multiple values, and it's
+	 * possible that more than one of them is used. Therefore,
+	 * to get different parameter combinations, it's easiest to
+	 * split a enumeration parameter into smaller, single-value
+	 * sub-parameters.
+	 * 
+	 * @return ParameterList of sub parameters
+	 */
+	public ParameterList getSubParameters() {
+		ParameterList parameterList = new ParameterList();
+		if (isEnumeration()) {
+			Map<String, Object> parameterMap;
+			List<String> toAdd;
+			for (String str : getEnumerationValues()) {
+				parameterMap = new HashMap<String, Object>();
+				toAdd = new LinkedList<String>();
+				toAdd.add(str);
+				if (str.contains("<<REPLACE_ME_STRING>>") || str.contains("<<REPLACE_ME_INT>>")) {
+					parameterMap.put("format", str);
+					if (str.contains("<<REPLACE_ME_INT>>")) {
+						parameterMap.put("type", Integer.class);
+					} else {
+						parameterMap.put("type", String.class);
+					}
+				}
+				parameterMap.put("enumerated values", toAdd);
+				parameterList.addParameter(new Parameter(parameterMap));
+			}
+		} else {
+			parameterList.addParameter(this);
+		}
+		return parameterList;
+	}
+
+	/**
+	 * Method to represent this Parameter as a String. If this Parameter is an enumeration,
+	 * this method returns the toString of the corresponding list of values. Otherwise, this
+	 * method returns the format string of this Parameter.
+	 * 
+	 * @return String representing the Parameter
+	 */
+	@Override
+	public String toString() {
+		if (this.toString != null) {
+			return this.toString;
+		} else {
+			if (isEnumeration()) {
+				this.toString = "" + this.inputMap.get("enumerated values");
+			} else {
+				this.toString = getFormat();
+			}
+			return this.toString;
+		}
+	}
+
+	@Override
+	public int hashCode() {
+		return toString().hashCode();
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (! (obj instanceof Parameter)) {
+			return false;
+		} else {
+			return ("" + this).equals("" + obj);
+		}
+	}
 }
