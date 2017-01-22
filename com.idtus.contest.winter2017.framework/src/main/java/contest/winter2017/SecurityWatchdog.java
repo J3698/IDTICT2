@@ -105,6 +105,7 @@ public class SecurityWatchdog {
 			try {
 				mainMethod.invoke(null, (Object) argsToPass);
 			} catch (InvocationTargetException e) {
+				// notify of exceptio, not just system err
 				e.getCause().printStackTrace();
 			} catch (IllegalAccessException | IllegalArgumentException e) {
 				watchdogError("INVOKE MAIN METHOD", e);
