@@ -321,9 +321,9 @@ public class Tester {
 					}
 				}
 			} else {
+				this.failCount++;
 				if (!this.toolChain) {
-					this.failCount++;
-					System.out.println("Could not initialize test.");
+					System.out.println("ERROR: Could not initialize test.");
 				}
 			}
 			if (!this.toolChain) {
