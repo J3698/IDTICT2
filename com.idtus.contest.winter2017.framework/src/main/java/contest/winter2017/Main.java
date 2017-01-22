@@ -1,9 +1,17 @@
 package contest.winter2017;
 
+import java.io.File;
+import java.io.FileWriter;
+import java.io.PrintWriter;
+import java.util.Iterator;
+import java.util.Scanner;
+import java.time.LocalDateTime;
+
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.HelpFormatter;
+import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 
@@ -31,7 +39,22 @@ public class Main {
 	 * black-box jar in order to collect code coverage metrics
 	 */
 	public static final String JACOCO_AGENT_JAR_PATH = "jacocoAgentJarPath";
-	
+
+	/**
+	 * cli key for number of black box iterations to run
+	 */
+	public static final String BLACK_BOX_TESTS = "bbTests";
+
+	/**
+	 * cli key for target time in minutes for tester to run
+	 */
+	public static final String TIME_GOAL = "timeGoal";
+
+	/**
+	 * cli key for whether to only use toolchain output
+	 */
+	public static final String TOOL_CHAIN = "toolChain";
+
 	/**
 	 * cli key for application help
 	 */
@@ -52,28 +75,53 @@ public class Main {
 		CommandLineParser parser = new DefaultParser();
 		
 		Options options = new Options();
+		// necessary parameters with arguments
 		options.addOption(JAR_TO_TEST_PATH, true, "path to the executable jar to test");
 		options.addOption(JACOCO_OUTPUT_PATH, true, "path to directory for jacoco output");
 		options.addOption(JACOCO_AGENT_JAR_PATH, true, "path to the jacoco agent jar");
+		// optional parameters with arguments
+		options.addOption(BLACK_BOX_TESTS, true, "number of black box testings to run");
+		options.addOption(TIME_GOAL, true, "time goal for black box testings to run in");
+		// optional parameters without arguments
+		options.addOption(TOOL_CHAIN, false, "option to print only necessary output");
 		options.addOption(HELP, false, "help");
 		options.addOption(ALT_HELP, false, "help");
-		
+
 		try {
 			CommandLine cliArgs = parser.parse(options, args);
 			if (cliArgs != null){
 				
 				// if we have the three arguments we need for exploratory black-box testing, initialize and execute the tester.  
 				if (cliArgs.hasOption(JAR_TO_TEST_PATH) && cliArgs.hasOption(JACOCO_OUTPUT_PATH) && cliArgs.hasOption(JACOCO_AGENT_JAR_PATH)) {
-					
+
+					ExceptionLogger.init(cliArgs);
+
 					String jarToTestPath = cliArgs.getOptionValue(JAR_TO_TEST_PATH);
 					String jacocoOutputDirPath = cliArgs.getOptionValue(JACOCO_OUTPUT_PATH);
 					String jacocoAgentJarPath = cliArgs.getOptionValue(JACOCO_AGENT_JAR_PATH);
-					
-					// the Tester class contains all of the logic for the testing framework
-					Tester tester = new Tester();
-					if (tester.init(jarToTestPath, jacocoOutputDirPath, jacocoAgentJarPath)) {
-						tester.executeBasicTests();          // this is the simple testing that we have implemented - likely no need to change this code much
-						tester.executeSecurityTests();       // this is the security vulnerability testing that we want you to implement
+					String bbTests = cliArgs.getOptionValue(BLACK_BOX_TESTS);
+					String timeGoal = cliArgs.getOptionValue(TIME_GOAL);
+					String toolChain = "" + cliArgs.hasOption(TOOL_CHAIN);
+
+					// catch and report runtime exceptions
+					try {
+						// the Tester class contains all of the logic for the testing framework
+						Tester tester = new Tester();
+						tester.init(jarToTestPath, jacocoOutputDirPath, jacocoAgentJarPath, bbTests, timeGoal, toolChain);
+						// implemented by IDT
+						tester.executeBasicTests();
+						// implemented by ICT-2
+						tester.executeSecurityTests();
+
+						if (toolChain.equals("true")) {
+							System.out.println();
+						}
+					} catch (RuntimeException re) {
+						re.printStackTrace();
+						if (toolChain.equals("true")) {
+							ExceptionLogger.errorLogDialog(re, LocalDateTime.now());
+						}
+						System.exit(0);
 					}
 					
 				// if the user has requested help
@@ -96,6 +144,8 @@ public class Main {
 	}
 	
 	
+
+
 	/**
 	 * private static method used to print the application help
 	 */
@@ -106,5 +156,4 @@ public class Main {
 		 HelpFormatter formatter = new HelpFormatter();
 		 formatter.printHelp("com.idtus.contest.winter2017.framework", header, options, footer, true);
 	}
-	
 }

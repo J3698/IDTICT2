@@ -59,8 +59,7 @@ public class ParameterFactory {
 		}
 		this.dependentParametersMap = (Map) this.inputMap.get("dependent parameters");
 		
-		/* Testing Code */
-
+		/* Testing Code 
 		System.out.println("______DEBUG______");
 		if (dependentParametersMap == null) {
 			System.out.println("FIXED");
@@ -70,9 +69,10 @@ public class ParameterFactory {
 			printMap(dependentParametersMap, "$: ");
 		}
 		System.out.println("______DEBUG______");
+		*/
 
 	}
-
+	/*
 	private void printList(List list) {
 		for (Object obj : list) {
 			if (obj instanceof Map) {
@@ -100,6 +100,7 @@ public class ParameterFactory {
 		}
 
 	}
+	*/
 
 	/**
 	 * Method to test if the parameters associated with this jar are fixed (aka bounded)

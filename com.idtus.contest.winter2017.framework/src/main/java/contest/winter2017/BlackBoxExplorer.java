@@ -37,7 +37,7 @@ public class BlackBoxExplorer {
 
 
 
-		System.out.println(possibleParamLists);
+		// System.out.println(possibleParamLists);
 	}
 }
 
