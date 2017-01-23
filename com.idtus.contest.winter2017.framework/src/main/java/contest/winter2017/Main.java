@@ -112,10 +112,8 @@ public class Main {
 						tester.executeBasicTests();
 						// implemented by ICT-2
 						tester.executeSecurityTests();
-
-						if (toolChain.equals("true")) {
-							System.out.println();
-						}
+						// output
+						System.out.println(tester.getYAMLOutput());
 					} catch (RuntimeException re) {
 						re.printStackTrace();
 						if (toolChain.equals("true")) {
@@ -132,14 +130,14 @@ public class Main {
 			    // user did not request help and we had an inadequate number of arguments
 				} else {
 					
-					System.out.println("Failed to execute - application requires at least three parameters.");
+					System.out.println("ERROR: Failed to execute - application requires at least three parameters.");
 					printHelp(options);
 					
 				}
 			}
 			
 		} catch( ParseException exp ) {
-		    System.out.println( "An error occurred during command line parsing: " + exp.getMessage());
+		    System.out.println( "ERROR: An error occurred during command line parsing: " + exp.getMessage());
 		}
 	}
 	

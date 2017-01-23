@@ -27,8 +27,15 @@ public class SecurityWatchdog {
 	private static boolean watchdogStarted = false;
 	private static boolean toolChain = true;
 
+	/**
+	 * Method used to run a jar under test with specified options.
+	 *
+	 * @param args - args with information for running jar to test
+	 * @throws Exception - any uncaught exceptions thrown
+	 */
 	public static void main(String[] args) throws Exception {
 			// ensure this code is being called properly
+		try {
 			if (watchdogStarted) {
 				throw new SecurityException("Cannot access SecurityWatchdog.");
 			} else if (args.length < 2) {
@@ -91,7 +98,7 @@ public class SecurityWatchdog {
 			} catch (NoSuchMethodException nsme) {
 				watchdogError("ERROR: Could not load main method of jar to test.");
 			}
-	
+
 			// set security manager if not using toolchain
 			if (!toolChain) {
 				try {
@@ -105,15 +112,17 @@ public class SecurityWatchdog {
 			try {
 				mainMethod.invoke(null, (Object) argsToPass);
 			} catch (InvocationTargetException e) {
-				// notify of exceptio, not just system err
+				// notify of exception, not just system err
 				e.getCause().printStackTrace();
 			} catch (IllegalAccessException | IllegalArgumentException e) {
 				watchdogError("INVOKE MAIN METHOD", e);
-			} 
+			}
 	
 			// notify tester of program end
-
 			System.exit(WATCHDOG_EXIT_CODE);
+		} catch (Exception e) {
+			watchdogError("RUN WATCHDOG", e);
+		}
 	}
 
 	/**
@@ -137,7 +146,7 @@ public class SecurityWatchdog {
 	 * Method used to notify the tester
 	 * of errors.
 	 * 
-	 * @param error to pass to tester
+	 * @param error - error to pass to tester
 	 */
 	private static void watchdogError(String error) {
 		watchdogError(error, null);

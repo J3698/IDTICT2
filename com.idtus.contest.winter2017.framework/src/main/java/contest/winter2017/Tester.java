@@ -13,6 +13,7 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.jar.Attributes;
@@ -38,7 +39,10 @@ import org.jacoco.report.internal.html.table.PercentageColumn;
  */
 public class Tester {
 
-	
+	//////////////////////////////////////////
+	// STATIC MEMBERS
+	//////////////////////////////////////////
+
 	/**
 	 * suffix for all jacoco output files
 	 */
@@ -53,6 +57,10 @@ public class Tester {
 	 * initialization error message
 	 */
 	private static final String INIT_ERROR_MSSG = "ERROR: An exception occurred during initialization.";
+
+	//////////////////////////////////////////
+	// INSTANCE MEMBERS
+	//////////////////////////////////////////
 
 	/**
 	 * path to the SecurityWatchdog class
@@ -100,6 +108,11 @@ public class Tester {
 	private Integer timeGoal = -1;
 
 	/**
+	 * maximum time per test
+	 */
+	private Integer maxMillisPerTest = -1;
+
+	/**
 	 * option to only use toolchain output
 	 */
 	private Boolean toolChain = false;
@@ -113,6 +126,7 @@ public class Tester {
 	 * number of predefined tests which have failed
 	 */
 	private int failCount = 0;
+
 	/**
 	 * basic tests that have been extracted from the jar under test
 	 */
@@ -128,7 +142,11 @@ public class Tester {
 	 */
 	private ParameterFactory parameterFactory = null;
 	
-	
+	/**
+	 * set to hold unique exceptions that have thus far been encountered
+	 */
+	private HashSet<String> exceptionSet = new HashSet<String>();
+
 	//////////////////////////////////////////
 	// PUBLIC METHODS
 	//////////////////////////////////////////
@@ -268,7 +286,7 @@ public class Tester {
 	 * method to report an initialization error, and then quit
 	 * the program.
 	 * 
-	 * @param information about the initialization error
+	 * @param message - information about the initialization error
 	 */
 	private void initError(String message) {
 		System.out.println("ERROR: " + INIT_ERROR_MSSG);
@@ -352,7 +370,7 @@ public class Tester {
 		
 	}
 
-	public String getYAMLToolchainOutput() {
+	public String getYAMLOutput() {
 		StringBuffer buffer = new StringBuffer(1000);
 		buffer.append("Total predefined tests run: ");
 		buffer.append(this.failCount + this.passCount + "\n");
@@ -363,13 +381,11 @@ public class Tester {
 		buffer.append("Total code coverage percentage: ");
 		buffer.append(percentCovered + "\n");
 		buffer.append("Unique error count: ");
-		// buffer.append(errCount + "\n");
+		buffer.append(this.exceptionSet.size() + "\n");
 		buffer.append("Errors seen:\n");
-		/*
-		for (Error error :errors) {
-			buffer.append("  -" + error);
+		for (String error : this.exceptionSet) {
+			buffer.append("  -" + error.replace('\n', ' ') + "\n");
 		}
-		*/
 
 		return buffer.toString();
 	}
@@ -423,76 +439,60 @@ public class Tester {
 			InputStreamReader isrOut = new InputStreamReader(isOut);
 			BufferedReader brOut = new BufferedReader(isrOut);
 			StringBuffer stdOutBuff = new StringBuffer();
-			
+
 			// prepare the stream needed to capture standard error
 			InputStream isErr = process.getErrorStream();
 			InputStreamReader isrErr = new InputStreamReader(isErr);
 			BufferedReader brErr = new BufferedReader(isrErr);
 			StringBuffer stdErrBuff = new StringBuffer();
-			
+
+			long start = System.currentTimeMillis();
+			while (process.isAlive() &&
+				(this.maxMillisPerTest == -1 || System.currentTimeMillis() - start < this.maxMillisPerTest)) {
+
+				try {
+					Thread.sleep(10);
+				} catch (Exception e) {
+					System.out.println("ERROR: Thread interrupted.");
+					return null;
+				}
+			}
+
+			if (process.isAlive()) {
+				process.destroy();
+				System.out.println("ERROR: Test took too long to run");
+				return null;
+			}
+
 			String line;
-			boolean outDone = false;
-			boolean errDone = false;
-			boolean programEnd = false;
-
-			// while standard out is not complete OR standard error is not complete
-			// continue to probe the output/error streams for the applications output
-			int i = 0;
-			while(!programEnd && (!outDone || !errDone)) {
-				// monitoring the standard output from the application
-				boolean outReady = brOut.ready();
-				if(outReady) {
-					line = brOut.readLine();
-					if(line == null) {
-						outDone = true;
-					} else if (line.equals("<<WATCHDOG_OUTPUT_START>>")) {
-						handleWatchdogOutput(brOut, output);
-					} else if (line.equals("<<WATCHDOG_PROGRAM_END>>")) {
-						programEnd = true;
-					} else {
-						stdOutBuff.append(line);
-					}
-				}
-				
-				// monitoring the standard error from the application
-				boolean errReady = brErr.ready();
-				if(errReady) {
-					line = brErr.readLine();
-					if(line == null) {
-						errDone = true;
-					} else {
-						if (line.equals("<<WATCHDOG_OUTPUT_START>>")) {
-							handleWatchdogError(brErr);
-						} else {
-							stdErrBuff.append(line);
-						}
-					}
-				}
-				
-				// if standard out and standard error are not ready, wait for 250ms 
-				// and try again to monitor the streams
-				if(!outReady && !errReady)  {
-					i++;
-					if (i > 5) {
-						break;
-					}
-					try {
-						Thread.sleep(250);
-					} catch (InterruptedException e) {
-						// NOP
-					}
+			// monitoring the standard out from the application
+			while((line = brOut.readLine()) != null) {
+				if (line.equals("<<WATCHDOG_OUTPUT_START>>")) {
+					handleWatchdogOutput(brOut, output);
+				} else {
+					stdOutBuff.append(line);
 				}
 			}
 
-			while (brErr.ready()) {
-				stdErrBuff.append(brErr.readLine());
+			// monitoring the standard error from the application
+			while((line = brErr.readLine()) != null) {
+				if (line.equals("<<WATCHDOG_OUTPUT_START>>")) {
+					handleWatchdogError(brErr);
+				} else {
+					stdErrBuff.append(line + "\n");
+				}
 			}
+
 
 			// we now have the output as an object from the run of the black-box jar
 			// this output object contains both the standard output and the standard error
+
 			output.setStdOutString(stdOutBuff.toString());
+			// trim extra newline character
+			if (stdErrBuff.length() != 0) {
+				stdErrBuff.deleteCharAt(stdErrBuff.length() - 1);
+			}
 			output.setStdErrString(stdErrBuff.toString());
-			output = new Output(stdOutBuff.toString(), stdErrBuff.toString());
 			
 		} catch (IOException e) {
 			if (!this.toolChain) {
@@ -507,15 +507,17 @@ public class Tester {
 			e.printStackTrace();
 			return null;
 		}
-		
+
+		this.exceptionSet.addAll(output.getExceptions());
+
 		return output;
 	}
 
 	private void handleWatchdogOutput(BufferedReader brOut, Output output) throws IOException {
 		String next;
-		output.resetSecurityLogString();
+		output.resetPermissionLog();
 		while (!(next = brOut.readLine()).equals("<<WATCHDOG_OUTPUT_END>>")) {
-			output.addSecurityMessage(next);
+			output.logPermission(next);
 		}
 	}
 
@@ -527,7 +529,7 @@ public class Tester {
 		String next;
 		StringBuffer errBuff = new StringBuffer();
 		while (!(next = brErr.readLine()).equals("<<WATCHDOG_OUTPUT_END>>")) {
-			errBuff.append("\n" + next);
+			errBuff.append(next + "\n");
 		}
 		System.err.println(errBuff);
 
@@ -543,7 +545,7 @@ public class Tester {
 		if (!this.toolChain) {
 			System.out.println("stdout of execution: " + output.getStdOutString());
 			System.out.println("stderr of execution: " + output.getStdErrString());
-			System.out.println("permissions used: " + output.getSecurityLogString());
+			System.out.println("permissions used: " + output.getPermissionLogString());
 		}
 	}
 

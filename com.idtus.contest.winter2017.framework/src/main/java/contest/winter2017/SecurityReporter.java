@@ -39,12 +39,12 @@ public class SecurityReporter extends SecurityManager {
 	 * to check originated from the SecurityReporter.
 	 * <p>
 	 * Note, it is possible for a jar under test to perform
-	 * unlogged operations using a different thread. This
-	 * could be prevented by granting permissions by looking
-	 * at the stacktrace, instead of disabling the security
-	 * manager.
+	 * unlogged operations using a different thread while the
+	 * SecurityReporter has disabled itself. This could be
+	 * prevented by granting permissions by looking at the
+	 * stacktrace, instead of disabling the security manager.
 	 * 
-	 * @param toCheck - permission to check and possible log
+	 * @param toCheck - permission to check and possibly log
 	 */
 	@Override
 	public void checkPermission(Permission toCheck) {
@@ -66,11 +66,11 @@ public class SecurityReporter extends SecurityManager {
 
 		if (toCheck instanceof RuntimePermission && toCheck.getName().contains("exitVM")) {
 			if (toCheck.getName().contains("" + WATCHDOG_EXIT_CODE)) {
-				System.out.println("<<WATCHDOG_PROGRAM_END>>");
+				outputSecurityLog();
 			} else {
 				permissionEvents.add(new PermissionEvent(toCheck, thread));
+				outputSecurityLog();
 			}
-			outputSecurityLog();
 		} else {
 			permissionEvents.add(new PermissionEvent(toCheck, thread));
 		}
