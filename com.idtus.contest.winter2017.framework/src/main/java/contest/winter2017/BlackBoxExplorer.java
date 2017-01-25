@@ -4,8 +4,15 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
-
+/**
+ * This class is deprecated, to be deleted. Currently
+ * retained as part of the project in case some methods
+ * are needed later.
+ * 
+ * @author ICT-2
+ */
 public class BlackBoxExplorer {
+/*
 	private static final String[] specialStringValues = {
 			"", "   ", "zzzzzzz", "*uw&we \n w\r ae\n\ns\tl\te\"f ko \"e",
 			"abcdefghijklmnopqrstuvwxyz", "0123456789", "\n\r\t\"",
@@ -48,9 +55,6 @@ public class BlackBoxExplorer {
 		this(tester, jarToTestPath, parameterFactory, false, false, 0, 0);
 	}
 
-	/**
-	 * Method used to randomly explore the jar under test.
-	 */
 	public void exploreByFizzing() {
 		Long start = System.currentTimeMillis();
 
@@ -92,14 +96,14 @@ public class BlackBoxExplorer {
 		this.tester.instrumentAndExecuteCode(arguments.toArray(new String[]{}));
 	}
 
-	/**
-	 * Utility method to get a random integer number. If the passed
-	 * Parameter has an associated min or max, these values are used
-	 * as the bounds of the random number.
-	 * 
-	 * @param param - parameter to get possible min and max from
-	 * @return Integer within bounds given by param
-	 */
+	//
+	// Utility method to get a random integer number. If the passed
+	// Parameter has an associated min or max, these values are used
+	// as the bounds of the random number.
+	// 
+	// @param param - parameter to get possible min and max from
+	// @return Integer within bounds given by param
+	//
 	private Integer getIntegerNumber(Parameter param) {
 		Integer min;
 		try {
@@ -130,14 +134,14 @@ public class BlackBoxExplorer {
 		return min + rand.nextInt(max - min + 1);
 	}
 
-	/**
-	 * Utility method to get a random double number. If the passed
-	 * Parameter has an associated min or max, these values are used
-	 * as the bounds of the random number.
-	 * 
-	 * @param param - parameter to get possible min and max from
-	 * @return Double within bounds given by param
-	 */
+	//
+	// Utility method to get a random double number. If the passed
+	// Parameter has an associated min or max, these values are used
+	// as the bounds of the random number.
+	// 
+	// @param param - parameter to get possible min and max from
+	// @return Double within bounds given by param
+	//
 	private Double getDoubleNumber(Parameter param) {
 		Double min;
 		try {
@@ -169,28 +173,16 @@ public class BlackBoxExplorer {
 	}
 
 
-	/**
-	 * Utility method used to get a special String value
-	 * 
-	 * @return special String value
-	 */
+	//
+	// Utility method used to get a special String value
+	// 
+	// @return special String value
+	//
 	private String randSpecialString() {
 		int choice = this.rand.nextInt(specialStringValues.length);
 		return specialStringValues[choice];
 	}
-
-	/**
-	 * Utility method used to determine how many minutes
-	 * have passed since a given long when System.currentTimeMillis()
-	 * was called.
-	 * 
-	 * @param start - last return of System.currentTimeMillis()
-	 * @return minutes since start
-	 */
-	private double minutesPassed(long start) {
-		long diff = (System.currentTimeMillis() - start) / 1_000_000;
-		return (double) diff;
-	}
+*/
 }
 
 
