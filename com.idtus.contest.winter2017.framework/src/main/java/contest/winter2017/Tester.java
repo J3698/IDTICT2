@@ -94,8 +94,9 @@ public class Tester {
 
 	/**
 	 * number of black box iterations to run
+	 * default 1000 iterations
 	 */
-	private Integer bbTests = -1;
+	private Integer bbTests = 1000;
 
 	/**
 	 * minimum time goal
@@ -104,8 +105,9 @@ public class Tester {
 
 	/**
 	 * target time in minutes for tester to run
+	 * default 5 minutes
 	 */
-	private Integer timeGoal = -1;
+	private Integer timeGoal = 5;
 
 	/**
 	 * maximum time per test
@@ -130,7 +132,7 @@ public class Tester {
 	/**
 	 * basic tests that have been extracted from the jar under test
 	 */
-	private List<Test> tests = null;
+	private List<Test> predefinedTests = null;
 
 	/**
 	 * percent of jar under test which has been covered during testing
@@ -141,7 +143,12 @@ public class Tester {
 	 * parameter factory that can be used to help figure out parameter signatures from the blackbox jars
 	 */
 	private ParameterFactory parameterFactory = null;
-	
+
+	/**
+	 * list of outputs encountered
+	 */
+	private ArrayList<Output> outputs = new ArrayList<Output>(2000);
+
 	/**
 	 * set to hold unique exceptions that have thus far been encountered
 	 */
@@ -275,23 +282,11 @@ public class Tester {
 		this.parameterFactory = new ParameterFactory(mainClassTestBoundsMap);
 		
 		// get a list of basic tests from the TestBounds class
-		this.tests = new ArrayList<Test>();
+		this.predefinedTests = new ArrayList<Test>();
 		List testList = (List)mainClassTestBoundsMap.get("tests");
 		for(Object inTest : testList) {
-			this.tests.add(new Test((Map)inTest));
+			this.predefinedTests.add(new Test((Map)inTest));
 		}
-	}
-
-	/**
-	 * method to report an initialization error, and then quit
-	 * the program.
-	 * 
-	 * @param message - information about the initialization error
-	 */
-	private void initError(String message) {
-		System.out.println("ERROR: " + INIT_ERROR_MSSG);
-		System.out.print(message);
-		System.exit(0);
 	}
 	
 	/**
@@ -302,7 +297,7 @@ public class Tester {
 	 */
 	public void executeBasicTests() {
 		// iterate through the lists of tests and execute each one
-		for(Test test : this.tests) {
+		for(Test test : this.predefinedTests) {
 
 			// instrument the code to code coverage metrics, execute the test with given parameters, then show the output
 			Output output = instrumentAndExecuteCode(test.getParameters().toArray());
@@ -364,8 +359,20 @@ public class Tester {
 	 * provided some example code in the method. The examples only demonstrate how to use existing functionality. 
 	 */
 	public void executeSecurityTests() {
-		BlackBoxExplorer blackBoxExplorer = new BlackBoxExplorer(this, jarToTestPath, parameterFactory);
-		blackBoxExplorer.exploreByFizzing();
+		// List<ParameterList> possibleParamLists = this.parameterFactory.possibleParamLists();
+		// ParameterList parameterList = possibleParamLists.get(0);
+		Long start = System.currentTimeMillis();
+
+		TestGenerator generator = new TestGenerator(this.parameterFactory, this.outputs);
+		for (int i = 0; i < this.bbTests; i++) {
+			Object[] params = generator.nextTest();
+			instrumentAndExecuteCode(params);
+		}
+
+		while (minutesPassed(start) < this.timeGoal) {
+			Object[] params = generator.nextTest();
+			instrumentAndExecuteCode(params);
+		}
 	}
 
 	public String getYAMLOutput() {
@@ -388,6 +395,35 @@ public class Tester {
 		return buffer.toString();
 	}
 
+	//////////////////////////////////////////
+	// PRIVATE METHODS
+	//////////////////////////////////////////
+
+	/**
+	 * method to report an initialization error, and then quit
+	 * the program.
+	 * 
+	 * @param message - information about the initialization error
+	 */
+	private void initError(String message) {
+		System.out.println("ERROR: " + INIT_ERROR_MSSG);
+		System.out.print(message);
+		System.exit(0);
+	}
+
+	/**
+	 * Utility method used to determine how many minutes
+	 * have passed since a given long when System.currentTimeMillis()
+	 * was called.
+	 * 
+	 * @param start - last return of System.currentTimeMillis()
+	 * @return minutes since start
+	 */
+	private double minutesPassed(long start) {
+		long diff = (System.currentTimeMillis() - start) / 1_000_000;
+		return (double) diff;
+	}
+
 	/**
 	 * This method will instrument and execute the jar under test with the supplied parameters.
 	 * This method should be used for both basic tests and security tests.
@@ -404,7 +440,7 @@ public class Tester {
 	 * @return Output representation of the standard out and standard error associated with the, in
 	 * addition to security notifications
 	 */
-	Output instrumentAndExecuteCode(Object[] parameters) {
+	private Output instrumentAndExecuteCode(Object[] parameters) {
 		Process process = null;
 		Output output = new Output();
 		
@@ -422,11 +458,14 @@ public class Tester {
 			}
 			
 			// show the user the command to run and prepare the process using the command
+			
 			if (!this.toolChain) {
 				System.out.println("command to run: "+command);
 			}
-			process = Runtime.getRuntime().exec(command);
 			
+
+			process = Runtime.getRuntime().exec(command);
+
 			// prepare the stream needed to capture standard output
 			InputStream isOut = process.getInputStream();
 			InputStreamReader isrOut = new InputStreamReader(isOut);
@@ -520,15 +559,11 @@ public class Tester {
 			return null;
 		}
 
+		this.outputs.add(output);
 		this.exceptionSet.addAll(output.getExceptions());
 
 		return output;
 	}
-
-	//////////////////////////////////////////
-	// PRIVATE METHODS
-	//////////////////////////////////////////
-
 
 	private void handleWatchdogOutput(BufferedReader brOut, Output output) throws IOException {
 		String next;
