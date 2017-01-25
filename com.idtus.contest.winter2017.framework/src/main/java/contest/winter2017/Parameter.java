@@ -217,10 +217,12 @@ public class Parameter {
 	 * to split a enumeration parameter into single-value
 	 * sub-parameters to get different parameter combinations.
 	 * 
-	 * @return ParameterList of sub parameters
+	 * @return List of sub parameters
 	 */
-	public ParameterList getSubParameters() {
-		ParameterList parameterList = new ParameterList();
+	public List<Parameter> getSubParameters() {
+		List<Parameter> parameterList =
+				new ArrayList<Parameter>(getEnumerationValues().size());
+
 		if (isEnumeration()) {
 			Map<String, Object> parameterMap;
 			List<String> toAdd;
@@ -241,10 +243,10 @@ public class Parameter {
 					}
 				}
 				parameterMap.put("enumerated values", toAdd);
-				parameterList.addParameter(new Parameter(parameterMap));
+				parameterList.add(new Parameter(parameterMap));
 			}
 		} else {
-			parameterList.addParameter(this);
+			parameterList.add(this);
 		}
 		return parameterList;
 	}
@@ -283,8 +285,4 @@ public class Parameter {
 			return ("" + this).equals("" + obj);
 		}
 	}
-}
-
-class EnumParameter extends Parameter {
-	// List
 }

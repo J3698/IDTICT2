@@ -50,9 +50,9 @@ public class ParameterFactory {
 	private Map<String, Object> dependentParametersMap;
 
 	/**
-	 * list possible inputs to the jar
+	 * ParameterList representing required parameters
 	 */
-	private List<ParameterList> possibleParamLists;
+	private List<Parameter> requiredParamList;
 
 	/**
 	 * if this jar takes a fixed parameter list
@@ -74,7 +74,7 @@ public class ParameterFactory {
 		}
 		this.dependentParametersMap = (Map) this.inputMap.get("dependent parameters");
 		
-		/* Testing Code */
+		/* Testing Code
 		System.out.println("______DEBUG______");
 		if (dependentParametersMap == null) {
 			System.out.println("FIXED");
@@ -84,8 +84,11 @@ public class ParameterFactory {
 			printMap(dependentParametersMap, "$: ");
 		}
 		System.out.println("______DEBUG______");
+		*/
 
 	}
+
+	/* Testing Code
 
 	private void printList(List list) {
 		for (Object obj : list) {
@@ -97,7 +100,6 @@ public class ParameterFactory {
 		}
 		System.out.println();
 	}
-
 	private void printMap(Map m, String lvl) {
 
 		for (Entry<Object, Object> e: (Set<Entry<Object, Object>>) m.entrySet()) {
@@ -114,6 +116,7 @@ public class ParameterFactory {
 		}
 
 	}
+	*/
 
 
 	/**
@@ -136,7 +139,7 @@ public class ParameterFactory {
 	 * @return List of Parameter objects containing all metadata known about the each Parameter
 	 */
 	@SuppressWarnings({ "rawtypes", "unchecked" })
-	public List<Parameter> getNext(ParameterList previousParameterValues) {
+	public List<Parameter> getNext(List<Parameter> previousParameterValues) {
 		
 		// we are returning all possible parameters for a given index
 		List<Parameter> possibleParamsList = new ArrayList<Parameter>();
@@ -199,38 +202,38 @@ public class ParameterFactory {
 	}
 
 	/**
-	 * Method to return a list of possible parameter lists.
-	 * Currently ignores optional parameters.
+	 * Method to return required parameters as a ParameterList
 	 * 
-	 * @return list of possile parameter lists
+	 * @return required ParameterList
 	 */
-	public List<ParameterList> possibleParamLists() {
-		if (this.possibleParamLists != null) {
-			return this.possibleParamLists;
+	public List<Parameter> requiredParamLists() {
+		if (this.requiredParamList != null) {
+			return this.requiredParamList;
 		} else {
-			this.possibleParamLists = new LinkedList<ParameterList>();
-			LinkedList<ParameterList> toProcess = new LinkedList<ParameterList>();
-			toProcess.add(new ParameterList());
-			while (!toProcess.isEmpty()) {
-				ParameterList curr = toProcess.removeFirst();
-				List<Parameter> possibleParameters = getNext(curr);
+			// this.possibleParamLists = new LinkedList<ParameterList>();
+			// LinkedList<ParameterList> toProcess = new LinkedList<ParameterList>();
+			// toProcess.add(new ParameterList());
+			this.requiredParamList = new ArrayList<Parameter>();
+			boolean moreParams = true;
+			while (moreParams) {
+				moreParams = false;
+				List<Parameter> possibleParameters = getNext(requiredParamList);
 				// add non-optional parameters
-				boolean moreParams = false;
 				for (Parameter parameter : possibleParameters) {
 					if (!parameter.isOptional()) {
 						moreParams = true;
-						curr.addParameter(parameter);
+						if (parameter.isEnumeration()) {
+							parameter = parameter.getSubParameters().get(0);
+							requiredParamList.add(parameter);
+						} else {
+							requiredParamList.add(parameter);
+						}
+
 					}
-				}
-				// if there might be more parameters reprocess the list later
-				if (moreParams) {
-					toProcess.addLast(curr);
-				} else {
-					this.possibleParamLists.add(curr);
 				}
 			}
 
-			return this.possibleParamLists;
+			return this.requiredParamList;
 		}
 	}
 }
