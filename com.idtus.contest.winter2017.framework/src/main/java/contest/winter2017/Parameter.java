@@ -14,6 +14,13 @@ import java.util.regex.Pattern;
  * @author IDT
  */
 public class Parameter {
+	private static final String REPLACE_STRING = "<<REPLACE_ME_STRING>>";
+	private static final String REPLACE_INT = "<<REPLACE_ME_INT>>";
+	private static final String REPLACE_DOUBLE = "<<REPLACE_ME_DOUBLE>>";
+
+	/**
+	 * String representation of this parameter
+	 */
 	private String toString = null;
 
 	/**
@@ -106,7 +113,7 @@ public class Parameter {
 	public boolean isFormatted() {
 		if(isEnumeration()) {
 			for(String enumValue : getEnumerationValues()) {
-				if(enumValue.matches(".*<<REPLACE_ME_(STRING|INT)>>.*")) {
+				if(enumValue.matches(".*<<REPLACE_ME_(STRING|INT|DOUBLE)>>.*")) {
 					return true;
 				}
 			}
@@ -153,15 +160,15 @@ public class Parameter {
 		
 		List<Class> typeList = new ArrayList<Class>();
 		
-		this.replaceMePattern = Pattern.compile("<<REPLACE_ME_(STRING|INT)>>");
+		this.replaceMePattern = Pattern.compile("<<REPLACE_ME_(STRING|INT|DOUBLE)>>");
 		Matcher replaceMeMatcher = replaceMePattern.matcher(format);
 		while(replaceMeMatcher.find()) {
 			switch(replaceMeMatcher.group()) {
-				case "<<REPLACE_ME_STRING>>": {
+				case REPLACE_STRING: {
 					typeList.add(String.class);
 					break;
 				}
-				case "<<REPLACE_ME_INT>>": {
+				case REPLACE_INT: {
 					typeList.add(Integer.class);
 					break;
 				}
@@ -174,7 +181,7 @@ public class Parameter {
 
 		return typeList;
 	}
-	
+
 
 	/**
 	 * Utility method to build a valid formatted parameter by replacing all of the <<REPLACE_ME_...>> in the format parameter string
@@ -184,7 +191,7 @@ public class Parameter {
 	public String getFormattedParameter(List<Object> formatVariableValues) {
 		return getFormattedParameter((String)inputMap.get("format"), formatVariableValues);
 	}
-		
+
 	/**
 	 * Utility method to build a valid formatted parameter by replacing all of the <<REPLACE_ME_...>> in the format parameter string
 	 * @param String - containing the orginial format strin with the <<REPLACE_ME_...>> in it
@@ -192,7 +199,6 @@ public class Parameter {
 	 * @return String containing the parameter with <<REPLACE_ME_...>> placeholders replaced with the passed in values
 	 */
 	public String getFormattedParameter(String format, List<Object> formatVariableValues) {
-	
 		Matcher replaceMeMatcher = replaceMePattern.matcher(format);
 		StringBuffer sb = new StringBuffer();
 		for(Object variable : formatVariableValues) {
@@ -201,17 +207,15 @@ public class Parameter {
 			}
 		}
 		replaceMeMatcher.appendTail(sb);
-		
 		return sb.toString();
 	}
 
 	/**
 	 * A method to get the sub parameters of this parameter.
-	 * An enumerated parameter has multiple values, and it's
-	 * possible that more than one of them is used. Therefore,
-	 * to get different parameter combinations, it's easiest to
-	 * split a enumeration parameter into smaller, single-value
-	 * sub-parameters.
+	 * An enumerated parameter has multiple values, and more
+	 * than one of them could be used. Therefore, it's easiest
+	 * to split a enumeration parameter into single-value
+	 * sub-parameters to get different parameter combinations.
 	 * 
 	 * @return ParameterList of sub parameters
 	 */
@@ -224,12 +228,16 @@ public class Parameter {
 				parameterMap = new HashMap<String, Object>();
 				toAdd = new LinkedList<String>();
 				toAdd.add(str);
-				if (str.contains("<<REPLACE_ME_STRING>>") || str.contains("<<REPLACE_ME_INT>>")) {
+				if (str.contains(REPLACE_STRING) || str.contains(REPLACE_INT) ||
+						str.contains(REPLACE_DOUBLE)) {
+
 					parameterMap.put("format", str);
-					if (str.contains("<<REPLACE_ME_INT>>")) {
+					if (str.contains(REPLACE_STRING)) {
+						parameterMap.put("type", String.class);
+					} else if (str.contains(REPLACE_INT)) {
 						parameterMap.put("type", Integer.class);
 					} else {
-						parameterMap.put("type", String.class);
+						parameterMap.put("type", Double.class);
 					}
 				}
 				parameterMap.put("enumerated values", toAdd);

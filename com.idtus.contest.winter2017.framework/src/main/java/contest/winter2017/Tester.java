@@ -110,7 +110,7 @@ public class Tester {
 	/**
 	 * maximum time per test
 	 */
-	private Integer maxMillisPerTest = -1;
+	private Integer maxMillisPerTest = 1000;
 
 	/**
 	 * option to only use toolchain output
@@ -364,10 +364,8 @@ public class Tester {
 	 * provided some example code in the method. The examples only demonstrate how to use existing functionality. 
 	 */
 	public void executeSecurityTests() {
-		BlackBoxExplorer blackBoxExplorer = new BlackBoxExplorer(jarToTestPath, parameterFactory);
+		BlackBoxExplorer blackBoxExplorer = new BlackBoxExplorer(this, jarToTestPath, parameterFactory);
 		blackBoxExplorer.exploreByFizzing();
-
-		
 	}
 
 	public String getYAMLOutput() {
@@ -390,11 +388,6 @@ public class Tester {
 		return buffer.toString();
 	}
 
-
-	//////////////////////////////////////////
-	// PRIVATE METHODS
-	//////////////////////////////////////////
-	
 	/**
 	 * This method will instrument and execute the jar under test with the supplied parameters.
 	 * This method should be used for both basic tests and security tests.
@@ -411,7 +404,7 @@ public class Tester {
 	 * @return Output representation of the standard out and standard error associated with the, in
 	 * addition to security notifications
 	 */
-	private Output instrumentAndExecuteCode(Object[] parameters) {
+	Output instrumentAndExecuteCode(Object[] parameters) {
 		Process process = null;
 		Output output = new Output();
 		
@@ -446,43 +439,62 @@ public class Tester {
 			BufferedReader brErr = new BufferedReader(isrErr);
 			StringBuffer stdErrBuff = new StringBuffer();
 
-			long start = System.currentTimeMillis();
-			while (process.isAlive() &&
-				(this.maxMillisPerTest == -1 || System.currentTimeMillis() - start < this.maxMillisPerTest)) {
-
-				try {
-					Thread.sleep(10);
-				} catch (Exception e) {
-					System.out.println("ERROR: Thread interrupted.");
-					return null;
-				}
-			}
-
-			if (process.isAlive()) {
-				process.destroy();
-				System.out.println("ERROR: Test took too long to run");
-				return null;
-			}
 
 			String line;
-			// monitoring the standard out from the application
-			while((line = brOut.readLine()) != null) {
-				if (line.equals("<<WATCHDOG_OUTPUT_START>>")) {
-					handleWatchdogOutput(brOut, output);
-				} else {
-					stdOutBuff.append(line);
+			boolean outDone = false;
+			boolean errDone = false;
+			boolean programEnd = false;
+
+			// while standard out is not complete OR standard error is not complete
+			// continue to probe the output/error streams for the applications output
+			int i = 0;
+			while((!outDone || !errDone)) {
+				// monitoring the standard output from the application
+				boolean outReady = brOut.ready();
+				if(outReady) {
+					line = brOut.readLine();
+					if(line == null) {
+						outDone = true;
+					} else if (line.equals("<<WATCHDOG_OUTPUT_START>>")) {
+						handleWatchdogOutput(brOut, output);
+					} else {
+						stdOutBuff.append(line);
+					}
+				}
+				
+				// monitoring the standard error from the application
+				boolean errReady = brErr.ready();
+				if(errReady) {
+					line = brErr.readLine();
+					if(line == null) {
+						errDone = true;
+					} else {
+						if (line.equals("<<WATCHDOG_OUTPUT_START>>")) {
+							handleWatchdogError(brErr);
+						} else {
+							stdErrBuff.append(line + "\n");
+						}
+					}
+				}
+
+				// if standard out and standard error are not ready, wait for 250ms 
+				// and try again to monitor the streams
+				if(!outReady && !errReady)  {
+					i++;
+					if (i > 6) {
+						break;
+					}
+					try {
+						Thread.sleep(250);
+					} catch (InterruptedException e) {
+						// NOP
+					}
 				}
 			}
 
-			// monitoring the standard error from the application
-			while((line = brErr.readLine()) != null) {
-				if (line.equals("<<WATCHDOG_OUTPUT_START>>")) {
-					handleWatchdogError(brErr);
-				} else {
-					stdErrBuff.append(line + "\n");
-				}
+			while (brErr.ready()) {
+				stdErrBuff.append(brErr.readLine());
 			}
-
 
 			// we now have the output as an object from the run of the black-box jar
 			// this output object contains both the standard output and the standard error
@@ -512,6 +524,11 @@ public class Tester {
 
 		return output;
 	}
+
+	//////////////////////////////////////////
+	// PRIVATE METHODS
+	//////////////////////////////////////////
+
 
 	private void handleWatchdogOutput(BufferedReader brOut, Output output) throws IOException {
 		String next;

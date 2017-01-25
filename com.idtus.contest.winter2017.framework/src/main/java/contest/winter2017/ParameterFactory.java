@@ -38,10 +38,25 @@ import org.omg.CORBA.PUBLIC_MEMBER;
  */
 public class ParameterFactory {
 
+	/**
+	 * input map associated with a tests inputs
+	 */
 	@SuppressWarnings("rawtypes")
 	private Map inputMap;
+
+	/**
+	 * map to map a parameter to the parameters can come after it
+	 */
 	private Map<String, Object> dependentParametersMap;
+
+	/**
+	 * list possible inputs to the jar
+	 */
 	private List<ParameterList> possibleParamLists;
+
+	/**
+	 * if this jar takes a fixed parameter list
+	 */
 	private boolean bounded;
 	
 	
@@ -59,7 +74,7 @@ public class ParameterFactory {
 		}
 		this.dependentParametersMap = (Map) this.inputMap.get("dependent parameters");
 		
-		/* Testing Code 
+		/* Testing Code */
 		System.out.println("______DEBUG______");
 		if (dependentParametersMap == null) {
 			System.out.println("FIXED");
@@ -69,10 +84,9 @@ public class ParameterFactory {
 			printMap(dependentParametersMap, "$: ");
 		}
 		System.out.println("______DEBUG______");
-		*/
 
 	}
-	/*
+
 	private void printList(List list) {
 		for (Object obj : list) {
 			if (obj instanceof Map) {
@@ -100,7 +114,7 @@ public class ParameterFactory {
 		}
 
 	}
-	*/
+
 
 	/**
 	 * Method to test if the parameters associated with this jar are fixed (aka bounded)
@@ -214,8 +228,7 @@ public class ParameterFactory {
 						}
 					}
 				}
-				// if there might be more parameters
-				// schedule the list for re-processing
+				// if there might be more parameters reprocess the list later
 				if (moreParams) {
 					toProcess.addLast(curr);
 				} else {

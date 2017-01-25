@@ -56,6 +56,11 @@ public class Main {
 	public static final String TOOL_CHAIN = "toolChain";
 
 	/**
+	 * cli key for showing information about a permission
+	 */
+	public static final String PERMISSION_INFO = "permissionInfo";
+
+	/**
 	 * cli key for application help
 	 */
 	public static final String HELP = "help";
@@ -80,6 +85,7 @@ public class Main {
 		options.addOption(JACOCO_OUTPUT_PATH, true, "path to directory for jacoco output");
 		options.addOption(JACOCO_AGENT_JAR_PATH, true, "path to the jacoco agent jar");
 		// optional parameters with arguments
+		options.addOption(PERMISSION_INFO, true, "permission to get information about");
 		options.addOption(BLACK_BOX_TESTS, true, "number of black box testings to run");
 		options.addOption(TIME_GOAL, true, "time goal for black box testings to run in");
 		// optional parameters without arguments
@@ -99,10 +105,11 @@ public class Main {
 					String jarToTestPath = cliArgs.getOptionValue(JAR_TO_TEST_PATH);
 					String jacocoOutputDirPath = cliArgs.getOptionValue(JACOCO_OUTPUT_PATH);
 					String jacocoAgentJarPath = cliArgs.getOptionValue(JACOCO_AGENT_JAR_PATH);
+					String permissionToShow = cliArgs.getOptionValue(PERMISSION_INFO);
 					String bbTests = cliArgs.getOptionValue(BLACK_BOX_TESTS);
 					String timeGoal = cliArgs.getOptionValue(TIME_GOAL);
 					String toolChain = "" + cliArgs.hasOption(TOOL_CHAIN);
-
+					
 					// catch and report runtime exceptions
 					try {
 						// the Tester class contains all of the logic for the testing framework
@@ -116,7 +123,7 @@ public class Main {
 						System.out.println(tester.getYAMLOutput());
 					} catch (RuntimeException re) {
 						re.printStackTrace();
-						if (toolChain.equals("true")) {
+						if (!toolChain.equals("true")) {
 							ExceptionLogger.errorLogDialog(re, LocalDateTime.now());
 						}
 						System.exit(0);
@@ -128,6 +135,11 @@ public class Main {
 					printHelp(options);
 					
 			    // user did not request help and we had an inadequate number of arguments
+				} else if (cliArgs.hasOption(PERMISSION_INFO)) {
+
+					String info = cliArgs.getOptionValue(PERMISSION_INFO);
+					System.out.println(PermissionInfo.getInfo(info));
+
 				} else {
 					
 					System.out.println("ERROR: Failed to execute - application requires at least three parameters.");

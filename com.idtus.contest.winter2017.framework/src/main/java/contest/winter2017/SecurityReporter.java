@@ -6,6 +6,7 @@ import java.net.SocketPermission;
 import java.security.Permission;
 import java.security.UnresolvedPermission;
 import java.util.LinkedList;
+import java.util.PropertyPermission;
 
 import javax.security.auth.PrivateCredentialPermission;
 import javax.security.auth.kerberos.DelegationPermission;
@@ -93,6 +94,8 @@ public class SecurityReporter extends SecurityManager {
 					perm instanceof SocketPermission || perm instanceof PrivateCredentialPermission ||
 					perm instanceof DelegationPermission || perm instanceof ServicePermission) {
 				name = perm.getClass().getSimpleName();
+			} else if (perm instanceof PropertyPermission) {
+				name = "Property:" + perm.getName();
 			} else {
 				name = perm.getName();
 				int pos = name.indexOf('.');

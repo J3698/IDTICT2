@@ -34,8 +34,8 @@ public class SecurityWatchdog {
 	 * @throws Exception - any uncaught exceptions thrown
 	 */
 	public static void main(String[] args) throws Exception {
-			// ensure this code is being called properly
 		try {
+			// ensure this code is being called properly
 			if (watchdogStarted) {
 				throw new SecurityException("Cannot access SecurityWatchdog.");
 			} else if (args.length < 2) {
