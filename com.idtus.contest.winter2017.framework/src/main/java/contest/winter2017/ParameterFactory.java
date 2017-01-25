@@ -219,13 +219,7 @@ public class ParameterFactory {
 				for (Parameter parameter : possibleParameters) {
 					if (!parameter.isOptional()) {
 						moreParams = true;
-						if (parameter.isEnumeration()) {
-							for (Parameter subParameter: parameter.getSubParameters()) {
-								curr.addParameter(subParameter);
-							}
-						} else {
-							curr.addParameter(parameter);
-						}
+						curr.addParameter(parameter);
 					}
 				}
 				// if there might be more parameters reprocess the list later
@@ -240,9 +234,6 @@ public class ParameterFactory {
 		}
 	}
 }
-
-
-
 
 
 

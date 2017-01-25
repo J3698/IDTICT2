@@ -284,3 +284,7 @@ public class Parameter {
 		}
 	}
 }
+
+class EnumParameter extends Parameter {
+	// List
+}

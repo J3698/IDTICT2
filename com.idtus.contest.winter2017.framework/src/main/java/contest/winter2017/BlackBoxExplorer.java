@@ -69,15 +69,19 @@ public class BlackBoxExplorer {
 	private void performTest(ParameterList parameterList) {
 		List<String> arguments = new LinkedList<String>();
 		for (Parameter parameter : parameterList) {
-			List<Object> paramValues = new ArrayList<>();
-			for (Class var : parameter.getFormatVariables()) {
-				if (var.equals(String.class)) {
-					paramValues.add(randSpecialString());
-				} else if (var.equals(Double.class)) {
-					paramValues.add(getDoubleNumber(parameter));
-				} else {
-					paramValues.add(getIntegerNumber(parameter));
+			if (parameter.isFormatted()) {
+				List<Object> paramValues = new ArrayList<>();
+				for (Class var : parameter.getFormatVariables()) {
+					if (var.equals(String.class)) {
+						paramValues.add(randSpecialString());
+					} else if (var.equals(Double.class)) {
+						paramValues.add(getDoubleNumber(parameter));
+					} else {
+						paramValues.add(getIntegerNumber(parameter));
+					}
 				}
+			} else {
+				
 			}
 			arguments.add(parameter.getFormattedParameter(paramValues));
 		}
