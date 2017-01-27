@@ -16,6 +16,7 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.jar.Attributes;
 
 import org.jacoco.core.analysis.Analyzer;
@@ -35,6 +36,11 @@ import org.jacoco.report.internal.html.table.PercentageColumn;
  * 
  * Example code that we used to guide our use of Jacoco code coverage was found @ http://www.eclemma.org/jacoco/trunk/doc/api.html
  * 
+ * ICT-2 has made several changes to this class. Many of them are documentation based, or were meant to improve code quality.
+ * In addition, toolchain mode has been implemented. Print statements directed to standard out are silenced if toolchain mode is used.
+ * ICT-2 has also changed how tests are run. ICT-2 has taken advantage of java's security structure to monitor potentially nefarious
+ * behavior. 
+ * 
  * @author IDT
  */
 public class Tester {
@@ -44,17 +50,17 @@ public class Tester {
 	//////////////////////////////////////////
 
 	/**
-	 * suffix for all jacoco output files
+	 * Suffix for all jacoco output files.
 	 */
 	private static final String JACOCO_OUTPUT_FILE_SUFFIX = "_jacoco.exec";
 	
 	/**
-	 * horizontal line shown between test output
+	 * Horizontal line shown between test output.
 	 */
 	private static final String HORIZONTAL_LINE = "-------------------------------------------------------------------------------------------";
 
 	/**
-	 * initialization error message
+	 * Initialization error message.
 	 */
 	private static final String INIT_ERROR_MSSG = "ERROR: An exception occurred during initialization.";
 
@@ -63,94 +69,92 @@ public class Tester {
 	//////////////////////////////////////////
 
 	/**
-	 * path to the SecurityWatchdog class
+	 * Path to the SecurityWatchdog class.
 	 */
 	private String watchdogPath = null;
 
 	/**
-	 * path of the jar to test as a String
+	 * Path of the jar to test as a String.
 	 */
 	private String jarToTestPath = null;
 	
 	/**
-	 * path of the directory for jacoco output as a String
+	 * Path of the directory for jacoco output as a String.
 	 */
 	private String jacocoOutputDirPath = null;
 	
 	/**
-	 * path to the jacoco agent library as a String
+	 * Path to the jacoco agent library as a String.
 	 */
 	private String jacocoAgentJarPath = null;
 	
 	/**
-	 * path to the file for jacoco output as a String
+	 * Path to the file for jacoco output as a String.
 	 */
 	private String jacocoOutputFilePath = null;
 
 	/**
-	 * minimum number of black box iterations to run
+	 * Minimum number of black box iterations to run.
 	 */
 	private int MIN_BB_TESTS = 10;
 
 	/**
-	 * number of black box iterations to run
-	 * default 1000 iterations
+	 * Number of black box iterations to run, default 1000.
 	 */
 	private Integer bbTests = 1000;
 
 	/**
-	 * minimum time goal
+	 * Minimum time goal for tests to run in, default 0 minutes.
 	 */
-	private int MIN_TIME_GOAL = 1;
+	private int MIN_TIME_GOAL = 0;
 
 	/**
-	 * target time in minutes for tester to run
-	 * default 5 minutes
+	 * Target time in minutes for tester to run, default 5 minutes.
 	 */
 	private Integer timeGoal = 5;
 
 	/**
-	 * maximum time per test
+	 * Maximum time per test, currently not implemented.
 	 */
 	private Integer maxMillisPerTest = 1000;
 
 	/**
-	 * option to only use toolchain output
+	 * Option to only use toolchain output.
 	 */
 	private Boolean toolChain = false;
 
 	/**
-	 * number of predefined tests which have passed
+	 * Number of predefined tests which have passed.
 	 */
 	private int passCount = 0;
 
 	/**
-	 * number of predefined tests which have failed
+	 * Number of predefined tests which have failed.
 	 */
 	private int failCount = 0;
 
 	/**
-	 * basic tests that have been extracted from the jar under test
+	 * Basic tests which have been extracted from the jar under test.
 	 */
 	private List<Test> predefinedTests = null;
 
 	/**
-	 * percent of jar under test which has been covered during testing
+	 * Percent of jar under test which has been covered during testing.
 	 */
 	private double percentCovered = 0.0;
 
 	/**
-	 * parameter factory that can be used to help figure out parameter signatures from the blackbox jars
+	 * ParameterFactory that can be used to help figure out parameter signatures from the blackbox jars.
 	 */
 	private ParameterFactory parameterFactory = null;
 
 	/**
-	 * list of outputs encountered
+	 * List of outputs encountered.
 	 */
 	private ArrayList<Output> outputs = new ArrayList<Output>(2000);
 
 	/**
-	 * set to hold unique exceptions that have thus far been encountered
+	 * Set to hold unique exceptions that have thus far been encountered.
 	 */
 	private HashSet<String> exceptionSet = new HashSet<String>();
 
@@ -159,7 +163,7 @@ public class Tester {
 	//////////////////////////////////////////
 	
 	/**
-	 * Method that will initialize the Framework by loading up the jar to test, and then extracting
+	 * Initialize the tester by loading up the jar to test, and then extracting
 	 * parameters, parameter bounds (if any), and basic tests from the jar.
 	 * 
 	 * @param initJarToTestPath - String representing path of the jar to test
@@ -290,6 +294,8 @@ public class Tester {
 	}
 	
 	/**
+	 * Executes predefined tests on the jar under test.
+	 * <p>
 	 * This is the half of the framework that IDT has completed. We are able to pull basic tests 
 	 * directly from the executable jar. We are able to run the tests and assess the output as PASS/FAIL.
 	 * 
@@ -352,10 +358,10 @@ public class Tester {
 	}
 
 	/**
+	 * Executes security tests on the jar under test.
+	 * <p>
 	 * This is the half of the framework that IDT has not completed. We want you to implement your exploratory 
-	 * security vulnerability testing here.
-	 * 
-	 * In an effort to demonstrate some of the features of the framework that you can already utilize, we have
+	 * security vulnerability testing here. In an effort to demonstrate some of the features of the framework that you can already utilize, we have
 	 * provided some example code in the method. The examples only demonstrate how to use existing functionality. 
 	 */
 	public void executeSecurityTests() {
@@ -375,6 +381,11 @@ public class Tester {
 		}
 	}
 
+	/**
+	 * Returns YAML toolchain output for this tester.
+	 * 
+	 * @return String output of this tester
+	 */
 	public String getYAMLOutput() {
 		StringBuffer buffer = new StringBuffer(1000);
 		buffer.append("Total predefined tests run: ");
@@ -400,7 +411,7 @@ public class Tester {
 	//////////////////////////////////////////
 
 	/**
-	 * method to report an initialization error, and then quit
+	 * Reports an initialization error, and then quits
 	 * the program.
 	 * 
 	 * @param message - information about the initialization error
@@ -412,20 +423,18 @@ public class Tester {
 	}
 
 	/**
-	 * Utility method used to determine how many minutes
-	 * have passed since a given long when System.currentTimeMillis()
-	 * was called.
+	 * Determine how many minutes have passed since a given System.currentTimeMillis() output
 	 * 
 	 * @param start - last return of System.currentTimeMillis()
 	 * @return minutes since start
 	 */
-	private double minutesPassed(long start) {
+	private int minutesPassed(long start) {
 		long diff = (System.currentTimeMillis() - start) / 1_000_000;
-		return (double) diff;
+		return (int) diff;
 	}
 
 	/**
-	 * This method will instrument and execute the jar under test with the supplied parameters.
+	 * Instruments and executes the jar under test with the supplied parameters.
 	 * This method should be used for both basic tests and security tests.
 	 * 
 	 * An assumption is made in this method that the word java is recognized on the command line
@@ -478,11 +487,10 @@ public class Tester {
 			BufferedReader brErr = new BufferedReader(isrErr);
 			StringBuffer stdErrBuff = new StringBuffer();
 
-
 			String line;
 			boolean outDone = false;
 			boolean errDone = false;
-			boolean programEnd = false;
+
 
 			// while standard out is not complete OR standard error is not complete
 			// continue to probe the output/error streams for the applications output
@@ -565,6 +573,13 @@ public class Tester {
 		return output;
 	}
 
+	/**
+	 * Handles standard output specifically for the tester.
+	 * 
+	 * @param brOut
+	 * @param output
+	 * @throws IOException
+	 */
 	private void handleWatchdogOutput(BufferedReader brOut, Output output) throws IOException {
 		String next;
 		output.resetPermissionLog();
@@ -574,6 +589,8 @@ public class Tester {
 	}
 
 	/**
+	 * Handles standard error output specifically for the tester.
+	 * 
 	 * Method used to handle errors passed by the security watchdog
 	 * @param error - the error to handle
 	 */
@@ -590,7 +607,8 @@ public class Tester {
 	}
 	
 	/**
-	 * Method used to print the basic test output (std out/err)
+	 * Prints the basic test output (std out/err).
+	 * 
 	 * @param output - Output object containing std out/err to print 
 	 */
 	private void printBasicTestOutput(Output output) {
@@ -602,7 +620,8 @@ public class Tester {
 	}
 
 	/**
-	 * Method used to print raw code coverage stats including hits/probes
+	 * Prints raw code coverage stats including hits/probes
+	 * 
 	 * @throws IOException
 	 */
 	private void printRawCoverageStats()  {
@@ -650,7 +669,8 @@ public class Tester {
 
 	
 	/**
-	 * Method used to get hit count from the code coverage metrics
+	 * Gets the hit count from the code coverage metrics.
+	 * 
 	 * @param data - boolean array of coverage data where true indicates hits
 	 * @return int representation of count of total hits from supplied data
 	 */
@@ -666,7 +686,7 @@ public class Tester {
 
 	
 	/**
-	 * Method for generating code coverage metrics including instructions, branches, lines, 
+	 * Generates code coverage metrics including instructions, branches, lines, 
 	 * methods and complexity. 
 	 * 
 	 * @return double representation of the percentage of code covered during testing
@@ -716,7 +736,7 @@ public class Tester {
 
 
 	/**
-	 * This method shows an example of how to generate code coverage metrics from Jacoco
+	 * Shows an example of how to generate code coverage metrics from Jacoco.
 	 * 
 	 * @return String representing code coverage results
 	 */
@@ -758,7 +778,7 @@ public class Tester {
 	
 	
 	/**
-	 * Method to translate the Jacoco line coverage status integers to Strings.
+	 * Translate the Jacoco line coverage status integers to Strings.
 	 * 
 	 * @param status - integer representation of line coverage status provided by Jacoco
 	 * @return String representation of line coverage status (not covered, partially covered, fully covered)
@@ -778,7 +798,7 @@ public class Tester {
 	
 	
 	/**
-	 * Method to translate the counter data and units into a human readable metric result String
+	 * Translate the counter data and units into a human readable metric result String.
 	 * 
 	 * @param unit
 	 * @param counter
@@ -791,13 +811,14 @@ public class Tester {
 	}
 
 	
-	/**
-	 * This method is not meant to be part of the final framework. It was included to demonstrate
+	/*
+	 * Is not meant to be part of the final framework. It was included to demonstrate
 	 * three different ways to tap into the code coverage results/metrics using jacoco. 
 	 * 
 	 * This method is deprecated and will be removed from the final product after your team completes 
 	 * development. Please do not add additional dependencies to this method. 
-	 */
+	 *
+
 	@Deprecated 
 	private void showCodeCoverageResultsExample() {
 		
@@ -819,8 +840,10 @@ public class Tester {
 			System.out.println("\n");
 			System.out.println(generateDetailedCodeCoverageResults());
 		}
-	}	
+	}
+	 */
 }
+
 
 /**
  * Thic class represents an exception thrown

@@ -1,0 +1,56 @@
+-Javadoc all declared members, methods, and non-anonymous classes
+
+
+-MEMBERS
+	-Members should be documented without paragraph breaks (new lines are fine)
+	-Documentation should start with member type, then the reason behind the member
+	-Documentation should be in full sentences
+
+GOOD Example:
+
+/**
+ * Int to count the number of eyes.
+ */
+private int i;
+
+
+
+BAD Examples:
+
+not in sentence format
+/**
+ * int to count the number of eyes
+ */
+private int i;
+
+doesn't start with type
+/**
+ * Counts the number of eyes.
+ */
+private int i;
+
+contains paragraph break
+/**
+ * Counts the number of eyes.
+ * <p>
+ * Calculated by ears.
+ */
+private int i;
+
+
+
+METHODS
+	-Initial description should start with a present tense verb
+	-Other documentation should be separated from inital desription with '<p>'
+	-
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	

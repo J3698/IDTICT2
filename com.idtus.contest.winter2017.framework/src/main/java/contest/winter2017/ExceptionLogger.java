@@ -10,19 +10,33 @@ import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 
 /**
- * This static class is for saving logs
- * with information pertaining to exceptions.
- * This class is static to prmote low coupling,
- * i.e. diminish interdependence with other
- * classes.
+ * This static class is for saving logs with information pertaining to exceptions.
+ * This class is static to prmote low coupling, i.e. diminish interdependence with
+ * other classes.
  * 
  * @author ICT-2
  */
 class ExceptionLogger {
+	/**
+	 * CommandLine to get arguments to log.
+	 */
 	private static CommandLine cliArgs;
+
+	/**
+	 * File directory to output error logs into.
+	 */
 	private static File jacocoOutputDir;
+
+	/**
+	 * File directory to output error logs into.
+	 */
 	private static File currentDir;
 
+	/**
+	 * Initializes the ExceptionLog.
+	 * 
+	 * @param initCliArgs - CommandLine to include in reports
+	 */
 	static void init(CommandLine initCliArgs) {
 		cliArgs = initCliArgs;
 		jacocoOutputDir = new File(cliArgs.getOptionValue(Main.JACOCO_OUTPUT_PATH));
@@ -30,46 +44,48 @@ class ExceptionLogger {
 	}
 
 	/**
-	 * private static method to ask to save an error log
+	 * Asks to save an error log.
 	 * <p>
 	 * This method asks if the user wants to save log
-	 * to the jacoco output location. If this is not
-	 * possible, it asks if the user wants to save
-	 * the log to the current directory.
+	 * to the Jacoco output location. Then, it asks
+	 * if the user wants to save the log to the
+	 * current directory.
 	 *
-	 * @param cliArgs the commandline arguments
-	 * @param re runtime exception encountered
-	 * @param now date and time of exception
+	 * @param re - RuntimeException encountered
+	 * @param now - date and time of exception
 	 */
 	static void errorLogDialog(RuntimeException re, LocalDateTime now) {
 		System.out.println("An exception has occured.");
-		System.out.println("Save error log to jacoco output path? (Y/n) ");
+		System.out.println("Save error log to jacoco output directory? (Y/n) ");
 		Scanner in = new Scanner(System.in);
-		if (!in.next().equalsIgnoreCase("n")) {
-			if (!saveErrorLog(jacocoOutputDir, cliArgs, re, now)) {
-				System.out.println("Could not log save to jacoco output. Save to current directory? (Y/n) ");
-				if (!in.next().equalsIgnoreCase("n")) {
-					if (!saveErrorLog(currentDir, cliArgs, re, now)) {
-						System.out.println("Could not save log to current directory.");
-					}
-				}
+		if (!in.nextLine().equalsIgnoreCase("n")) {
+			if (!saveErrorLog(jacocoOutputDir, re, now)) {
+				System.out.println("Could not log save to jacoco output directory.");
+			}
+		}
+
+		System.out.println("Save error log to current directory? (Y/n) ");
+		if (!in.nextLine().equalsIgnoreCase("n")) {
+			if (!saveErrorLog(currentDir, re, now)) {
+				System.out.println("Could not save log to current directory.");
 			}
 		}
 	}
 
 	/**
-	 * private static method to save error logs
+	 * Saves the specefied exception to the specified error log file.
 	 * <p>
 	 * This method attempts to log an error file. 
 	 * A number is appended to error logs so that
 	 * previous logs are not overwritten.
 	 * 
-	 * @param dir directory to save file into
-	 * @param cliArgs the commandline arguments
-	 * @param re runtime exception encountered
-	 * @param now date and time of exception
+	 * @param dir - directory to save file into
+	 * @param re - RuntimeEception encountered
+	 * @param now - date and time of exception
+	 * 
+	 * @return boolean whether the log was succesfully saved
 	 */
-	private static boolean saveErrorLog(File dir, CommandLine cliArgs, RuntimeException re, LocalDateTime now) {
+	private static boolean saveErrorLog(File dir, RuntimeException re, LocalDateTime now) {
 		if (!dir.exists()) {
 			return false;
 		}
@@ -90,7 +106,7 @@ class ExceptionLogger {
 			// print arguments
 			pw.println("");
 			pw.println("\nArguments:");
-			Iterator<Option> it = cliArgs.iterator();
+			Iterator<Option> it = ExceptionLogger.cliArgs.iterator();
 			while (it.hasNext()) {
 				Option next = it.next();
 				pw.println("  " + next.getOpt() + ":");

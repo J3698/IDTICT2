@@ -13,18 +13,31 @@ import javax.security.auth.kerberos.DelegationPermission;
 import javax.security.auth.kerberos.ServicePermission;
 
 /**
- * 
+ * Class to watch for security permission requests. This class is not
+ * meant to curtail actions requested by executable jars under test,
+ * but to keep track of them, and to report them to the tester.
  * 
  * @author ICT-2
  */
 public class SecurityReporter extends SecurityManager {
+	/**
+	 * Int exit code to signify whether the jar under test
+	 * is trying to terminate the program.
+	 */
 	private static final int WATCHDOG_EXIT_CODE = 302590835;
 
+	/**
+	 * LinkedList of permissions attempted by the jar under test.
+	 */
 	private LinkedList<PermissionEvent> permissionEvents;
+
+	/**
+	 * Reference to stdOut, in case the jar under test uses System.setOut.
+	 */
 	private PrintStream stdOut;
 
 	/** 
-	 * Ctr for SecurityReporter
+	 * Constructs a new SecurityReporter with the specified stdOut.
 	 * 
 	 * @param stdOutu - output stream to print log to
 	 */
@@ -34,10 +47,12 @@ public class SecurityReporter extends SecurityManager {
 	}
 
 	/**
-	 * Method to log permissions used. This method attempts
-	 * to allow the SecurityReporter to circumvent itself,
-	 * by disabling the security manager if the permission
-	 * to check originated from the SecurityReporter.
+	 * Logs a permission requested.
+	 * <p>
+	 * This method attempts to allow the SecurityReporter to
+	 * circumvent itself, disabling the security manager if
+	 * the permission to check originated from the
+	 * SecurityReporter.
 	 * <p>
 	 * Note, it is possible for a jar under test to perform
 	 * unlogged operations using a different thread while the
@@ -65,7 +80,9 @@ public class SecurityReporter extends SecurityManager {
 		// disable manager
 		System.setSecurityManager(null);
 
+
 		if (toCheck instanceof RuntimePermission && toCheck.getName().contains("exitVM")) {
+			// log exit codes if they use the special int
 			if (toCheck.getName().contains("" + WATCHDOG_EXIT_CODE)) {
 				outputSecurityLog();
 			} else {
@@ -81,7 +98,9 @@ public class SecurityReporter extends SecurityManager {
 	}
 
 	/**
-	 * Method to output security events seen so far.
+	 * Outputs security events seen so far.
+	 * <p>
+	 * Certain permissions, such as file permissions, are abbreviated, otherwie they would be hard to deal with.
 	 */
 	public void outputSecurityLog() {
 		PrintStream out = System.out;
@@ -110,20 +129,51 @@ public class SecurityReporter extends SecurityManager {
 	}
 }
 
+/**
+ * Class to encapsulate a permission request. Holds a permission and
+ * the stack trace when the permission was requested. In the future,
+ * the stack trace could be parsed to find where dubious permissions
+ * are executed from.
+ * 
+ * @author ICT-2
+ */
 
 class PermissionEvent {
+	/**
+	 * Permission logged to this permission event.
+	 */
 	private Permission permission;
+
+	/**
+	 * Stack trace logged to this permission event.
+	 */
 	private StackTraceElement[] traceElements;
 
-	public PermissionEvent(Permission permision, StackTraceElement[] traceElements) {
-		this.permission = permision;
+	/**
+	 * Constructs a PermissionEvent with the given permission and StackTrace.
+	 * 
+	 * @param permision - permission to log
+	 * @param traceElements - stack trace to log
+	 */
+	public PermissionEvent(Permission permission, StackTraceElement[] traceElements) {
+		this.permission = permission;
 		this.traceElements = traceElements;
 	}
 
+	/**
+	 * Gets the permission logged to this permission event.
+	 * 
+	 * @return permission logged to this permission event
+	 */
 	public Permission getPermission() {
 		return this.permission;
 	}
 
+	/**
+	 * Gets the stack trace logged to this permission event.
+	 * 
+	 * @return stack trace logged to this permission event.
+	 */
 	public StackTraceElement[] getTraceElements() {
 		return this.traceElements;
 	}

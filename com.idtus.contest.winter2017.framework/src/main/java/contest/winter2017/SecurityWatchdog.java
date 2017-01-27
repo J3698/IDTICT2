@@ -7,12 +7,8 @@ import java.lang.reflect.Method;
 import java.net.JarURLConnection;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.util.Map;
 import java.util.jar.Attributes;
 
-import javax.swing.JOptionPane;
-
-import org.w3c.dom.DOMError;
 
 /**
  * This class installs a security manager to monitor a test
@@ -22,15 +18,26 @@ import org.w3c.dom.DOMError;
  *
  */
 public class SecurityWatchdog {
+	/**
+	 * Int exit code to signify whether the jar under test
+	 * is trying to terminate the program.
+	 */
 	private static final int WATCHDOG_EXIT_CODE = 302590835;
 
+	/**
+	 * boolean whether the watchdog has already been started.
+	 */
 	private static boolean watchdogStarted = false;
+
+	/**
+	 * boolean whether toolchain output mode is enabled.
+	 */
 	private static boolean toolChain = true;
 
 	/**
-	 * Method used to run a jar under test with specified options.
+	 * Runs an executable jar under test with the specified options.
 	 *
-	 * @param args - args with information for running jar to test
+	 * @param args - args with information for the executable jar under test
 	 * @throws Exception - any uncaught exceptions thrown
 	 */
 	public static void main(String[] args) throws Exception {
@@ -126,8 +133,7 @@ public class SecurityWatchdog {
 	}
 
 	/**
-	 * Method used to notify the tester
-	 * of errors.
+	 * Notifies the tester of errorss.
 	 * 
 	 * @param error - error to pass to tester
 	 * @param e - exception to pass to tester
@@ -143,8 +149,7 @@ public class SecurityWatchdog {
 	}
 
 	/**
-	 * Method used to notify the tester
-	 * of errors.
+	 * Notifies the tester of errorss.
 	 * 
 	 * @param error - error to pass to tester
 	 */
@@ -152,3 +157,58 @@ public class SecurityWatchdog {
 		watchdogError(error, null);
 	}
 }
+
+/*
+ * 
+ * OTHER IDEAS:
+ * 	 have thread with REAL sys out/err read the "fake" out/err
+
+ * Wrapper class for protecting the std out/err streams from being closed. Documentation
+ * for overriden methods can be found in the PrintStream javadoc. The close method only
+ * flushes this PrintStream.
+ * 
+ * @author ICT-2
+ * @see java.io.PrintStream
+ 
+class UnclosablePrintStream extends PrintStream {
+	private UnclosablePrintStream(File file) throws FileNotFoundException {
+		super(file);
+	}
+
+	public 
+
+	public PrintStream append(char c) {}
+	public PrintStream append(CharSequence csq) {}
+	public PrintStream append(CharSequence csq, int start, int end) {}
+	public boolean checkError() {}
+	protected void clearError() {}
+	public void close() {}
+	public void flush() {}
+	public PrintStream format(Locale l, String format, Object... args) {}
+	public PrintStream format(String format, Object... args) {}
+	public void print(boolean b) {}
+	public void print(char c) {]
+	public void print(char[] s) {}
+	public void print(double d) {}
+	public void print(float f) {}
+	public void print(int i) {}
+	public void print(long l) {}
+	public void print(Object obj) {}
+	public void print(String s) {}
+	public PrintStream printf(Locale l, String format, Object... args) {}
+	public PrintStream printf(String format, Object... args) {}
+	public void println() {}
+	public void println(boolean x) {}
+	public void println(char x) {}
+	public void println(char[] x) {}
+	public void println(double x) {}
+	public void println(float x) {}
+	public void println(int x) {}
+	public void println(long x) {}
+	public void println(Object x) {}
+	public void println(String x) {}
+	protected void setError() {}
+	public void write(byte[] buf, int off, int len) {}
+	public void write(int b) {}
+}
+	*/

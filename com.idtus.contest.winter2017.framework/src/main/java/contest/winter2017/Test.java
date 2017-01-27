@@ -13,25 +13,26 @@ public class Test {
 	
 	/**
 	 * List of parameter values that will be passed into the executable jar as 
-	 * as single test
+	 * as single test.
 	 */
 	@SuppressWarnings("rawtypes")
 	private List parameters;
 	
 	/**
-	 * The regex string that describes the expected std out result for the test
+	 * Regex string that describes the expected std out result for the test.
 	 */
 	private String stdOutExpectedResultRegex;
 	
 	/**
-	 * The regex string that describes the expected std err result for the test
+	 * Regex string that describes the expected std err result for the test.
 	 */
 	private String stdErrExpectedResultRegex;
 	
 
 	/**
-	 * Ctr for Test object
-	 * @param inputMap
+	 * Constructs a test object with the given input map.
+	 * 
+	 * @param inputMap for the test
 	 */
 	@SuppressWarnings("rawtypes")
 	public Test(Map inputMap) {
@@ -42,8 +43,9 @@ public class Test {
 	
 	
 	/**
-	 * Getter for parameters List
-	 * @return
+	 * Gets the parameter list of this test.
+	 * 
+	 * @return List of parameters for this test
 	 */
 	@SuppressWarnings("rawtypes")
 	public List getParameters() {
@@ -52,17 +54,18 @@ public class Test {
 
 	
 	/**
-	 * Getter for Standard Out expected results regex
-	 * @return
+	 * Gets the regex for the expected standard out.
+	 * 
+	 * @return String regex for expected standard out
 	 */
 	public String getStdOutExpectedResultRegex() {
 		return stdOutExpectedResultRegex;
 	}
-
 	
 	/**
-	 * Getter for Standard Error expected results regex
-	 * @return
+	 * Gets the regex for the expected standard errpr.
+	 * 
+	 * @return String regex for expected standard error
 	 */
 	public String getStdErrExpectedResultRegex() {
 		return stdErrExpectedResultRegex;

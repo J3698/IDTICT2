@@ -31,29 +31,7 @@ public class BlackBoxExplorer {
 	private int timeGoal;
 	private Random rand;
 
-	public BlackBoxExplorer(Tester tester, String jarToTestPath, ParameterFactory parameterFactory,
-						boolean bbTestsSpecified, boolean timeGoalSpecified, int bbTests, int timeGoal) {
 
-		this.tester = tester;
-		this.jarToTestPath = jarToTestPath;
-		this.parameterFactory = parameterFactory;
-		this.bbTests = 1000;
-		this.timeGoal = 5;
-		this.timeGoalSpecified = timeGoalSpecified;
-		if (timeGoalSpecified) {
-			this.timeGoal = timeGoal;
-		}
-		this.bbTestsPsecified = bbTestsSpecified;
-		if (bbTestsSpecified) {
-			this.bbTests = bbTests;
-		}
-
-		this.rand = new Random();
-	}
-
-	public BlackBoxExplorer(Tester tester, String jarToTestPath, ParameterFactory parameterFactory) {
-		this(tester, jarToTestPath, parameterFactory, false, false, 0, 0);
-	}
 
 	public void exploreByFizzing() {
 		Long start = System.currentTimeMillis();

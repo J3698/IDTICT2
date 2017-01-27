@@ -19,25 +19,25 @@ public class Parameter {
 	private static final String REPLACE_DOUBLE = "<<REPLACE_ME_DOUBLE>>";
 
 	/**
-	 * String representation of this parameter
+	 * String representation of this parameter.
 	 */
 	private String toString = null;
 
 	/**
-	 * Input Map associated with this parameter
+	 * Input Map associated with this parameter.
 	 */
 	@SuppressWarnings("rawtypes")
 	private Map inputMap;
-	
-	
+
 	/**
-	 * Pattern to replace if the parameter is formatted
+	 * Pattern to replace if this parameter is formatted.
 	 */
 	private Pattern replaceMePattern = null;
 
 
 	/**
-	 * Ctr for Parameter
+	 * Constructs a new Paraneter using the specified input map.
+	 * 
 	 * @param inputMap - map containing parameter meta data
 	 */
 	@SuppressWarnings("rawtypes")
@@ -46,8 +46,9 @@ public class Parameter {
 	}
 
 	/**
-	 * Getter for type of parameter (integer, long, double, float, String, etc)
-	 * @return
+	 * Gets the type of the parameter (integer, long, double, float, String, etc).
+	 * 
+	 * @return Class type of the parameter
 	 */
 	@SuppressWarnings("rawtypes")
 	public Class getType() {
@@ -55,8 +56,9 @@ public class Parameter {
 	}
 
 	/**
-	 * Method to find out if this parameter is an enumeration or not, 
-	 * meaning that there are multiple options associated with this parameter
+	 * Returns whether this parameter is an enumeration or not, i.e.
+	 * whether multiple options are associated with this parameter.
+	 * 
 	 * @return boolean true if this parameter is an enumeration, false if it is not
 	 */
 	public boolean isEnumeration() {
@@ -68,7 +70,8 @@ public class Parameter {
 	}
 
 	/**
-	 * Getter for enumeration values (if this parameter is an enumeration)
+	 * Gets enumeration values if this parameter is an enumeration.
+	 * 
 	 * @return List<String> containing multiple options associated with this parameter
 	 */
 	@SuppressWarnings("unchecked")
@@ -77,7 +80,8 @@ public class Parameter {
 	}
 
 	/**
-	 * Getter for the min value associated with this parameter (if one exists)
+	 * Gets the min value associated with this parameter (if one exists).
+	 * 
 	 * @return Object representing the minimum value associated with this parameter
 	 */
 	public Object getMin() {
@@ -85,7 +89,8 @@ public class Parameter {
 	}
 
 	/**
-	 * Getter for the max value associated with this parameter (if one exists)
+	 * Gets the max value associated with this parameter (if one exists).
+	 * 
 	 * @return Object representing the maximum value associated with this parameter
 	 */
 	public Object getMax() {
@@ -93,7 +98,8 @@ public class Parameter {
 	}
 
 	/**
-	 * Getter for the optionality of the parameter
+	 * Gets the optionality of this parameter.
+	 * 
 	 * @return boolean true indicates the parameter is optional
 	 */
 	public boolean isOptional() {
@@ -107,7 +113,8 @@ public class Parameter {
 	
 	
 	/**
-	 * Getter for the flag indicating whether or not the parameter has a specific format
+	 * Gets the flag indicating whether or not the parameter has a specific format
+	 * 
 	 * @return boolean true indicates the parameter has a specific format
 	 */
 	public boolean isFormatted() {
@@ -129,7 +136,8 @@ public class Parameter {
 	
 	
 	/**
-	 * Getter for the format string the parameter has if it has a specific one
+	 * Gets this parameter's format string if one exists
+	 * 
 	 * @return String with the parameters format <<REPLACE_ME_...>> are included
 	 */
 	public String getFormat() {
@@ -137,7 +145,8 @@ public class Parameter {
 	}
 
 	/**
-	 * Getter for the types of the variables (eg. <<REPLACE_ME_STRING>>) in the format string
+	 * Gets the types of the variables (eg. <<REPLACE_ME_STRING>>) in the format string
+	 * 
 	 * @return List<Class> that contains the types of each of the <<REPLACE_ME_...>> in the format string
 	 */
 	@SuppressWarnings("rawtypes")
@@ -147,7 +156,8 @@ public class Parameter {
 	
 	
 	/**
-	 * Getter for the types of the variables (eg. <<REPLACE_ME_STRING>>) in the format string... useful for formatted enumerated values
+	 * Gets the types of the variables (eg. <<REPLACE_ME_STRING>>) in the format string... useful for formatted enumerated values
+	 * 
 	 * @param format - string containing the format for this parameter
 	 * @return List<Class> that contains the types of each of the <<REPLACE_ME_...>> in the format string
 	 */
@@ -184,7 +194,8 @@ public class Parameter {
 
 
 	/**
-	 * Utility method to build a valid formatted parameter by replacing all of the <<REPLACE_ME_...>> in the format parameter string
+	 * Builds a valid formatted parameter by replacing all of the <<REPLACE_ME_...>> in the format parameter string
+	 * 
 	 * @param List<Object> - containing the values that will replace the format for <<REPLACE_ME_...>> placeholders of this formatted parameter
 	 * @return String containing the parameter with <<REPLACE_ME_...>> placeholders replaced with the passed in values
 	 */
@@ -193,7 +204,8 @@ public class Parameter {
 	}
 
 	/**
-	 * Utility method to build a valid formatted parameter by replacing all of the <<REPLACE_ME_...>> in the format parameter string
+	 * Builds a valid formatted parameter by replacing all of the <<REPLACE_ME_...>> in the format parameter string
+	 * 
 	 * @param String - containing the orginial format strin with the <<REPLACE_ME_...>> in it
 	 * @param List<Object> - containing the values that will replace the format for <<REPLACE_ME_...>> placeholders of this formatted parameter
 	 * @return String containing the parameter with <<REPLACE_ME_...>> placeholders replaced with the passed in values
@@ -211,9 +223,10 @@ public class Parameter {
 	}
 
 	/**
-	 * A method to get the sub parameters of this parameter.
+	 * Gets the sub parameters of this parameter.
+	 * <p>
 	 * An enumerated parameter has multiple values, and more
-	 * than one of them could be used. Therefore, it's easiest
+	 * than one of them could be used. Therefore, it's useful
 	 * to split a enumeration parameter into single-value
 	 * sub-parameters to get different parameter combinations.
 	 * 
@@ -252,11 +265,12 @@ public class Parameter {
 	}
 
 	/**
-	 * Method to represent this Parameter as a String. If this Parameter is an enumeration,
-	 * this method returns the toString of the corresponding list of values. Otherwise, this
-	 * method returns the format string of this Parameter.
+	 * Returns a string representation of this parameter.
+	 * <p>
+	 * If this Parameter is an enumeration, this method returns the toString of the corresponding
+	 * list of values. Otherwise, this method returns the format string of this Parameter.
 	 * 
-	 * @return String representing the Parameter
+	 * @return String representing this parameter
 	 */
 	@Override
 	public String toString() {
@@ -272,17 +286,31 @@ public class Parameter {
 		}
 	}
 
+	/**
+	 * Returns a hash code value for this parameter.
+	 * <p>
+	 * The hash code is generated using the hashcode of this parameter's toString.
+	 * 
+	 * @return an integer hashcode for this parameter
+	 */
 	@Override
 	public int hashCode() {
 		return toString().hashCode();
 	}
 
+	/**
+	 * Returns whether this parameter is equal to another parameter.
+	 * <p>
+	 * Equality testing is done by comparing the string representation of the parameters being compared.
+	 * 
+	 * @return boolean whether this parameter and the other parameter are equal
+	 */
 	@Override
-	public boolean equals(Object obj) {
-		if (! (obj instanceof Parameter)) {
+	public boolean equals(Object other) {
+		if (! (other instanceof Parameter)) {
 			return false;
 		} else {
-			return ("" + this).equals("" + obj);
+			return ("" + this).equals("" + other);
 		}
 	}
 }
