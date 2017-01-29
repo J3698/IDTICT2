@@ -1,0 +1,161 @@
+package contest.winter2017.gui;
+
+import java.io.File;
+
+import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
+import javafx.scene.control.Button;
+import javafx.scene.control.ProgressBar;
+import javafx.scene.control.ScrollPane;
+import javafx.scene.input.MouseButton;
+import javafx.scene.input.MouseEvent;
+import javafx.scene.layout.VBox;
+import javafx.scene.text.Font;
+import javafx.scene.text.Text;
+import javafx.stage.FileChooser;
+import javafx.stage.FileChooser.ExtensionFilter;
+import javafx.stage.Window;
+
+/**
+ * ScrollPane to hold the tests.
+ * 
+ * @author ICT-2
+ */
+class TestListPane extends ScrollPane {
+	public static final double WIDTH = 150;
+	private static final double SPACING = 4;
+	private int infoAdderIndex;
+
+	/**
+	 * ContentPane for test info.
+	 */
+	private VBox contentPane;
+
+	/**
+	 * Constructs a TestListPane with the specified parent BorderPane.
+	 */
+	public TestListPane() {
+		setMinWidth(WIDTH);
+		setFitToWidth(true);
+		setHbarPolicy(ScrollBarPolicy.NEVER);
+		setVbarPolicy(ScrollBarPolicy.ALWAYS);
+		// setStyle("-fx-focus-color: transparent; -fx-faint-focus-color:
+		// transparent;");
+
+		this.contentPane = new VBox(SPACING);
+		setContent(this.contentPane);
+
+		infoAdderIndex = this.contentPane.getChildren().size();
+		this.contentPane.getChildren().add(new TestInfoAdder(this));
+	}
+
+	/**
+	 * Adds a test.
+	 * 
+	 * @param test
+	 *            - test to add
+	 */
+	public void addTest(TestInfo testInfo) {
+		this.contentPane.getChildren().add(infoAdderIndex, testInfo);
+		this.infoAdderIndex++;
+	}
+}
+
+/**
+ * VBox used to hold basic info for tests.
+ * 
+ * @author ICT-2
+ */
+class TestInfo extends VBox {
+	/**
+	 * Constructs a TestInfo.
+	 */
+	public TestInfo() {
+		setAlignment(Pos.CENTER);
+		setStyle("-fx-border-color: lightgray; -fx-border-width: 1; -fx-focus-color: black;");
+		setFocused(true);
+		setFocusTraversable(true);
+		requestFocus();
+		Text name = new Text("Test01");
+		name.setFont(new Font(20));
+		Text percent = new Text("0%");
+		percent.setFont(new Font(10));
+		ProgressBar progressBar = new ProgressBar(0);
+		progressBar.setMouseTransparent(true);
+		progressBar.setPadding(new Insets(3, 0, 0, 2));
+		getChildren().addAll(name, percent, progressBar);
+		setOnMouseClicked(new EventHandler<MouseEvent>() {
+			/**
+			 * Handles an event.
+			 * 
+			 * @param event
+			 *            - event to handle
+			 */
+			public void handle(MouseEvent event) {
+				if (event.getButton() == MouseButton.PRIMARY) {
+					System.out.println("Hello");
+				}
+			}
+		});
+	}
+}
+
+/**
+ * VBox used to create new tests.
+ * 
+ * @author ICT-2
+ */
+class TestInfoAdder extends VBox {
+	/**
+	 * Constructs a new TestInfoAdder.
+	 */
+	public TestInfoAdder(TestListPane testList) {
+		setAlignment(Pos.CENTER);
+		setStyle("-fx-border-color: lightgray; -fx-border-width: 1;");
+
+		Button addButton = new SelectJarButton(testList);
+		Text drag = new Text("Or Drag and Drop Jar");
+		drag.setFont(new Font(10));
+		getChildren().addAll(new VExternSpace(addButton, 13, 4), new VExternSpace(drag, 4, 13));
+	}
+}
+
+/**
+ * Button used to select a Jar to test.
+ * 
+ * @author ICT-2
+ */
+class SelectJarButton extends Button {
+	/**
+	 * Constructs a SelectJarButton with the TestListPane specified.
+	 * 
+	 * @param testLists
+	 *            - testLists to add a test to
+	 */
+	public SelectJarButton(TestListPane testLists) {
+		super("Select Jar");
+
+		setOnAction(new EventHandler<ActionEvent>() {
+			/**
+			 * Handles an event.
+			 * 
+			 * @param event
+			 *            - event to handle
+			 */
+			@Override
+			public void handle(ActionEvent event) {
+				FileChooser fc = new FileChooser();
+				fc.setTitle("Choose a Jar");
+				fc.getExtensionFilters().addAll(new ExtensionFilter("Java Jar Files", "*.jar"));
+				Window window = SelectJarButton.this.getScene().getWindow();
+				File selected = fc.showOpenDialog(window);
+				if (selected != null && selected.exists()) {
+					testLists.addTest(new TestInfo());
+				}
+			}
+		});
+	}
+
+}
