@@ -66,6 +66,26 @@ public class Tester {
 	 */
 	private static final String INIT_ERROR_MSSG = "ERROR: An exception occurred during initialization.";
 
+	/**
+	 * Minimum time goal for tests to run in, default 0 minutes.
+	 */
+	public static final int MIN_TIME_GOAL = 0;
+
+	/**
+	 * Minimum number of black box iterations to run.
+	 */
+	public static final int MIN_BB_TESTS = 10;
+
+	/**
+	 * Minimum time goal for tests to run in, default 0 minutes.
+	 */
+	public static final int DEFAULT_TIME_GOAL = 5;
+
+	/**
+	 * Minimum number of black box iterations to run.
+	 */
+	public static final int DEFAULT_BB_TESTS = 1000;
+
 	//////////////////////////////////////////
 	// INSTANCE MEMBERS
 	//////////////////////////////////////////
@@ -96,24 +116,14 @@ public class Tester {
 	private String jacocoOutputFilePath = null;
 
 	/**
-	 * Minimum number of black box iterations to run.
-	 */
-	private int MIN_BB_TESTS = 10;
-
-	/**
 	 * Number of black box iterations to run, default 1000.
 	 */
-	private Integer bbTests = 1000;
-
-	/**
-	 * Minimum time goal for tests to run in, default 0 minutes.
-	 */
-	private int MIN_TIME_GOAL = 0;
+	private Integer bbTests = DEFAULT_BB_TESTS;
 
 	/**
 	 * Target time in minutes for tester to run, default 5 minutes.
 	 */
-	private Integer timeGoal = 5;
+	private Integer timeGoal = DEFAULT_TIME_GOAL;
 
 	/**
 	 * Maximum time per test, currently not implemented.
@@ -180,7 +190,7 @@ public class Tester {
 	 *         if it does not
 	 */
 	@SuppressWarnings({ "unchecked", "rawtypes" })
-	public void init(String initJarToTestPath, String initJacocoOutputDirPath, String initJacocoAgentJarPath,
+	public boolean init(String initJarToTestPath, String initJacocoOutputDirPath, String initJacocoAgentJarPath,
 			String initbbTests, String initTimeGoal, String initToolChain) {
 
 		this.watchdogPath = Tester.class.getResource("Tester.class").getPath();
@@ -196,9 +206,11 @@ public class Tester {
 				tempbbTests = Integer.parseInt(initbbTests);
 			} catch (NumberFormatException e) {
 				initError("Option bbTests could not be parsed to an int.");
+				return false;
 			}
 			if (tempbbTests < MIN_BB_TESTS) {
 				initError("Minimum value of bbTests is " + MIN_BB_TESTS + ".");
+				return false;
 			} else {
 				this.bbTests = tempbbTests;
 			}
@@ -211,9 +223,11 @@ public class Tester {
 				tempTimeGoal = Integer.parseInt(initTimeGoal);
 			} catch (NumberFormatException e) {
 				initError("Option timeGoal could not be parsed to an int.");
+				return false;
 			}
 			if (tempTimeGoal < MIN_TIME_GOAL) {
 				initError("Minimum value of timeGoal is " + MIN_TIME_GOAL + ".");
+				return false;
 			} else {
 				this.timeGoal = tempTimeGoal;
 			}
@@ -246,6 +260,7 @@ public class Tester {
 			jarURLconn = (JarURLConnection) jarURL.openConnection();
 		} catch (IOException ioe) {
 			initError("Could not load specified jar file to test.");
+			return false;
 		}
 
 		// figure out where the entry-point (main class) is in the jar under
@@ -255,10 +270,12 @@ public class Tester {
 			attr = jarURLconn.getMainAttributes();
 		} catch (IOException ioe) {
 			initError("Could not load manifest from jar to test.");
+			return false;
 		}
 		String mainClassName = attr.getValue(Attributes.Name.MAIN_CLASS);
 		if (mainClassName == null) {
 			initError("Cannot test jar without a main class.");
+			return false;
 		}
 
 		// load the TestBounds class from the jar under test
@@ -268,6 +285,7 @@ public class Tester {
 			mainClassTestBounds = cl.loadClass(mainClassTestBoundsName);
 		} catch (ClassNotFoundException cnfe) {
 			initError("Cannot test jar without a [MainClassName]TestBounds.class file.");
+			return false;
 		}
 
 		// use reflection to invoke the TestBounds class to get the usage
@@ -277,12 +295,14 @@ public class Tester {
 			testBoundsMethod = mainClassTestBounds.getMethod("testBounds");
 		} catch (NoSuchMethodException nsme) {
 			initError("Could not get testBounds method from [MainClassName]TestBounds class.");
+			return false;
 		}
 		Object mainClassTestBoundsInstance = null;
 		try {
 			mainClassTestBoundsInstance = mainClassTestBounds.newInstance();
 		} catch (InstantiationException | IllegalAccessException e) {
 			initError("Could not instantiate [MainClassName]TestBounds class from jar to test.");
+			return false;
 		}
 
 		// get test bounds
@@ -292,6 +312,7 @@ public class Tester {
 		} catch (ExceptionInInitializerError | IllegalAccessException | IllegalArgumentException
 				| InvocationTargetException e) {
 			initError("Could not invoke method testBounds from [MainClassName]TestBounds class.");
+			return false;
 		}
 
 		// instantiating a new Parameter Factory using the Test Bounds map
@@ -303,6 +324,8 @@ public class Tester {
 		for (Object inTest : testList) {
 			this.predefinedTests.add(new Test((Map) inTest));
 		}
+
+		return true;
 	}
 
 	/**
@@ -444,7 +467,6 @@ public class Tester {
 	private void initError(String message) {
 		System.out.println("ERROR: " + INIT_ERROR_MSSG);
 		System.out.print(message);
-		System.exit(0);
 	}
 
 	/**
