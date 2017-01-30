@@ -16,7 +16,6 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.jar.Attributes;
 
 import org.jacoco.core.analysis.Analyzer;
@@ -29,17 +28,20 @@ import org.jacoco.core.data.IExecutionDataVisitor;
 import org.jacoco.core.data.ISessionInfoVisitor;
 import org.jacoco.core.data.SessionInfo;
 import org.jacoco.core.tools.ExecFileLoader;
-import org.jacoco.report.internal.html.table.PercentageColumn;
 
 /**
- * Class that will handle execution of basic tests and exploratory security test on a black-box executable jar.  
+ * Class that will handle execution of basic tests and exploratory security test
+ * on a black-box executable jar.
  * 
- * Example code that we used to guide our use of Jacoco code coverage was found @ http://www.eclemma.org/jacoco/trunk/doc/api.html
+ * Example code that we used to guide our use of Jacoco code coverage was
+ * found @ http://www.eclemma.org/jacoco/trunk/doc/api.html
  * 
- * ICT-2 has made several changes to this class. Many of them are documentation based, or were meant to improve code quality.
- * In addition, toolchain mode has been implemented. Print statements directed to standard out are silenced if toolchain mode is used.
- * ICT-2 has also changed how tests are run. ICT-2 has taken advantage of java's security structure to monitor potentially nefarious
- * behavior. 
+ * ICT-2 has made several changes to this class. Many of them are documentation
+ * based, or were meant to improve code quality. In addition, toolchain mode has
+ * been implemented. Print statements directed to standard out are silenced if
+ * toolchain mode is used. ICT-2 has also changed how tests are run. ICT-2 has
+ * taken advantage of java's security structure to monitor potentially nefarious
+ * behavior.
  * 
  * @author IDT
  */
@@ -53,7 +55,7 @@ public class Tester {
 	 * Suffix for all jacoco output files.
 	 */
 	private static final String JACOCO_OUTPUT_FILE_SUFFIX = "_jacoco.exec";
-	
+
 	/**
 	 * Horizontal line shown between test output.
 	 */
@@ -77,17 +79,17 @@ public class Tester {
 	 * Path of the jar to test as a String.
 	 */
 	private String jarToTestPath = null;
-	
+
 	/**
 	 * Path of the directory for jacoco output as a String.
 	 */
 	private String jacocoOutputDirPath = null;
-	
+
 	/**
 	 * Path to the jacoco agent library as a String.
 	 */
 	private String jacocoAgentJarPath = null;
-	
+
 	/**
 	 * Path to the file for jacoco output as a String.
 	 */
@@ -144,7 +146,8 @@ public class Tester {
 	private double percentCovered = 0.0;
 
 	/**
-	 * ParameterFactory that can be used to help figure out parameter signatures from the blackbox jars.
+	 * ParameterFactory that can be used to help figure out parameter signatures
+	 * from the blackbox jars.
 	 */
 	private ParameterFactory parameterFactory = null;
 
@@ -161,19 +164,24 @@ public class Tester {
 	//////////////////////////////////////////
 	// PUBLIC METHODS
 	//////////////////////////////////////////
-	
+
 	/**
 	 * Initialize the tester by loading up the jar to test, and then extracting
 	 * parameters, parameter bounds (if any), and basic tests from the jar.
 	 * 
-	 * @param initJarToTestPath - String representing path of the jar to test
-	 * @param initJacocoOutputDirPath - String representing path of the directory jacoco will use for output
-	 * @param initJacocoAgentJarPath - String representing path of the jacoco agent jar
-	 * @return boolean - false if initialization encounters an Exception, true if it does not
+	 * @param initJarToTestPath
+	 *            - String representing path of the jar to test
+	 * @param initJacocoOutputDirPath
+	 *            - String representing path of the directory jacoco will use
+	 *            for output
+	 * @param initJacocoAgentJarPath
+	 *            - String representing path of the jacoco agent jar
+	 * @return boolean - false if initialization encounters an Exception, true
+	 *         if it does not
 	 */
 	@SuppressWarnings({ "unchecked", "rawtypes" })
-	public void init(String initJarToTestPath, String initJacocoOutputDirPath,
-			String initJacocoAgentJarPath, String initbbTests, String initTimeGoal, String initToolChain) {
+	public void init(String initJarToTestPath, String initJacocoOutputDirPath, String initJacocoAgentJarPath,
+			String initbbTests, String initTimeGoal, String initToolChain) {
 
 		this.watchdogPath = Tester.class.getResource("Tester.class").getPath();
 		this.watchdogPath = this.watchdogPath.replace("contest/winter2017/Tester.class", "");
@@ -216,29 +224,32 @@ public class Tester {
 
 		// delete previous jacoco outputs
 		File jarFileToTest = new File(this.jarToTestPath);
-		this.jacocoOutputFilePath = this.jacocoOutputDirPath+"\\"+jarFileToTest.getName().replaceAll("\\.", "_")+JACOCO_OUTPUT_FILE_SUFFIX;
+		this.jacocoOutputFilePath = this.jacocoOutputDirPath + "\\" + jarFileToTest.getName().replaceAll("\\.", "_")
+				+ JACOCO_OUTPUT_FILE_SUFFIX;
 		File jacocoOutputFile = new File(this.jacocoOutputFilePath);
-		if (jacocoOutputFile !=null && jacocoOutputFile.exists()) {
+		if (jacocoOutputFile != null && jacocoOutputFile.exists()) {
 			jacocoOutputFile.delete();
 		}
 
-		// load up the jar under test so that we can access information its classes
+		// load up the jar under test so that we can access information its
+		// classes
 		URL fileURL = null;
 		URL jarURL = null;
-	    JarURLConnection jarURLconn = null;
-	    URLClassLoader cl = null;
-	    try {
+		JarURLConnection jarURLconn = null;
+		URLClassLoader cl = null;
+		try {
 			fileURL = jarFileToTest.toURI().toURL();
-			String jarUrlTemp = "jar:"+jarFileToTest.toURI().toString()+"!/";
+			String jarUrlTemp = "jar:" + jarFileToTest.toURI().toString() + "!/";
 			jarURL = new URL(jarUrlTemp);
-			cl = URLClassLoader.newInstance(new URL[]{fileURL});
+			cl = URLClassLoader.newInstance(new URL[] { fileURL });
 			jarURLconn = null;
-			jarURLconn = (JarURLConnection)jarURL.openConnection();
-	    } catch (IOException ioe) {
-	    	initError("Could not load specified jar file to test.");
-	    }
+			jarURLconn = (JarURLConnection) jarURL.openConnection();
+		} catch (IOException ioe) {
+			initError("Could not load specified jar file to test.");
+		}
 
-		// figure out where the entry-point (main class) is in the jar under test
+		// figure out where the entry-point (main class) is in the jar under
+		// test
 		Attributes attr = null;
 		try {
 			attr = jarURLconn.getMainAttributes();
@@ -251,7 +262,7 @@ public class Tester {
 		}
 
 		// load the TestBounds class from the jar under test
-		String mainClassTestBoundsName = mainClassName+"TestBounds";
+		String mainClassTestBoundsName = mainClassName + "TestBounds";
 		Class<?> mainClassTestBounds = null;
 		try {
 			mainClassTestBounds = cl.loadClass(mainClassTestBoundsName);
@@ -259,7 +270,8 @@ public class Tester {
 			initError("Cannot test jar without a [MainClassName]TestBounds.class file.");
 		}
 
-		// use reflection to invoke the TestBounds class to get the usage information from the jar
+		// use reflection to invoke the TestBounds class to get the usage
+		// information from the jar
 		Method testBoundsMethod = null;
 		try {
 			testBoundsMethod = mainClassTestBounds.getMethod("testBounds");
@@ -273,45 +285,49 @@ public class Tester {
 			initError("Could not instantiate [MainClassName]TestBounds class from jar to test.");
 		}
 
-		// get tests
+		// get test bounds
 		Map<String, Object> mainClassTestBoundsMap = null;
 		try {
-				mainClassTestBoundsMap =
-						(Map<String, Object>)testBoundsMethod.invoke(mainClassTestBoundsInstance);
-		} catch (ExceptionInInitializerError | IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+			mainClassTestBoundsMap = (Map<String, Object>) testBoundsMethod.invoke(mainClassTestBoundsInstance);
+		} catch (ExceptionInInitializerError | IllegalAccessException | IllegalArgumentException
+				| InvocationTargetException e) {
 			initError("Could not invoke method testBounds from [MainClassName]TestBounds class.");
-		}		
+		}
 
 		// instantiating a new Parameter Factory using the Test Bounds map
 		this.parameterFactory = new ParameterFactory(mainClassTestBoundsMap);
-		
+
 		// get a list of basic tests from the TestBounds class
 		this.predefinedTests = new ArrayList<Test>();
-		List testList = (List)mainClassTestBoundsMap.get("tests");
-		for(Object inTest : testList) {
-			this.predefinedTests.add(new Test((Map)inTest));
+		List testList = (List) mainClassTestBoundsMap.get("tests");
+		for (Object inTest : testList) {
+			this.predefinedTests.add(new Test((Map) inTest));
 		}
 	}
-	
+
 	/**
 	 * Executes predefined tests on the jar under test.
 	 * <p>
-	 * This is the half of the framework that IDT has completed. We are able to pull basic tests 
-	 * directly from the executable jar. We are able to run the tests and assess the output as PASS/FAIL.
+	 * This is the half of the framework that IDT has completed. We are able to
+	 * pull basic tests directly from the executable jar. We are able to run the
+	 * tests and assess the output as PASS/FAIL.
 	 * 
-	 * ICT-2 has made one minor change to this method. If toolChain mode is used, this method is now silent.
+	 * ICT-2 has made one minor change to this method. If toolChain mode is
+	 * used, this method is now silent.
 	 */
 	public void executeBasicTests() {
 		// iterate through the lists of tests and execute each one
-		for(Test test : this.predefinedTests) {
+		for (Test test : this.predefinedTests) {
 
-			// instrument the code to code coverage metrics, execute the test with given parameters, then show the output
+			// instrument the code to code coverage metrics, execute the test
+			// with given parameters, then show the output
 			Output output = instrumentAndExecuteCode(test.getParameters().toArray());
 			if (output != null) {
 				printBasicTestOutput(output);
-				
-				// determine the result of the test based on expected output/error regex
-				if(output.getStdOutString().matches(test.getStdOutExpectedResultRegex())
+
+				// determine the result of the test based on expected
+				// output/error regex
+				if (output.getStdOutString().matches(test.getStdOutExpectedResultRegex())
 						&& output.getStdErrString().matches(test.getStdErrExpectedResultRegex())) {
 					if (!this.toolChain) {
 						System.out.println("basic test result: PASS");
@@ -324,18 +340,22 @@ public class Tester {
 					}
 
 					this.failCount++;
-					
+
 					if (!this.toolChain) {
-						// since we have a failed basic test, show the expectation for the stdout
-						if(!output.getStdOutString().matches(test.getStdOutExpectedResultRegex())) {
-							System.out.println("\t ->stdout: "+output.getStdOutString());
-							System.out.println("\t ->did not match expected stdout regex: "+test.getStdOutExpectedResultRegex());
+						// since we have a failed basic test, show the
+						// expectation for the stdout
+						if (!output.getStdOutString().matches(test.getStdOutExpectedResultRegex())) {
+							System.out.println("\t ->stdout: " + output.getStdOutString());
+							System.out.println(
+									"\t ->did not match expected stdout regex: " + test.getStdOutExpectedResultRegex());
 						}
-						
-						// since we have a failed basic test, show the expectation for the stderr
-						if(!output.getStdErrString().matches(test.getStdErrExpectedResultRegex())) {
-							System.out.println("\t ->stderr: "+output.getStdErrString());
-							System.out.println("\t ->did not match expected stderr regex: "+test.getStdErrExpectedResultRegex());
+
+						// since we have a failed basic test, show the
+						// expectation for the stderr
+						if (!output.getStdErrString().matches(test.getStdErrExpectedResultRegex())) {
+							System.out.println("\t ->stderr: " + output.getStdErrString());
+							System.out.println(
+									"\t ->did not match expected stderr regex: " + test.getStdErrExpectedResultRegex());
 						}
 					}
 				}
@@ -348,11 +368,13 @@ public class Tester {
 			if (!this.toolChain) {
 				System.out.println(HORIZONTAL_LINE);
 			}
-		} 
-		// print the basic test results and the code coverage associated with the basic tests
+		}
+		// print the basic test results and the code coverage associated with
+		// the basic tests
 		double percentCovered = generateSummaryCodeCoverageResults();
 		if (!this.toolChain) {
-			System.out.println("basic test results: " + (passCount + failCount) + " total, " + passCount + " pass, " + failCount + " fail, " + percentCovered + " percent covered");
+			System.out.println("basic test results: " + (passCount + failCount) + " total, " + passCount + " pass, "
+					+ failCount + " fail, " + percentCovered + " percent covered");
 			System.out.println(HORIZONTAL_LINE);
 		}
 	}
@@ -360,12 +382,15 @@ public class Tester {
 	/**
 	 * Executes security tests on the jar under test.
 	 * <p>
-	 * This is the half of the framework that IDT has not completed. We want you to implement your exploratory 
-	 * security vulnerability testing here. In an effort to demonstrate some of the features of the framework that you can already utilize, we have
-	 * provided some example code in the method. The examples only demonstrate how to use existing functionality. 
+	 * This is the half of the framework that IDT has not completed. We want you
+	 * to implement your exploratory security vulnerability testing here. In an
+	 * effort to demonstrate some of the features of the framework that you can
+	 * already utilize, we have provided some example code in the method. The
+	 * examples only demonstrate how to use existing functionality.
 	 */
 	public void executeSecurityTests() {
-		// List<ParameterList> possibleParamLists = this.parameterFactory.possibleParamLists();
+		// List<ParameterList> possibleParamLists =
+		// this.parameterFactory.possibleParamLists();
 		// ParameterList parameterList = possibleParamLists.get(0);
 		Long start = System.currentTimeMillis();
 
@@ -411,10 +436,10 @@ public class Tester {
 	//////////////////////////////////////////
 
 	/**
-	 * Reports an initialization error, and then quits
-	 * the program.
+	 * Reports an initialization error, and then quits the program.
 	 * 
-	 * @param message - information about the initialization error
+	 * @param message
+	 *            - information about the initialization error
 	 */
 	private void initError(String message) {
 		System.out.println("ERROR: " + INIT_ERROR_MSSG);
@@ -423,9 +448,11 @@ public class Tester {
 	}
 
 	/**
-	 * Determine how many minutes have passed since a given System.currentTimeMillis() output
+	 * Determine how many minutes have passed since a given
+	 * System.currentTimeMillis() output
 	 * 
-	 * @param start - last return of System.currentTimeMillis()
+	 * @param start
+	 *            - last return of System.currentTimeMillis()
 	 * @return minutes since start
 	 */
 	private int minutesPassed(long start) {
@@ -437,41 +464,45 @@ public class Tester {
 	 * Instruments and executes the jar under test with the supplied parameters.
 	 * This method should be used for both basic tests and security tests.
 	 * 
-	 * An assumption is made in this method that the word java is recognized on the command line
-	 * because the user has already set the appropriate environment variable path. 
+	 * An assumption is made in this method that the word java is recognized on
+	 * the command line because the user has already set the appropriate
+	 * environment variable path.
 	 * 
-	 * ICT-2 has changed this method such that it monitors output from a security handler which
-	 * watches the jar under test.
+	 * ICT-2 has changed this method such that it monitors output from a
+	 * security handler which watches the jar under test.
 	 * 
-	 * @param parameters - array of Objects that represents the parameter values to use for this 
-	 *                     execution of the jar under test
-	 *                     
-	 * @return Output representation of the standard out and standard error associated with the, in
-	 * addition to security notifications
+	 * @param parameters
+	 *            - array of Objects that represents the parameter values to use
+	 *            for this execution of the jar under test
+	 * 
+	 * @return Output representation of the standard out and standard error
+	 *         associated with the, in addition to security notifications
 	 */
 	private Output instrumentAndExecuteCode(Object[] parameters) {
 		Process process = null;
 		Output output = new Output();
-		
-		// we are building up a command line statement that will use java -jar to execute the jar
-		// and uses jacoco to instrument that jar and collect code coverage metrics
+
+		// we are building up a command line statement that will use java -jar
+		// to execute the jar
+		// and uses jacoco to instrument that jar and collect code coverage
+		// metrics
 		String command = "java";
 		try {
 			command += " -javaagent:" + this.jacocoAgentJarPath + "=destfile=" + this.jacocoOutputFilePath;
-			//command += " -jar " + this.jarToTestPath;
+			// command += " -jar " + this.jarToTestPath;
 			command += " -cp " + this.watchdogPath;
 			command += " " + SecurityWatchdog.class.getCanonicalName();
 			command += " " + this.jarToTestPath + " " + this.toolChain;
-			for (Object o: parameters) {
+			for (Object o : parameters) {
 				command += " " + o.toString();
 			}
-			
-			// show the user the command to run and prepare the process using the command
-			
+
+			// show the user the command to run and prepare the process using
+			// the command
+
 			if (!this.toolChain) {
-				System.out.println("command to run: "+command);
+				System.out.println("command to run: " + command);
 			}
-			
 
 			process = Runtime.getRuntime().exec(command);
 
@@ -491,16 +522,17 @@ public class Tester {
 			boolean outDone = false;
 			boolean errDone = false;
 
-
-			// while standard out is not complete OR standard error is not complete
-			// continue to probe the output/error streams for the applications output
+			// while standard out is not complete OR standard error is not
+			// complete
+			// continue to probe the output/error streams for the applications
+			// output
 			int i = 0;
-			while((!outDone || !errDone)) {
+			while ((!outDone || !errDone)) {
 				// monitoring the standard output from the application
 				boolean outReady = brOut.ready();
-				if(outReady) {
+				if (outReady) {
 					line = brOut.readLine();
-					if(line == null) {
+					if (line == null) {
 						outDone = true;
 					} else if (line.equals("<<WATCHDOG_OUTPUT_START>>")) {
 						handleWatchdogOutput(brOut, output);
@@ -508,12 +540,12 @@ public class Tester {
 						stdOutBuff.append(line);
 					}
 				}
-				
+
 				// monitoring the standard error from the application
 				boolean errReady = brErr.ready();
-				if(errReady) {
+				if (errReady) {
 					line = brErr.readLine();
-					if(line == null) {
+					if (line == null) {
 						errDone = true;
 					} else {
 						if (line.equals("<<WATCHDOG_OUTPUT_START>>")) {
@@ -524,9 +556,10 @@ public class Tester {
 					}
 				}
 
-				// if standard out and standard error are not ready, wait for 250ms 
+				// if standard out and standard error are not ready, wait for
+				// 250ms
 				// and try again to monitor the streams
-				if(!outReady && !errReady)  {
+				if (!outReady && !errReady) {
 					i++;
 					if (i > 6) {
 						break;
@@ -543,8 +576,10 @@ public class Tester {
 				stdErrBuff.append(brErr.readLine());
 			}
 
-			// we now have the output as an object from the run of the black-box jar
-			// this output object contains both the standard output and the standard error
+			// we now have the output as an object from the run of the black-box
+			// jar
+			// this output object contains both the standard output and the
+			// standard error
 
 			output.setStdOutString(stdOutBuff.toString());
 			// trim extra newline character
@@ -552,7 +587,7 @@ public class Tester {
 				stdErrBuff.deleteCharAt(stdErrBuff.length() - 1);
 			}
 			output.setStdErrString(stdErrBuff.toString());
-			
+
 		} catch (IOException e) {
 			if (!this.toolChain) {
 				System.out.println("ERROR: IOException has prevented execution of the command: " + command);
@@ -592,7 +627,9 @@ public class Tester {
 	 * Handles standard error output specifically for the tester.
 	 * 
 	 * Method used to handle errors passed by the security watchdog
-	 * @param error - the error to handle
+	 * 
+	 * @param error
+	 *            - the error to handle
 	 */
 	private void handleWatchdogError(BufferedReader brErr) throws IOException, WatchdogException {
 		String next;
@@ -605,11 +642,12 @@ public class Tester {
 		// TODO: handle Watchdog Error
 		throw new WatchdogException();
 	}
-	
+
 	/**
 	 * Prints the basic test output (std out/err).
 	 * 
-	 * @param output - Output object containing std out/err to print 
+	 * @param output
+	 *            - Output object containing std out/err to print
 	 */
 	private void printBasicTestOutput(Output output) {
 		if (!this.toolChain) {
@@ -624,7 +662,7 @@ public class Tester {
 	 * 
 	 * @throws IOException
 	 */
-	private void printRawCoverageStats()  {
+	private void printRawCoverageStats() {
 		if (!this.toolChain) {
 			System.out.printf("exec file: %s%n", this.jacocoOutputFilePath);
 			System.out.println("CLASS ID         HITS/PROBES   CLASS NAME");
@@ -637,8 +675,7 @@ public class Tester {
 			reader.setSessionInfoVisitor(new ISessionInfoVisitor() {
 				public void visitSessionInfo(final SessionInfo info) {
 					if (!Tester.this.toolChain) {
-						System.out.printf("Session \"%s\": %s - %s%n", info.getId(), new Date(
-								info.getStartTimeStamp()),
+						System.out.printf("Session \"%s\": %s - %s%n", info.getId(), new Date(info.getStartTimeStamp()),
 								new Date(info.getDumpTimeStamp()));
 					}
 				}
@@ -646,11 +683,9 @@ public class Tester {
 			reader.setExecutionDataVisitor(new IExecutionDataVisitor() {
 				public void visitClassExecution(final ExecutionData data) {
 					if (!Tester.this.toolChain) {
-						System.out.printf("%016x  %3d of %3d   %s%n",
-								Long.valueOf(data.getId()),
+						System.out.printf("%016x  %3d of %3d   %s%n", Long.valueOf(data.getId()),
 								Integer.valueOf(getHitCount(data.getProbes())),
-								Integer.valueOf(data.getProbes().length),
-								data.getName());
+								Integer.valueOf(data.getProbes().length), data.getName());
 					}
 				}
 			});
@@ -658,7 +693,8 @@ public class Tester {
 			in.close();
 		} catch (IOException e) {
 			if (!this.toolChain) {
-				System.out.println("Unable to display raw coverage stats due to IOException related to " + this.jacocoOutputFilePath);
+				System.out.println("Unable to display raw coverage stats due to IOException related to "
+						+ this.jacocoOutputFilePath);
 			}
 			e.printStackTrace();
 		}
@@ -667,11 +703,11 @@ public class Tester {
 		}
 	}
 
-	
 	/**
 	 * Gets the hit count from the code coverage metrics.
 	 * 
-	 * @param data - boolean array of coverage data where true indicates hits
+	 * @param data
+	 *            - boolean array of coverage data where true indicates hits
 	 * @return int representation of count of total hits from supplied data
 	 */
 	private int getHitCount(final boolean[] data) {
@@ -684,41 +720,43 @@ public class Tester {
 		return count;
 	}
 
-	
 	/**
-	 * Generates code coverage metrics including instructions, branches, lines, 
-	 * methods and complexity. 
+	 * Generates code coverage metrics including instructions, branches, lines,
+	 * methods and complexity.
 	 * 
-	 * @return double representation of the percentage of code covered during testing
+	 * @return double representation of the percentage of code covered during
+	 *         testing
 	 */
 	private double generateSummaryCodeCoverageResults() {
 		long total = 0;
 		long covered = 0;
 		try {
-			// creating a new file for output in the jacoco output directory (one of the application arguments)
+			// creating a new file for output in the jacoco output directory
+			// (one of the application arguments)
 			File executionDataFile = new File(this.jacocoOutputFilePath);
 			ExecFileLoader execFileLoader = new ExecFileLoader();
 			execFileLoader.load(executionDataFile);
-			
-			// use CoverageBuilder and Analyzer to assess code coverage from jacoco output file
+
+			// use CoverageBuilder and Analyzer to assess code coverage from
+			// jacoco output file
 			final CoverageBuilder coverageBuilder = new CoverageBuilder();
-			final Analyzer analyzer = new Analyzer(
-					execFileLoader.getExecutionDataStore(), coverageBuilder);
-			
-			// analyzeAll is the way to go to analyze all classes inside a container (jar or zip or directory)
+			final Analyzer analyzer = new Analyzer(execFileLoader.getExecutionDataStore(), coverageBuilder);
+
+			// analyzeAll is the way to go to analyze all classes inside a
+			// container (jar or zip or directory)
 			analyzer.analyzeAll(new File(this.jarToTestPath));
-			
-			
+
 			for (final IClassCoverage cc : coverageBuilder.getClasses()) {
-				
-				// report code coverage from all classes that are not the TestBounds class within the jar
-				if(! cc.getName().endsWith("TestBounds") && ! cc.getPackageName().startsWith("contest.winter2017")) {
+
+				// report code coverage from all classes that are not the
+				// TestBounds class within the jar
+				if (!cc.getName().endsWith("TestBounds") && !cc.getPackageName().startsWith("contest.winter2017")) {
 					total += cc.getInstructionCounter().getTotalCount();
 					total += cc.getBranchCounter().getTotalCount();
 					total += cc.getLineCounter().getTotalCount();
 					total += cc.getMethodCounter().getTotalCount();
 					total += cc.getComplexityCounter().getTotalCount();
-						
+
 					covered += cc.getInstructionCounter().getCoveredCount();
 					covered += cc.getBranchCounter().getCoveredCount();
 					covered += cc.getLineCounter().getCoveredCount();
@@ -729,11 +767,10 @@ public class Tester {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		
-		percentCovered = ((double)covered / (double)total) * 100.0;
+
+		percentCovered = ((double) covered / (double) total) * 100.0;
 		return percentCovered;
 	}
-
 
 	/**
 	 * Shows an example of how to generate code coverage metrics from Jacoco.
@@ -746,13 +783,12 @@ public class Tester {
 			File executionDataFile = new File(this.jacocoOutputFilePath);
 			ExecFileLoader execFileLoader = new ExecFileLoader();
 			execFileLoader.load(executionDataFile);
-			
+
 			final CoverageBuilder coverageBuilder = new CoverageBuilder();
-			final Analyzer analyzer = new Analyzer(
-					execFileLoader.getExecutionDataStore(), coverageBuilder);
-			
+			final Analyzer analyzer = new Analyzer(execFileLoader.getExecutionDataStore(), coverageBuilder);
+
 			analyzer.analyzeAll(new File(this.jarToTestPath));
-			
+
 			for (final IClassCoverage cc : coverageBuilder.getClasses()) {
 				executionResults += "Coverage of class " + cc.getName() + ":\n";
 				executionResults += getMetricResultString("instructions", cc.getInstructionCounter());
@@ -760,28 +796,34 @@ public class Tester {
 				executionResults += getMetricResultString("lines", cc.getLineCounter());
 				executionResults += getMetricResultString("methods", cc.getMethodCounter());
 				executionResults += getMetricResultString("complexity", cc.getComplexityCounter());
-				
-				// adding this to a string is a little impractical with the size of some of the files, 
-				// so we are commenting it out, but it shows that you can get the coverage status of each line
-				// if you wanted to add debug argument to display this level of detail at command line level.... 
+
+				// adding this to a string is a little impractical with the size
+				// of some of the files,
+				// so we are commenting it out, but it shows that you can get
+				// the coverage status of each line
+				// if you wanted to add debug argument to display this level of
+				// detail at command line level....
 				//
-				//for (int i = cc.getFirstLine(); i <= cc.getLastLine(); i++) {
-				//	executionResults += "Line " + Integer.valueOf(i) + ": " + getStatusString(cc.getLine(i).getStatus()) + "\n";
-				//}
+				// for (int i = cc.getFirstLine(); i <= cc.getLastLine(); i++) {
+				// executionResults += "Line " + Integer.valueOf(i) + ": " +
+				// getStatusString(cc.getLine(i).getStatus()) + "\n";
+				// }
 			}
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		
+
 		return executionResults;
 	}
-	
-	
+
 	/**
 	 * Translate the Jacoco line coverage status integers to Strings.
 	 * 
-	 * @param status - integer representation of line coverage status provided by Jacoco
-	 * @return String representation of line coverage status (not covered, partially covered, fully covered)
+	 * @param status
+	 *            - integer representation of line coverage status provided by
+	 *            Jacoco
+	 * @return String representation of line coverage status (not covered,
+	 *         partially covered, fully covered)
 	 */
 	@SuppressWarnings("unused")
 	private String getStatusString(final int status) {
@@ -795,10 +837,10 @@ public class Tester {
 		}
 		return "";
 	}
-	
-	
+
 	/**
-	 * Translate the counter data and units into a human readable metric result String.
+	 * Translate the counter data and units into a human readable metric result
+	 * String.
 	 * 
 	 * @param unit
 	 * @param counter
@@ -810,45 +852,36 @@ public class Tester {
 		return missedCount.toString() + " of " + totalCount.toString() + " " + unit + " missed\n";
 	}
 
-	
 	/*
-	 * Is not meant to be part of the final framework. It was included to demonstrate
-	 * three different ways to tap into the code coverage results/metrics using jacoco. 
+	 * Is not meant to be part of the final framework. It was included to
+	 * demonstrate three different ways to tap into the code coverage
+	 * results/metrics using jacoco.
 	 * 
-	 * This method is deprecated and will be removed from the final product after your team completes 
-	 * development. Please do not add additional dependencies to this method. 
+	 * This method is deprecated and will be removed from the final product
+	 * after your team completes development. Please do not add additional
+	 * dependencies to this method.
 	 *
-
-	@Deprecated 
-	private void showCodeCoverageResultsExample() {
-		
-		// Below is the first example of how to tap into code coverage metrics
-		double result = generateSummaryCodeCoverageResults();
-		if (!this.toolChain) {
-			System.out.println("\n");
-			System.out.println("percent covered: " + result);
-		}
-
-		// Below is the second example of how to tap into code coverage metrics 
-		if (!this.toolChain) {
-			System.out.println("\n");
-		}
-		printRawCoverageStats();
-		
-		// Below is the third example of how to tap into code coverage metrics
-		if (!this.toolChain) {
-			System.out.println("\n");
-			System.out.println(generateDetailedCodeCoverageResults());
-		}
-	}
+	 * 
+	 * @Deprecated private void showCodeCoverageResultsExample() {
+	 * 
+	 * // Below is the first example of how to tap into code coverage metrics
+	 * double result = generateSummaryCodeCoverageResults(); if
+	 * (!this.toolChain) { System.out.println("\n");
+	 * System.out.println("percent covered: " + result); }
+	 * 
+	 * // Below is the second example of how to tap into code coverage metrics
+	 * if (!this.toolChain) { System.out.println("\n"); }
+	 * printRawCoverageStats();
+	 * 
+	 * // Below is the third example of how to tap into code coverage metrics if
+	 * (!this.toolChain) { System.out.println("\n");
+	 * System.out.println(generateDetailedCodeCoverageResults()); } }
 	 */
 }
 
-
 /**
- * Thic class represents an exception thrown
- * by the security watchdog, and not the jar
- * under test.
+ * Thic class represents an exception thrown by the security watchdog, and not
+ * the jar under test.
  * 
  * @author ICT-2
  */
