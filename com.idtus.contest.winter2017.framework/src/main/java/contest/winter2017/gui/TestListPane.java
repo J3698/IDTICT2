@@ -6,6 +6,7 @@ import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.ProgressBar;
 import javafx.scene.control.ScrollPane;
@@ -14,6 +15,7 @@ import javafx.scene.input.Dragboard;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.input.TransferMode;
+import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
@@ -60,7 +62,13 @@ class TestListPane extends ScrollPane {
 	 *            - TestInfo to select
 	 */
 	public void selectTest(TestInfo testInfo) {
-
+		for (Node node : this.contentPane.getChildren()) {
+			if (node instanceof TestInfo) {
+				node.setStyle("-fx-border-color: lightgray; -fx-border-width: 1;");
+			}
+		}
+		testInfo.setStyle("-fx-border-color: #039ED3; -fx-border-width: 2;");
+		((BorderPane) getParent()).setCenter(testInfo.getMainPane());
 	}
 
 	/**
@@ -82,14 +90,19 @@ class TestListPane extends ScrollPane {
  */
 class TestInfo extends VBox {
 	/**
+	 * MainPane of the test.
+	 */
+	private MainPane mainPane;
+
+	/**
 	 * Constructs a TestInfo.
 	 */
 	public TestInfo(TestListPane pane) {
 		setAlignment(Pos.CENTER);
-		setStyle("-fx-border-color: lightgray; -fx-border-width: 1; -fx-focus-color: black;");
-		setFocused(true);
-		setFocusTraversable(true);
-		requestFocus();
+		setStyle("-fx-border-color: lightgray; -fx-border-width: 1;");// -fx-focus-color:black;
+
+		this.mainPane = new MainPane();
+
 		Text name = new Text("Test01");
 		name.setFont(new Font(20));
 		Text percent = new Text("0%");
@@ -98,6 +111,7 @@ class TestInfo extends VBox {
 		progressBar.setMouseTransparent(true);
 		progressBar.setPadding(new Insets(3, 0, 0, 2));
 		getChildren().addAll(name, percent, progressBar);
+
 		setOnMouseClicked(new EventHandler<MouseEvent>() {
 			/**
 			 * Handles an event.
@@ -111,6 +125,15 @@ class TestInfo extends VBox {
 				}
 			}
 		});
+	}
+
+	/**
+	 * Returns the MainPane for this test.
+	 * 
+	 * @return MainPane for this test
+	 */
+	public MainPane getMainPane() {
+		return this.mainPane;
 	}
 }
 

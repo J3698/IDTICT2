@@ -127,8 +127,8 @@ class RunPane extends BorderPane {
 
 		Button runButton = new Button("Start Testing");
 		runButton.setFont(new Font(15));
-		box.getChildren().addAll(outputPathButton, agentPathButton, nameInput);
-		box.getChildren().addAll(testsToRunInput, timeGoalInput, runButton);
+		box.getChildren().addAll(nameInput, testsToRunInput, timeGoalInput);
+		box.getChildren().addAll(outputPathButton, agentPathButton, runButton);
 		setCenter(box);
 	}
 }
