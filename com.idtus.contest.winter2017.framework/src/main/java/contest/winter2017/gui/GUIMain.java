@@ -29,9 +29,8 @@ public class GUIMain extends Application {
 	 */
 	public void start(Stage stage) {
 		BorderPane pane = new BorderPane();
-		// pane.setTop(new TestMenuBar());
-		pane.setLeft(new TestListPane());
-		// pane.setCenter(new MainPane());
+		pane.setLeft(new TestListPane(pane));
+
 		// dirty work
 		Scene scene = new Scene(pane, 640, 480);
 		stage.setScene(scene);

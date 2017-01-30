@@ -1,7 +1,16 @@
 package contest.winter2017.gui;
 
+import java.io.File;
+import java.util.Set;
+
+import contest.winter2017.Tester;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
+import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
+import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.Label;
@@ -15,6 +24,11 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
+import javafx.scene.text.Text;
+import javafx.stage.DirectoryChooser;
+import javafx.stage.FileChooser;
+import javafx.stage.FileChooser.ExtensionFilter;
+import javafx.stage.Window;
 
 /**
  * TabPane to control testing form.
@@ -22,11 +36,17 @@ import javafx.scene.text.Font;
  * @author ICT-2
  */
 public class MainPane extends TabPane {
+	private Tester tester;
+	private GUITestPackage test;
+
 	/**
 	 * Constructs a MainPane.
 	 */
-	public MainPane() {
-		Tab runTab = new Tab("Run", new RunPane());
+	public MainPane(GUITestPackage test) {
+		this.test = test;
+		tester = new Tester();
+
+		Tab runTab = new Tab("Run", new RunPane(this.test));
 
 		TabPane output = new TabPane();
 
@@ -54,9 +74,18 @@ public class MainPane extends TabPane {
 
 		Tab outputTab = new Tab("Output", output);
 
-		Tab parameterTab = new Tab("Parameter Bounds", new ParameterPane());
+		Tab parameterTab = new Tab("Parameter Bounds", new ParameterPane(this.test));
 		getTabs().addAll(runTab, outputTab, parameterTab);
 		setTabClosingPolicy(TabClosingPolicy.UNAVAILABLE);
+	}
+
+	/**
+	 * Returns this MainPane's test.
+	 * 
+	 * @return test of this MainPane
+	 */
+	public GUITestPackage getTest() {
+		return this.test;
 	}
 }
 
@@ -68,11 +97,13 @@ class ParameterPane extends ScrollPane {
 	 * Content for this pane.
 	 */
 	private VBox content;
+	private GUITestPackage test;
 
 	/**
 	 * Constructs a ParameterPane.
 	 */
-	public ParameterPane() {
+	public ParameterPane(GUITestPackage test) {
+		this.test = test;
 		setFitToWidth(true);
 		this.content = new VBox();
 		setContent(this.content);
@@ -102,11 +133,24 @@ class RunPane extends BorderPane {
 	 * Int default space between elements.
 	 */
 	private static final int DEFAULT_SPACE = 10;
+	private TextField name;
+	private TextField toRun;
+	private TextField timeGoal;
+	private File outputPath = null;
+	private File jacocoPath = null;
+	private GUITestPackage test;
+
+	private boolean validName;
+	private boolean validTimeGoal;
+	private boolean validTestNumber;
+	private boolean validOutputPath;
+	private boolean validJacocoPath;
 
 	/**
 	 * Constructs a RunPane.
 	 */
-	public RunPane() {
+	public RunPane(GUITestPackage test) {
+		this.test = test;
 		VBox box = new VBox(DEFAULT_SPACE);
 		box.setAlignment(Pos.CENTER);
 
@@ -115,19 +159,156 @@ class RunPane extends BorderPane {
 		Button agentPath = new Button("Set Agent Path");
 		LabeledNode agentPathButton = new LabeledNode("Jacoco Agent Path", agentPath);
 
-		TextField tf = new TextField();
-		tf.setPrefColumnCount(5);
-		LabeledNode nameInput = new LabeledNode("Test Name", tf);
-		tf = new TextField();
-		tf.setPrefColumnCount(5);
-		LabeledNode testsToRunInput = new LabeledNode("Tests to Run", tf);
-		tf = new TextField();
-		tf.setPrefColumnCount(5);
-		LabeledNode timeGoalInput = new LabeledNode("Time Goal", tf);
+		Text jarName = new Text();
+		jarName.setText(test.getToTest().getName());
+		jarName.setFont(new Font(20));
+		VExternSpace jarNameSpacer = new VExternSpace(jarName, 0, 60);
+
+		name = new TextField();
+		name.setPrefColumnCount(5);
+		name.setText(this.test.getName().get());
+		LabeledNode nameInput = new LabeledNode("Test Name", name);
+		toRun = new TextField();
+		toRun.setPrefColumnCount(5);
+		toRun.setText("" + Tester.DEFAULT_BB_TESTS);
+		LabeledNode testsToRunInput = new LabeledNode("Tests to Run", toRun);
+		timeGoal = new TextField();
+		timeGoal.setPrefColumnCount(5);
+		timeGoal.setText("" + Tester.DEFAULT_TIME_GOAL);
+		LabeledNode timeGoalInput = new LabeledNode("Time Goal", timeGoal);
 
 		Button runButton = new Button("Start Testing");
 		runButton.setFont(new Font(15));
-		box.getChildren().addAll(nameInput, testsToRunInput, timeGoalInput);
+
+		name.setStyle("-fx-border-color: green;");
+		this.validName = false;
+		name.textProperty().addListener(new ChangeListener<String>() {
+			@Override
+			public void changed(ObservableValue<? extends String> arg0, String oldVal, String newVal) {
+				newVal = newVal.trim();
+				Set<String> usedNames = RunPane.this.test.getTestListPane().getTestNames();
+				if (!usedNames.contains(newVal) && !newVal.equals("")) {
+					RunPane.this.test.setName(newVal);
+					usedNames.remove(oldVal);
+					RunPane.this.validName = true;
+					name.setStyle("-fx-border-color: green;");
+				} else {
+					RunPane.this.validName = true;
+					name.setStyle("-fx-border-color: red;");
+				}
+			}
+		});
+
+		toRun.setStyle("-fx-border-color: green;");
+		this.validTestNumber = true;
+		toRun.textProperty().addListener(new ChangeListener<String>() {
+			@Override
+			public void changed(ObservableValue<? extends String> arg0, String oldVal, String newVal) {
+				RunPane.this.validTestNumber = false;
+				try {
+					if (Integer.parseInt(newVal.trim()) >= Tester.MIN_BB_TESTS) {
+						RunPane.this.validTestNumber = true;
+					}
+				} catch (NumberFormatException e) {
+					// prevent exception from bubbling up
+				}
+
+				if (RunPane.this.validTestNumber) {
+					toRun.setStyle("-fx-border-color: green;");
+				} else {
+					toRun.setStyle("-fx-border-color: red;");
+				}
+			}
+		});
+
+		timeGoal.setStyle("-fx-border-color: green;");
+		this.validTimeGoal = true;
+		timeGoal.textProperty().addListener(new ChangeListener<String>() {
+			@Override
+			public void changed(ObservableValue<? extends String> arg0, String oldVal, String newVal) {
+				RunPane.this.validTimeGoal = false;
+				try {
+					if (Integer.parseInt(newVal.trim()) >= Tester.MIN_TIME_GOAL) {
+						RunPane.this.validTimeGoal = true;
+					}
+				} catch (NumberFormatException e) {
+					// prevent exception from bubbling up
+				}
+
+				if (RunPane.this.validTimeGoal) {
+					timeGoal.setStyle("-fx-border-color: green;");
+				} else {
+					timeGoal.setStyle("-fx-border-color: red;");
+				}
+			}
+		});
+
+		outputPath.setStyle("-fx-border-color: red;");
+		this.validOutputPath = false;
+		outputPath.setOnAction(new EventHandler<ActionEvent>() {
+			@Override
+			public void handle(ActionEvent event) {
+				DirectoryChooser dc = new DirectoryChooser();
+				dc.setTitle("Choose a Jacoco Output Path");
+				Window window = RunPane.this.getScene().getWindow();
+				File selected = dc.showDialog(window);
+				if (selected != null && selected.exists()) {
+					outputPath.setStyle("-fx-border-color: green;");
+					RunPane.this.validOutputPath = true;
+					String path = selected.getAbsolutePath();
+					if (path.length() > 30) {
+						path = path.substring(path.length() - 1 - 30);
+						outputPath.setText("..." + path.substring(3));
+					}
+				}
+			}
+		});
+
+		agentPath.setStyle("-fx-border-color: red;");
+		this.validJacocoPath = false;
+		agentPath.setOnAction(new EventHandler<ActionEvent>() {
+			@Override
+			public void handle(ActionEvent event) {
+				FileChooser fc = new FileChooser();
+				fc.setTitle("Choose a Jacoco Jar Agent");
+				fc.getExtensionFilters().addAll(new ExtensionFilter("Java Jar Files", "*.jar"));
+				Window window = RunPane.this.getScene().getWindow();
+				File selected = fc.showOpenDialog(window);
+				if (selected != null && selected.exists()) {
+					agentPath.setStyle("-fx-border-color: green;");
+					RunPane.this.validJacocoPath = true;
+					String path = selected.getAbsolutePath();
+					if (path.length() > 30) {
+						path = path.substring(path.length() - 1 - 30);
+						agentPath.setText("..." + path.substring(3));
+					}
+				}
+			}
+		});
+		/*
+		 * private boolean validName; private boolean validTimeGoal; private
+		 * boolean validTestNumber; private boolean validOutputPath; private
+		 * boolean validJacocoPath;
+		 */
+		runButton.setOnAction(new EventHandler<ActionEvent>() {
+			@Override
+			public void handle(ActionEvent event) {
+				String jarPath = RunPane.this.test.getToTest().getAbsolutePath();
+				String outputPath = null;
+				String agentPath = null;
+				String bbTests = null;
+				String timeGoal = null;
+				String toolChain = null;
+				if (!RunPane.this.test.getTester().init(jarPath, outputPath, agentPath, bbTests, timeGoal, toolChain)) {
+					Alert alert = new Alert(Alert.AlertType.ERROR);
+					alert.setTitle("Tester Failed to Initialize");
+					alert.setContentText("Tester failed to initialize.");
+					alert.showAndWait();
+				}
+			}
+		});
+
+		box.getChildren().addAll(jarNameSpacer, nameInput, testsToRunInput, timeGoalInput);
 		box.getChildren().addAll(outputPathButton, agentPathButton, runButton);
 		setCenter(box);
 	}
