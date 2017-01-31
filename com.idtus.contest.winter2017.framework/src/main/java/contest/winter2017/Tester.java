@@ -425,12 +425,12 @@ public class Tester {
 		TestGenerator generator = new TestGenerator(this.parameterFactory, getOutputs());
 		for (int i = 0; i < this.bbTests; i++) {
 			Object[] params = generator.nextTest();
-			instrumentAndExecuteCode(params);
+			// instrumentAndExecuteCode(params);
 		}
 
 		while (minutesPassed(start) < this.timeGoal) {
 			Object[] params = generator.nextTest();
-			instrumentAndExecuteCode(params);
+			// instrumentAndExecuteCode(params);
 		}
 	}
 
@@ -533,11 +533,21 @@ public class Tester {
 		// metrics
 		String command = "java";
 		try {
-			command += " -javaagent:" + this.jacocoAgentJarPath + "=destfile=" + this.jacocoOutputFilePath;
-			// command += " -jar " + this.jarToTestPath;
-			command += " -cp \"" + this.watchdogPath + "\" ";
-			command += SecurityWatchdog.class.getCanonicalName();
-			command += " \"" + this.jarToTestPath + "\" " + this.toolChain;
+			// http://stackoverflow.com/questions/6780678/run-class-in-jar-file
+
+			if (runningFromJar()) {
+				System.out.println("Running from Jar.");
+				command += " -javaagent:" + this.jacocoAgentJarPath + "=destfile=" + this.jacocoOutputFilePath;
+				command += " -cp" + " com.idtus.contest.winter2017.framework.jar ";
+				command += SecurityWatchdog.class.getCanonicalName();
+				command += " \"" + this.jarToTestPath + "\" " + this.toolChain;
+			} else {
+				command += " -javaagent:" + this.jacocoAgentJarPath + "=destfile=" + this.jacocoOutputFilePath;
+				command += " -cp \"" + this.watchdogPath + "\" ";
+				command += SecurityWatchdog.class.getCanonicalName();
+				command += " \"" + this.jarToTestPath + "\" " + this.toolChain;
+			}
+
 			for (Object o : parameters) {
 				command += " " + o.toString();
 			}
@@ -654,6 +664,22 @@ public class Tester {
 		percentDone.set(outputs.size() / totalTests);
 
 		return output;
+	}
+
+	/**
+	 * Returns whether this class is running from a Jar.
+	 * 
+	 * @return boolean whether this class is running from a jar.
+	 */
+	private boolean runningFromJar() {
+		String name = getClass().getName();
+		name = name.replace('.', '/');
+		String path = "" + Tester.class.getResource("/" + name + ".class");
+		System.out.println(path);
+		if (path.startsWith("jar:") || path.startsWith("rsrc:") || path.endsWith(".jar")) {
+			return true;
+		}
+		return false;
 	}
 
 	/**
@@ -933,6 +959,7 @@ public class Tester {
  * 
  * @author ICT-2
  */
+@SuppressWarnings("serial")
 class WatchdogException extends Exception {
 	// no overriden methods
 }
