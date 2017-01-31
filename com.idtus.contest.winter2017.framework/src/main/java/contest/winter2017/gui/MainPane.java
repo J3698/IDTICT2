@@ -136,8 +136,8 @@ class RunPane extends BorderPane {
 	private TextField name;
 	private TextField toRun;
 	private TextField timeGoal;
-	private File outputPath = null;
-	private File jacocoPath = null;
+	private File outputPathFile = null;
+	private File jacocoPathFile = null;
 	private GUITestPackage test;
 
 	private boolean validName;
@@ -251,14 +251,16 @@ class RunPane extends BorderPane {
 				DirectoryChooser dc = new DirectoryChooser();
 				dc.setTitle("Choose a Jacoco Output Path");
 				Window window = RunPane.this.getScene().getWindow();
-				File selected = dc.showDialog(window);
-				if (selected != null && selected.exists()) {
+				RunPane.this.outputPathFile = dc.showDialog(window);
+				if (RunPane.this.outputPathFile != null && RunPane.this.outputPathFile.exists()) {
 					outputPath.setStyle("-fx-border-color: green;");
 					RunPane.this.validOutputPath = true;
-					String path = selected.getAbsolutePath();
+					String path = RunPane.this.outputPathFile.getAbsolutePath();
 					if (path.length() > 30) {
 						path = path.substring(path.length() - 1 - 30);
 						outputPath.setText("..." + path.substring(3));
+					} else {
+						outputPath.setText(path);
 					}
 				}
 			}
@@ -273,37 +275,77 @@ class RunPane extends BorderPane {
 				fc.setTitle("Choose a Jacoco Jar Agent");
 				fc.getExtensionFilters().addAll(new ExtensionFilter("Java Jar Files", "*.jar"));
 				Window window = RunPane.this.getScene().getWindow();
-				File selected = fc.showOpenDialog(window);
-				if (selected != null && selected.exists()) {
+				RunPane.this.jacocoPathFile = fc.showOpenDialog(window);
+				if (jacocoPathFile != null && jacocoPathFile.exists()) {
 					agentPath.setStyle("-fx-border-color: green;");
 					RunPane.this.validJacocoPath = true;
-					String path = selected.getAbsolutePath();
+					String path = RunPane.this.jacocoPathFile.getAbsolutePath();
 					if (path.length() > 30) {
 						path = path.substring(path.length() - 1 - 30);
 						agentPath.setText("..." + path.substring(3));
+					} else {
+						agentPath.setText(path);
 					}
 				}
 			}
 		});
-		/*
-		 * private boolean validName; private boolean validTimeGoal; private
-		 * boolean validTestNumber; private boolean validOutputPath; private
-		 * boolean validJacocoPath;
-		 */
+
 		runButton.setOnAction(new EventHandler<ActionEvent>() {
 			@Override
 			public void handle(ActionEvent event) {
+				runButton.setDisable(true);
+
+				Alert alert = new Alert(Alert.AlertType.ERROR);
+				alert.setTitle("Tester Failed to Initialize");
+
 				String jarPath = RunPane.this.test.getToTest().getAbsolutePath();
-				String outputPath = null;
-				String agentPath = null;
-				String bbTests = null;
-				String timeGoal = null;
-				String toolChain = null;
-				if (!RunPane.this.test.getTester().init(jarPath, outputPath, agentPath, bbTests, timeGoal, toolChain)) {
-					Alert alert = new Alert(Alert.AlertType.ERROR);
-					alert.setTitle("Tester Failed to Initialize");
-					alert.setContentText("Tester failed to initialize.");
+				if (RunPane.this.validOutputPath) {
+				} else {
+					alert.setContentText("Invalid jar path.");
 					alert.showAndWait();
+				}
+
+				String outputPath = null;
+				if (RunPane.this.validOutputPath) {
+					outputPath = RunPane.this.outputPathFile.getAbsolutePath();
+				} else {
+					alert.setContentText("Invalid output path.");
+					alert.showAndWait();
+				}
+
+				String agentPath = null;
+				if (RunPane.this.validJacocoPath) {
+					agentPath = RunPane.this.jacocoPathFile.getAbsolutePath();
+				} else {
+					alert.setContentText("Invalid agent path.");
+					alert.showAndWait();
+				}
+
+				String bbTests = null;
+				if (RunPane.this.validTestNumber) {
+					bbTests = RunPane.this.toRun.getText();
+				} else {
+					alert.setContentText("Invalid number of tests.");
+					alert.showAndWait();
+				}
+
+				String timeGoal = null;
+				if (RunPane.this.validTimeGoal) {
+					timeGoal = RunPane.this.timeGoal.getText();
+				} else {
+					alert.setContentText("Invalid time goal.");
+					alert.showAndWait();
+				}
+
+				String toolChain = "false";
+
+				if (!RunPane.this.test.getTester().init(jarPath, outputPath, agentPath, bbTests, timeGoal, toolChain)) {
+					alert.setContentText("Unknown initialization error.");
+					alert.showAndWait();
+					runButton.setDisable(false);
+				} else {
+					test.startTests();
+					runButton.setDisable(true);
 				}
 			}
 		});
