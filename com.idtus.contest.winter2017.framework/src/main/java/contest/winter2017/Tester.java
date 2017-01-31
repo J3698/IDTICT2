@@ -29,6 +29,8 @@ import org.jacoco.core.data.ISessionInfoVisitor;
 import org.jacoco.core.data.SessionInfo;
 import org.jacoco.core.tools.ExecFileLoader;
 
+import javafx.beans.property.SimpleDoubleProperty;
+
 /**
  * Class that will handle execution of basic tests and exploratory security test
  * on a black-box executable jar.
@@ -74,7 +76,7 @@ public class Tester {
 	/**
 	 * Minimum number of black box iterations to run.
 	 */
-	public static final int MIN_BB_TESTS = 10;
+	public static final int MIN_BB_TESTS = 0;
 
 	/**
 	 * Minimum time goal for tests to run in, default 0 minutes.
@@ -144,6 +146,8 @@ public class Tester {
 	 * Number of predefined tests which have failed.
 	 */
 	private int failCount = 0;
+
+	private SimpleDoubleProperty percentDone = new SimpleDoubleProperty(0);
 
 	/**
 	 * Basic tests which have been extracted from the jar under test.
@@ -454,6 +458,10 @@ public class Tester {
 		return buffer.toString();
 	}
 
+	public SimpleDoubleProperty getPercentDone() {
+		return percentDone;
+	}
+
 	//////////////////////////////////////////
 	// PRIVATE METHODS
 	//////////////////////////////////////////
@@ -626,6 +634,9 @@ public class Tester {
 
 		this.outputs.add(output);
 		this.exceptionSet.addAll(output.getExceptions());
+
+		double totalTests = this.bbTests + this.predefinedTests.size();
+		percentDone.set(outputs.size() / totalTests);
 
 		return output;
 	}

@@ -3,7 +3,11 @@ package contest.winter2017.gui;
 import java.io.File;
 
 import contest.winter2017.Tester;
+import javafx.application.Platform;
 import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
+import javafx.concurrent.Task;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -23,12 +27,26 @@ public class GUITestPackage {
 	private File toTest;
 
 	public GUITestPackage(TestListPane testListPane, String name, File toTest) {
+		// order of initialization matters
 		this.name = new SimpleStringProperty(name);
 		this.testListPane = testListPane;
 		this.toTest = toTest;
+		this.tester = new Tester();
 		this.testInfo = new TestInfo(this);
 		this.mainPane = new MainPane(this);
-		this.tester = new Tester();
+	}
+
+	public void startTests() {
+		Task<Void> task = new Task<Void>() {
+			@Override
+			protected Void call() {
+				GUITestPackage.this.tester.executeBasicTests();
+				// GUITestPackage.this.tester.executeSecurityTests();
+
+				return null;
+			}
+		};
+		new Thread(task).start();
 	}
 
 	/**
@@ -118,11 +136,37 @@ class TestInfo extends VBox {
 		Text name = new Text("");
 		name.textProperty().bind(this.test.getName());
 		name.setFont(new Font(20));
+
 		Text percent = new Text("0%");
 		percent.setFont(new Font(10));
+
 		ProgressBar progressBar = new ProgressBar(0);
 		progressBar.setMouseTransparent(true);
 		progressBar.setPadding(new Insets(3, 0, 0, 2));
+		this.test.getTester().getPercentDone().addListener(new ChangeListener<Number>() {
+			@Override
+			public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
+				double progress = newValue.doubleValue();
+
+				if (progress <= 1) {
+					progressBar.setProgress(progress);
+					String progressRep = "" + (100 * progress);
+					if (progressRep.length() > 4) {
+						progressRep = progressRep.substring(0, 4);
+					}
+					percent.setText(progressRep + "%");
+				} else if (!progressBar.isIndeterminate()) {
+					percent.setText("Extra Tests");
+					Platform.runLater(new Runnable() {
+						@Override
+						public void run() {
+							progressBar.setProgress(ProgressBar.INDETERMINATE_PROGRESS);
+						}
+					});
+				}
+			}
+		});
+
 		getChildren().addAll(name, percent, progressBar);
 
 		setOnMouseClicked(new EventHandler<MouseEvent>() {
