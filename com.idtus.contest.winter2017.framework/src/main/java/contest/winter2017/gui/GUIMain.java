@@ -12,16 +12,6 @@ import javafx.stage.Stage;
  */
 public class GUIMain extends Application {
 	/**
-	 * Runs the GUI.
-	 * 
-	 * @param args
-	 *            - args supplied to application
-	 */
-	public static void main(String[] args) {
-		GUIMain.launch(args);
-	}
-
-	/**
 	 * Starts the GUI.
 	 * 
 	 * @param stage
