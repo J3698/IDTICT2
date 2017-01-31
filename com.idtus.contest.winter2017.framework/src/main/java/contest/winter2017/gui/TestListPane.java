@@ -30,12 +30,34 @@ import javafx.stage.Window;
  * @author ICT-2
  */
 class TestListPane extends ScrollPane {
+	/**
+	 * Int width of the ScrollPane.
+	 */
 	public static final double WIDTH = 150;
+
+	/**
+	 * Double spacing between components in the TestListPane.
+	 */
 	private static final double SPACING = 4;
 
+	/**
+	 * MainPane of the GUI.
+	 */
 	private BorderPane mainPane;
+
+	/**
+	 * List of tests for the GUI.
+	 */
 	private List<GUITestPackage> tests = new ArrayList<GUITestPackage>();
+
+	/**
+	 * Set of names for the tests.
+	 */
 	private Set<String> testNames;
+
+	/**
+	 * Int position where to place new TestInfo components.
+	 */
 	private int infoAdderIndex;
 
 	/**
@@ -167,7 +189,7 @@ class TestListPane extends ScrollPane {
 			@Override
 			public void changed(ObservableValue<? extends String> observable, String oldValue, String newValue) {
 				TestListPane.this.testNames.remove(oldValue);
-				TestListPane.this.testNames.add(oldValue);
+				TestListPane.this.testNames.add(newValue);
 			}
 
 		});

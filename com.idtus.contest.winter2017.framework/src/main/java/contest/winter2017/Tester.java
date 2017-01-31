@@ -29,6 +29,7 @@ import org.jacoco.core.data.ISessionInfoVisitor;
 import org.jacoco.core.data.SessionInfo;
 import org.jacoco.core.tools.ExecFileLoader;
 
+import edu.emory.mathcs.backport.java.util.Collections;
 import javafx.beans.property.SimpleDoubleProperty;
 
 /**
@@ -168,7 +169,7 @@ public class Tester {
 	/**
 	 * List of outputs encountered.
 	 */
-	private ArrayList<Output> outputs = new ArrayList<Output>(2000);
+	private List<Output> outputs = Collections.synchronizedList(new ArrayList<Output>(2000));
 
 	/**
 	 * Set to hold unique exceptions that have thus far been encountered.
@@ -421,7 +422,7 @@ public class Tester {
 		// ParameterList parameterList = possibleParamLists.get(0);
 		Long start = System.currentTimeMillis();
 
-		TestGenerator generator = new TestGenerator(this.parameterFactory, this.outputs);
+		TestGenerator generator = new TestGenerator(this.parameterFactory, getOutputs());
 		for (int i = 0; i < this.bbTests; i++) {
 			Object[] params = generator.nextTest();
 			instrumentAndExecuteCode(params);
@@ -458,6 +459,20 @@ public class Tester {
 		return buffer.toString();
 	}
 
+	/**
+	 * Returns unmodifiable list of this tester's outputs.
+	 * 
+	 * @return list of this testers outputs
+	 */
+	public List<Output> getOutputs() {
+		return Collections.unmodifiableList(this.outputs);
+	}
+
+	/**
+	 * Returns this tester's percent of tests completed.
+	 * 
+	 * @return percent of tests completed
+	 */
 	public SimpleDoubleProperty getPercentDone() {
 		return percentDone;
 	}
@@ -520,9 +535,9 @@ public class Tester {
 		try {
 			command += " -javaagent:" + this.jacocoAgentJarPath + "=destfile=" + this.jacocoOutputFilePath;
 			// command += " -jar " + this.jarToTestPath;
-			command += " -cp " + this.watchdogPath;
-			command += " " + SecurityWatchdog.class.getCanonicalName();
-			command += " " + this.jarToTestPath + " " + this.toolChain;
+			command += " -cp \"" + this.watchdogPath + "\" ";
+			command += SecurityWatchdog.class.getCanonicalName();
+			command += " \"" + this.jarToTestPath + "\" " + this.toolChain;
 			for (Object o : parameters) {
 				command += " " + o.toString();
 			}
@@ -783,7 +798,7 @@ public class Tester {
 
 				// report code coverage from all classes that are not the
 				// TestBounds class within the jar
-				if (!cc.getName().endsWith("TestBounds") && !cc.getPackageName().startsWith("contest.winter2017")) {
+				if (!cc.getName().endsWith("TestBounds")) {
 					total += cc.getInstructionCounter().getTotalCount();
 					total += cc.getBranchCounter().getTotalCount();
 					total += cc.getLineCounter().getTotalCount();

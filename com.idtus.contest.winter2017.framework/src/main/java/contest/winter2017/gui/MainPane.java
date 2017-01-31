@@ -3,6 +3,7 @@ package contest.winter2017.gui;
 import java.io.File;
 import java.util.Set;
 
+import contest.winter2017.Output;
 import contest.winter2017.Tester;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
@@ -36,47 +37,153 @@ import javafx.stage.Window;
  * @author ICT-2
  */
 public class MainPane extends TabPane {
-	private Tester tester;
+	/**
+	 * Test of this MainPane.
+	 */
 	private GUITestPackage test;
 
 	/**
-	 * Constructs a MainPane.
+	 * ParameterPane of this MainPane.
+	 */
+	private ParameterPane parameterPane;
+
+	/**
+	 * RunPane of this MainPane.
+	 */
+	private RunPane runPane;
+
+	/**
+	 * TabPane of this MainPane.
+	 */
+	private TabPane outputPane;
+
+	/**
+	 * TextArea for this test's std out.
+	 */
+	private TextArea stdOutText;
+
+	/**
+	 * TextArea for this test's std err.
+	 */
+	private TextArea stdErrText;
+
+	/**
+	 * TextArea for this test's permissions.
+	 */
+	private TextArea permissionsText;
+
+	/**
+	 * Int tests recorded so far.
+	 */
+	private int testsAdded = 0;
+
+	/**
+	 * Constructs a MainPane with the given test.
 	 */
 	public MainPane(GUITestPackage test) {
 		this.test = test;
-		tester = new Tester();
 
-		Tab runTab = new Tab("Run", new RunPane(this.test));
+		this.runPane = new RunPane(this.test);
+		Tab runTab = new Tab("Run", this.runPane);
 
-		TabPane output = new TabPane();
+		outputPane = new TabPane();
 
-		TextArea text = new TextArea();
-		text.setEditable(false);
-		text.setWrapText(true);
-		text.setMouseTransparent(true);
-		text.setFocusTraversable(false);
-		Tab stdOut = new Tab("Standard Out", text);
-		text = new TextArea();
-		text.setEditable(false);
-		text.setWrapText(true);
-		text.setMouseTransparent(true);
-		text.setFocusTraversable(false);
-		Tab stdErr = new Tab("Standard Error", text);
-		text = new TextArea();
-		text.setEditable(false);
-		text.setWrapText(true);
-		text.setMouseTransparent(true);
-		text.setFocusTraversable(false);
-		Tab permissions = new Tab("Permissions", text);
+		stdOutText = new TextArea();
+		stdOutText.setEditable(false);
+		stdOutText.setWrapText(true);
+		stdOutText.setMouseTransparent(true);
+		stdOutText.setFocusTraversable(false);
+		Tab stdOut = new Tab("Standard Out", stdOutText);
+		stdErrText = new TextArea();
+		stdErrText.setEditable(false);
+		stdErrText.setWrapText(true);
+		stdErrText.setMouseTransparent(true);
+		stdErrText.setFocusTraversable(false);
+		Tab stdErr = new Tab("Standard Error", stdErrText);
+		permissionsText = new TextArea();
+		permissionsText.setEditable(false);
+		permissionsText.setWrapText(true);
+		permissionsText.setMouseTransparent(true);
+		permissionsText.setFocusTraversable(false);
+		Tab permissions = new Tab("Permissions", permissionsText);
 
-		output.getTabs().addAll(stdOut, stdErr, permissions);
-		output.setTabClosingPolicy(TabClosingPolicy.UNAVAILABLE);
+		outputPane.getTabs().addAll(stdOut, stdErr, permissions);
+		outputPane.setTabClosingPolicy(TabClosingPolicy.UNAVAILABLE);
 
-		Tab outputTab = new Tab("Output", output);
+		Tab outputTab = new Tab("Output", outputPane);
 
-		Tab parameterTab = new Tab("Parameter Bounds", new ParameterPane(this.test));
+		this.parameterPane = new ParameterPane(this.test);
+		Tab parameterTab = new Tab("Parameter Bounds", parameterPane);
 		getTabs().addAll(runTab, outputTab, parameterTab);
 		setTabClosingPolicy(TabClosingPolicy.UNAVAILABLE);
+	}
+
+	/**
+	 * Adds an output to this MainPane's output pane.
+	 * 
+	 * @param output
+	 *            - output to add
+	 */
+	public void addOutput(Output output) {
+		this.testsAdded++;
+		String prefix = "Test " + this.testsAdded + ":\n";
+		this.stdErrText.appendText(prefix + output.getStdErrString() + "\n\n");
+		this.stdOutText.appendText(prefix + output.getStdOutString() + "\n\n");
+		this.permissionsText.appendText(prefix + output.getPermissionLogString() + "\n\n");
+	}
+
+	/**
+	 * Returns this MainPane's run pane.
+	 * 
+	 * @return this MainPane's run pane
+	 */
+	public RunPane getRunPane() {
+		return this.runPane;
+	}
+
+	/**
+	 * Returns this MainPane's output pane.
+	 * 
+	 * @return this MainPane's output pane
+	 */
+	public TabPane getOutputPane() {
+		return this.outputPane;
+	}
+
+	/**
+	 * Returns this MainPane's parameter pane.
+	 * 
+	 * @return this MainPane's parameter pane
+	 */
+	public ParameterPane getParameterPane() {
+		return this.parameterPane;
+	}
+
+	/**
+	 * Returns this test's std out text.
+	 * 
+	 * @return this test's std out text
+	 */
+	public TextArea getStdOutText() {
+		return this.stdOutText;
+	}
+
+	/**
+	 * Returns this test's std err text.
+	 * 
+	 * @return this test's std err text
+	 */
+	public TextArea getStdErrText() {
+		return this.stdErrText;
+	}
+
+	/**
+	 * Returns this test's permissions text.
+	 * 
+	 * @return this test's permissions text
+	 */
+	public TextArea getPermissionsText() {
+		return this.permissionsText;
 	}
 
 	/**

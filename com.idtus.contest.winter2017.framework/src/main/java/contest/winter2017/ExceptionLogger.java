@@ -10,9 +10,9 @@ import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 
 /**
- * This static class is for saving logs with information pertaining to exceptions.
- * This class is static to prmote low coupling, i.e. diminish interdependence with
- * other classes.
+ * This static class is for saving logs with information pertaining to
+ * exceptions. This class is static to prmote low coupling, i.e. diminish
+ * interdependence with other classes.
  * 
  * @author ICT-2
  */
@@ -35,7 +35,8 @@ class ExceptionLogger {
 	/**
 	 * Initializes the ExceptionLog.
 	 * 
-	 * @param initCliArgs - CommandLine to include in reports
+	 * @param initCliArgs
+	 *            - CommandLine to include in reports
 	 */
 	static void init(CommandLine initCliArgs) {
 		cliArgs = initCliArgs;
@@ -46,16 +47,17 @@ class ExceptionLogger {
 	/**
 	 * Asks to save an error log.
 	 * <p>
-	 * This method asks if the user wants to save log
-	 * to the Jacoco output location. Then, it asks
-	 * if the user wants to save the log to the
-	 * current directory.
+	 * This method asks if the user wants to save log to the Jacoco output
+	 * location. Then, it asks if the user wants to save the log to the current
+	 * directory.
 	 *
-	 * @param re - RuntimeException encountered
-	 * @param now - date and time of exception
+	 * @param re
+	 *            - RuntimeException encountered
+	 * @param now
+	 *            - date and time of exception
 	 */
 	static void errorLogDialog(RuntimeException re, LocalDateTime now) {
-		System.out.println("An exception has occured.");
+		System.out.println("The tester has encountered an exception.");
 		System.out.println("Save error log to jacoco output directory? (Y/n) ");
 		Scanner in = new Scanner(System.in);
 		if (!in.nextLine().equalsIgnoreCase("n")) {
@@ -75,13 +77,15 @@ class ExceptionLogger {
 	/**
 	 * Saves the specefied exception to the specified error log file.
 	 * <p>
-	 * This method attempts to log an error file. 
-	 * A number is appended to error logs so that
-	 * previous logs are not overwritten.
+	 * This method attempts to log an error file. A number is appended to error
+	 * logs so that previous logs are not overwritten.
 	 * 
-	 * @param dir - directory to save file into
-	 * @param re - RuntimeEception encountered
-	 * @param now - date and time of exception
+	 * @param dir
+	 *            - directory to save file into
+	 * @param re
+	 *            - RuntimeEception encountered
+	 * @param now
+	 *            - date and time of exception
 	 * 
 	 * @return boolean whether the log was succesfully saved
 	 */

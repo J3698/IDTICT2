@@ -1,8 +1,12 @@
 package contest.winter2017.gui;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 
+import contest.winter2017.Output;
 import contest.winter2017.Tester;
+import edu.emory.mathcs.backport.java.util.Collections;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.value.ChangeListener;
@@ -18,14 +22,58 @@ import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 
+/**
+ * Class encapsulting a test run in the GUI interface.
+ * 
+ * @author ICT-2
+ */
 public class GUITestPackage {
+	/**
+	 * TestListPane of this test.
+	 */
 	private TestListPane testListPane;
+
+	/**
+	 * TestInfo GUI component of this test.
+	 */
 	private TestInfo testInfo;
+
+	/**
+	 * MainPane of this test.
+	 */
 	private MainPane mainPane;
+
+	/**
+	 * Tester of this test.
+	 */
 	private Tester tester;
+
+	/**
+	 * Name of this test.
+	 */
 	private SimpleStringProperty name;
+
+	/**
+	 * Jar to test.
+	 */
 	private File toTest;
 
+	/**
+	 * Synchronized list of outputs for this test.
+	 */
+	private List<Output> outputs = Collections.synchronizedList(new ArrayList<Output>());
+
+	/**
+	 * Constructs a GUITestPackage with the given testListPane, name, and file
+	 * to test.
+	 * 
+	 * @param testListPane
+	 *            - testListPane to put test info in
+	 * @param name
+	 *            - name of this test
+	 * @param toTest
+	 *            - file to test
+	 */
 	public GUITestPackage(TestListPane testListPane, String name, File toTest) {
 		// order of initialization matters
 		this.name = new SimpleStringProperty(name);
@@ -36,6 +84,9 @@ public class GUITestPackage {
 		this.mainPane = new MainPane(this);
 	}
 
+	/**
+	 * Starts tests for this test.
+	 */
 	public void startTests() {
 		Task<Void> task = new Task<Void>() {
 			@Override
@@ -47,6 +98,22 @@ public class GUITestPackage {
 			}
 		};
 		new Thread(task).start();
+	}
+
+	/**
+	 * Updates the output for this test.
+	 */
+	public void updateOutput() {
+		while (outputs.size() < this.tester.getOutputs().size()) {
+			Output newOutput = this.tester.getOutputs().get(outputs.size());
+			outputs.add(newOutput);
+			Platform.runLater(new Runnable() {
+				@Override
+				public void run() {
+					GUITestPackage.this.mainPane.addOutput(newOutput);
+				}
+			});
+		}
 	}
 
 	/**
@@ -146,8 +213,9 @@ class TestInfo extends VBox {
 		this.test.getTester().getPercentDone().addListener(new ChangeListener<Number>() {
 			@Override
 			public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
-				double progress = newValue.doubleValue();
+				TestInfo.this.test.updateOutput();
 
+				double progress = newValue.doubleValue();
 				if (progress <= 1) {
 					progressBar.setProgress(progress);
 					String progressRep = "" + (100 * progress);

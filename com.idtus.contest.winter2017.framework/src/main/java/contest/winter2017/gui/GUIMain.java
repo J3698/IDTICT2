@@ -30,8 +30,6 @@ public class GUIMain extends Application {
 	public void start(Stage stage) {
 		BorderPane pane = new BorderPane();
 		pane.setLeft(new TestListPane(pane));
-
-		// dirty work
 		Scene scene = new Scene(pane, 640, 480);
 		stage.setScene(scene);
 		stage.show();
