@@ -191,7 +191,6 @@ class TestListPane extends ScrollPane {
 				TestListPane.this.testNames.remove(oldValue);
 				TestListPane.this.testNames.add(newValue);
 			}
-
 		});
 
 		this.tests.add(newTest);
