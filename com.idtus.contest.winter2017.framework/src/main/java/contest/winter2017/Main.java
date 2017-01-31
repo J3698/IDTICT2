@@ -9,6 +9,9 @@ import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 
+import contest.winter2017.gui.GUIMain;
+import javafx.application.Application;
+
 /**
  * Entry-point class for the black-box testing framework.
  * <p>
@@ -31,21 +34,6 @@ import org.apache.commons.cli.ParseException;
  * 
  * 
  * @author IDT
- */
-/*
- * options.addOption(JAR_TO_TEST_PATH, true,
- * "path to the executable jar to test"); options.addOption(JACOCO_OUTPUT_PATH,
- * true, "path to directory for jacoco output");
- * options.addOption(JACOCO_AGENT_JAR_PATH, true,
- * "path to the jacoco agent jar"); // optional parameters with arguments
- * options.addOption(PERMISSION_INFO, true,
- * "permission to get information about"); options.addOption(BLACK_BOX_TESTS,
- * true, "number of black box testings to run"); options.addOption(TIME_GOAL,
- * true, "time goal for black box testings to run in"); // optional parameters
- * without arguments options.addOption(TOOL_CHAIN, false,
- * "option to print only necessary output"); options.addOption(HELP, false,
- * "help"); options.addOption(ALT_HELP, false, "help");
- * 
  */
 public class Main {
 
@@ -97,6 +85,11 @@ public class Main {
 	public static final String ALT_HELP = "h";
 
 	/**
+	 * Cli key for running the GUI.
+	 */
+	public static final String GUI = "gui";
+
+	/**
 	 * Starts the black-box testing framework.
 	 * 
 	 * @param args
@@ -119,6 +112,7 @@ public class Main {
 		options.addOption(TOOL_CHAIN, false, "option to print only necessary output");
 		options.addOption(HELP, false, "help");
 		options.addOption(ALT_HELP, false, "help");
+		options.addOption(GUI, false, "run the gui");
 
 		try {
 			CommandLine cliArgs = parser.parse(options, args);
@@ -175,6 +169,10 @@ public class Main {
 
 					String info = cliArgs.getOptionValue(PERMISSION_INFO);
 					System.out.println(PermissionInfo.getInfo(info));
+
+				} else if (cliArgs.hasOption(GUI)) {
+
+					Application.launch(GUIMain.class);
 
 				} else {
 
