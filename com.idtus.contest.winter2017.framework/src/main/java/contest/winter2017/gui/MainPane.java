@@ -83,11 +83,12 @@ public class MainPane extends TabPane {
 	public MainPane(GUITestPackage test) {
 		this.test = test;
 
+		// runpane
 		this.runPane = new RunPane(this.test);
 		Tab runTab = new Tab("Run", this.runPane);
 
+		// three tabs of output pane
 		outputPane = new TabPane();
-
 		stdOutText = new TextArea();
 		stdOutText.setEditable(false);
 		stdOutText.setWrapText(true);
@@ -106,14 +107,15 @@ public class MainPane extends TabPane {
 		permissionsText.setMouseTransparent(true);
 		permissionsText.setFocusTraversable(false);
 		Tab permissions = new Tab("Permissions", permissionsText);
-
 		outputPane.getTabs().addAll(stdOut, stdErr, permissions);
 		outputPane.setTabClosingPolicy(TabClosingPolicy.UNAVAILABLE);
-
 		Tab outputTab = new Tab("Output", outputPane);
 
+		// parameter pane
 		this.parameterPane = new ParameterPane(this.test);
 		Tab parameterTab = new Tab("Parameter Bounds", parameterPane);
+
+		// add undeletable tabs
 		getTabs().addAll(runTab, outputTab, parameterTab);
 		setTabClosingPolicy(TabClosingPolicy.UNAVAILABLE);
 	}
@@ -211,6 +213,8 @@ class ParameterPane extends ScrollPane {
 	 */
 	public ParameterPane(GUITestPackage test) {
 		this.test = test;
+
+		// styling and components
 		setFitToWidth(true);
 		this.content = new VBox();
 		setContent(this.content);
@@ -258,35 +262,51 @@ class RunPane extends BorderPane {
 	 */
 	public RunPane(GUITestPackage test) {
 		this.test = test;
+
+		// styling
 		VBox box = new VBox(DEFAULT_SPACE);
 		box.setAlignment(Pos.CENTER);
 
+		// buttons for output and agent path
 		Button outputPath = new Button("Set Output Path");
 		LabeledNode outputPathButton = new LabeledNode("Jacoco Output Path", outputPath);
+		outputPath.setStyle("-fx-border-color: red;");
+		this.validOutputPath = false;
 		Button agentPath = new Button("Set Agent Path");
 		LabeledNode agentPathButton = new LabeledNode("Jacoco Agent Path", agentPath);
+		agentPath.setStyle("-fx-border-color: red;");
+		this.validJacocoPath = false;
 
+		// label name of jar to test
 		Text jarName = new Text();
 		jarName.setText(test.getToTest().getName());
 		jarName.setFont(new Font(20));
-		VExternSpace jarNameSpacer = new VExternSpace(jarName, 0, 60);
+		VExternSpace jarNameSpacer = new VExternSpace(jarName, 0, 40);
 
+		// name setting
 		name = new TextField();
 		name.setPrefColumnCount(5);
 		name.setText(this.test.getName().get());
 		LabeledNode nameInput = new LabeledNode("Test Name", name);
+
+		// number of test setting
 		toRun = new TextField();
 		toRun.setPrefColumnCount(5);
 		toRun.setText("" + Tester.DEFAULT_BB_TESTS);
 		LabeledNode testsToRunInput = new LabeledNode("Tests to Run", toRun);
+
+		// time goal setting
 		timeGoal = new TextField();
 		timeGoal.setPrefColumnCount(5);
 		timeGoal.setText("" + Tester.DEFAULT_TIME_GOAL);
 		LabeledNode timeGoalInput = new LabeledNode("Time Goal", timeGoal);
 
+		// run button
 		Button runButton = new Button("Start Testing");
 		runButton.setFont(new Font(15));
+		VExternSpace runButtonSpacer = new VExternSpace(runButton, 40, 0);
 
+		// track whether name is valid
 		name.setStyle("-fx-border-color: green;");
 		this.validName = false;
 		name.textProperty().addListener(new ChangeListener<String>() {
@@ -306,6 +326,7 @@ class RunPane extends BorderPane {
 			}
 		});
 
+		// track whether number of tests to run is valid
 		toRun.setStyle("-fx-border-color: green;");
 		this.validTestNumber = true;
 		toRun.textProperty().addListener(new ChangeListener<String>() {
@@ -328,6 +349,7 @@ class RunPane extends BorderPane {
 			}
 		});
 
+		// track whether time goal is valid
 		timeGoal.setStyle("-fx-border-color: green;");
 		this.validTimeGoal = true;
 		timeGoal.textProperty().addListener(new ChangeListener<String>() {
@@ -339,7 +361,8 @@ class RunPane extends BorderPane {
 						RunPane.this.validTimeGoal = true;
 					}
 				} catch (NumberFormatException e) {
-					// prevent exception from bubbling up
+					// prevent exception from bubbling up,
+					// just leave validTimeGoal as false
 				}
 
 				if (RunPane.this.validTimeGoal) {
@@ -350,8 +373,16 @@ class RunPane extends BorderPane {
 			}
 		});
 
-		outputPath.setStyle("-fx-border-color: red;");
-		this.validOutputPath = false;
+		// default path for jacoco output
+		File defaultFile = new File(".");
+		if (defaultFile.exists()) {
+			outputPathFile = defaultFile;
+			outputPath.setStyle("-fx-border-color: green;");
+			outputPath.setText("Current Folder");
+			this.validOutputPath = true;
+		}
+
+		// get a directory for the jacoco output path
 		outputPath.setOnAction(new EventHandler<ActionEvent>() {
 			@Override
 			public void handle(ActionEvent event) {
@@ -363,18 +394,21 @@ class RunPane extends BorderPane {
 					outputPath.setStyle("-fx-border-color: green;");
 					RunPane.this.validOutputPath = true;
 					String path = RunPane.this.outputPathFile.getAbsolutePath();
-					if (path.length() > 30) {
-						path = path.substring(path.length() - 1 - 30);
-						outputPath.setText("..." + path.substring(3));
-					} else {
-						outputPath.setText(path);
-					}
+					outputPath.setText(clipName(path));
 				}
 			}
 		});
 
-		agentPath.setStyle("-fx-border-color: red;");
-		this.validJacocoPath = false;
+		// default path for jacoco agent
+		defaultFile = new File("C:\\idt_contest\\jacoco\\lib\\jacocoagent.jar");
+		if (defaultFile.exists()) {
+			this.validJacocoPath = true;
+			agentPath.setStyle("-fx-border-color: green;");
+			this.jacocoPathFile = defaultFile;
+			outputPath.setText(clipName(defaultFile.getAbsolutePath()));
+		}
+
+		// get a jacoco agent jar
 		agentPath.setOnAction(new EventHandler<ActionEvent>() {
 			@Override
 			public void handle(ActionEvent event) {
@@ -387,23 +421,22 @@ class RunPane extends BorderPane {
 					agentPath.setStyle("-fx-border-color: green;");
 					RunPane.this.validJacocoPath = true;
 					String path = RunPane.this.jacocoPathFile.getAbsolutePath();
-					if (path.length() > 30) {
-						path = path.substring(path.length() - 1 - 30);
-						agentPath.setText("..." + path.substring(3));
-					} else {
-						agentPath.setText(path);
-					}
+					agentPath.setText(clipName(path));
 				}
 			}
 		});
 
+		// run the tests
 		runButton.setOnAction(new EventHandler<ActionEvent>() {
 			@Override
 			public void handle(ActionEvent event) {
 				runButton.setDisable(true);
 
+				// prepare an error alert
 				Alert alert = new Alert(Alert.AlertType.ERROR);
 				alert.setTitle("Tester Failed to Initialize");
+
+				// ensure options are all correct
 
 				String jarPath = RunPane.this.test.getToTest().getAbsolutePath();
 				if (RunPane.this.validOutputPath) {
@@ -446,20 +479,37 @@ class RunPane extends BorderPane {
 
 				String toolChain = "false";
 
+				// initialize and run tester
 				if (!RunPane.this.test.getTester().init(jarPath, outputPath, agentPath, bbTests, timeGoal, toolChain)) {
 					alert.setContentText("Unknown initialization error.");
 					alert.showAndWait();
 					runButton.setDisable(false);
 				} else {
 					test.startTests();
-					runButton.setDisable(true);
 				}
 			}
 		});
 
 		box.getChildren().addAll(jarNameSpacer, nameInput, testsToRunInput, timeGoalInput);
-		box.getChildren().addAll(outputPathButton, agentPathButton, runButton);
+		box.getChildren().addAll(outputPathButton, agentPathButton, runButtonSpacer);
 		setCenter(box);
+	}
+
+	/**
+	 * Clips a path name and prefixes it with ellipses.
+	 * 
+	 * @param name
+	 *            - name to clip
+	 * @return the clipped name
+	 */
+	public String clipName(String name) {
+		if (name.length() > 30) {
+			name = name.substring(name.length() - 1 - 30);
+			return "..." + name.substring(3);
+		} else {
+			return name;
+		}
+
 	}
 }
 
