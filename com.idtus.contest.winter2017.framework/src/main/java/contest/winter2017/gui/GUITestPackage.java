@@ -93,7 +93,6 @@ public class GUITestPackage {
 			protected Void call() {
 				GUITestPackage.this.tester.executeBasicTests();
 				// GUITestPackage.this.tester.executeSecurityTests();
-
 				return null;
 			}
 		};
@@ -197,20 +196,35 @@ class TestInfo extends VBox {
 	public TestInfo(GUITestPackage test) {
 		this.test = test;
 
+		// styling and buttons
 		setAlignment(Pos.CENTER);
 		setStyle("-fx-border-color: lightgray; -fx-border-width: 1;");
-
 		Text name = new Text("");
 		name.textProperty().bind(this.test.getName());
 		name.setFont(new Font(20));
-
 		Text percent = new Text("0%");
 		percent.setFont(new Font(10));
-
 		ProgressBar progressBar = new ProgressBar(0);
 		progressBar.setMouseTransparent(true);
 		progressBar.setPadding(new Insets(3, 0, 0, 2));
+
+		// keep track of progress
 		this.test.getTester().getPercentDone().addListener(new ChangeListener<Number>() {
+			/**
+			 * Tracks the percent of testing done.
+			 * <p>
+			 * If required tests are not completed, progress bar shows the
+			 * percent completed. If required tests are completed, but the time
+			 * goal has not been fulfilled, the progress bar shows
+			 * indeterminate.
+			 * 
+			 * @param observable
+			 *            - percent complete being obsesrved
+			 * @param oldValue
+			 *            - the previous percent complete
+			 * @param newValue
+			 *            - the new percent complete.
+			 */
 			@Override
 			public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
 				TestInfo.this.test.updateOutput();
@@ -237,6 +251,7 @@ class TestInfo extends VBox {
 
 		getChildren().addAll(name, percent, progressBar);
 
+		// grabs focus if testinfo is selected
 		setOnMouseClicked(new EventHandler<MouseEvent>() {
 			@Override
 			public void handle(MouseEvent event) {
