@@ -6,6 +6,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.event.ActionEvent;
@@ -71,6 +72,7 @@ class TestListPane extends ScrollPane {
 	public TestListPane(BorderPane mainPane) {
 		this.mainPane = mainPane;
 
+		// styling
 		setMinWidth(WIDTH);
 		setFitToWidth(true);
 		setHbarPolicy(ScrollBarPolicy.NEVER);
@@ -87,17 +89,19 @@ class TestListPane extends ScrollPane {
 	}
 
 	/**
-	 * Makes the test adder component
+	 * Makes the component to add more tests.
 	 */
 	public void makeTestAdder() {
 		VBox adder = new VBox();
+
+		// styling and buttons
 		adder.setAlignment(Pos.CENTER);
 		adder.setStyle("-fx-border-color: lightgray; -fx-border-width: 1;");
-
 		Button addButton = new Button("Select Jar");
 		Text drag = new Text("Or Drag and Drop Jar");
 		drag.setFont(new Font(10));
 
+		// manually select a jar
 		addButton.setOnAction(new EventHandler<ActionEvent>() {
 			@Override
 			public void handle(ActionEvent event) {
@@ -111,6 +115,8 @@ class TestListPane extends ScrollPane {
 				}
 			}
 		});
+
+		// light up if an aplpicable jar is dragged over
 		adder.setOnDragEntered(new EventHandler<DragEvent>() {
 			public void handle(DragEvent event) {
 				Dragboard db = event.getDragboard();
@@ -123,6 +129,8 @@ class TestListPane extends ScrollPane {
 				event.consume();
 			}
 		});
+
+		// accept jars which are dragged over
 		adder.setOnDragOver(new EventHandler<DragEvent>() {
 			public void handle(DragEvent event) {
 				Dragboard db = event.getDragboard();
@@ -135,6 +143,8 @@ class TestListPane extends ScrollPane {
 				event.consume();
 			}
 		});
+
+		// remove light up when a jar is no longer dragged over
 		adder.setOnDragExited(new EventHandler<DragEvent>() {
 			public void handle(DragEvent event) {
 				if (event.isAccepted()) {
@@ -143,6 +153,8 @@ class TestListPane extends ScrollPane {
 				event.consume();
 			}
 		});
+
+		// add jar when it's dropped over
 		adder.setOnDragDropped(new EventHandler<DragEvent>() {
 			public void handle(DragEvent event) {
 				Dragboard db = event.getDragboard();
@@ -165,6 +177,7 @@ class TestListPane extends ScrollPane {
 	 *            - test to select
 	 */
 	public void selectTest(GUITestPackage toSelect) {
+		// light up only the selected test
 		for (GUITestPackage test : this.tests) {
 			test.getTestInfo().setStyle("-fx-border-color: lightgray; -fx-border-width: 1;");
 		}
@@ -179,12 +192,15 @@ class TestListPane extends ScrollPane {
 	 *            - jar file to add
 	 */
 	public void addTest(File toTest) {
+		// get an available name
 		int i = 0;
 		while (testNames.contains("test" + i)) {
 			i++;
 		}
-
 		GUITestPackage newTest = new GUITestPackage(this, "test" + i, toTest);
+
+		// register the test's name and keep track of it
+		TestListPane.this.testNames.add("test" + i);
 		newTest.getName().addListener(new ChangeListener<String>() {
 			@Override
 			public void changed(ObservableValue<? extends String> observable, String oldValue, String newValue) {
@@ -193,9 +209,16 @@ class TestListPane extends ScrollPane {
 			}
 		});
 
+		// add the test to the GUi at some point
 		this.tests.add(newTest);
-		this.contentPane.getChildren().add(infoAdderIndex, newTest.getTestInfo());
-		selectTest(newTest);
+		Platform.runLater(new Runnable() {
+			@Override
+			public void run() {
+				TestListPane.this.contentPane.getChildren().add(infoAdderIndex, newTest.getTestInfo());
+				selectTest(newTest);
+			}
+		});
+
 		this.infoAdderIndex++;
 	}
 
