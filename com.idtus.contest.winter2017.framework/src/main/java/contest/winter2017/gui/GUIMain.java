@@ -1,5 +1,7 @@
 package contest.winter2017.gui;
 
+import java.io.File;
+
 import javafx.application.Application;
 import javafx.scene.Scene;
 import javafx.scene.layout.BorderPane;
@@ -18,10 +20,18 @@ public class GUIMain extends Application {
 	 *            - stage for the GUI
 	 */
 	public void start(Stage stage) {
+		/*
+		 * BorderPane pane = new BorderPane(); pane.setLeft(new
+		 * TestListPane(pane)); Scene scene = new Scene(pane, 640, 480);
+		 * stage.setScene(scene); stage.show();
+		 */
 		BorderPane pane = new BorderPane();
 		pane.setLeft(new TestListPane(pane));
+		TestListPane tPane = new TestListPane(pane);
+		pane.setCenter(new MainPane(new GUITestPackage(tPane, "", new File("."))));
 		Scene scene = new Scene(pane, 640, 480);
 		stage.setScene(scene);
 		stage.show();
+
 	}
 }
