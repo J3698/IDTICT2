@@ -6,7 +6,7 @@ import javafx.scene.Node;
 import javafx.scene.layout.VBox;
 
 /**
- * Class to space a Node.
+ * Class to space a Node vertically.
  * 
  * @author ICT-2
  */
