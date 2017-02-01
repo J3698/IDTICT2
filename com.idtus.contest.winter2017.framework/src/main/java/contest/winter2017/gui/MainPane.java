@@ -13,14 +13,11 @@ import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
-import javafx.scene.control.CheckBox;
 import javafx.scene.control.Label;
-import javafx.scene.control.ScrollPane;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
-import javafx.scene.control.TitledPane;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
@@ -195,42 +192,6 @@ public class MainPane extends TabPane {
 	 */
 	public GUITestPackage getTest() {
 		return this.test;
-	}
-}
-
-/**
- * Pane to change parameters.
- */
-class ParameterPane extends ScrollPane {
-	/**
-	 * Content for this pane.
-	 */
-	private VBox content;
-	private GUITestPackage test;
-
-	/**
-	 * Constructs a ParameterPane.
-	 */
-	public ParameterPane(GUITestPackage test) {
-		this.test = test;
-
-		// styling and components
-		setFitToWidth(true);
-		this.content = new VBox();
-		setContent(this.content);
-		this.content.setAlignment(Pos.CENTER);
-
-		CheckBox box = new CheckBox("Use Parameter Test Bounds from Jar");
-		VExternSpace testBoundsBox = new VExternSpace(box, 20, 20);
-		this.content.getChildren().add(testBoundsBox);
-
-		for (int i = 0; i < 2; i++)
-			this.content.getChildren().add(new TitledPane("Parameter #", new HBox()));
-
-		Button b = new Button("New Parameter");
-		b.setFont(new Font(15));
-		VExternSpace addParamButton = new VExternSpace(b, 20, 20);
-		this.content.getChildren().add(addParamButton);
 	}
 }
 
