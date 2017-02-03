@@ -10,16 +10,13 @@ import javafx.beans.value.ObservableValue;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.Pos;
-import javafx.scene.Node;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
-import javafx.scene.control.Label;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
@@ -471,61 +468,5 @@ class RunPane extends BorderPane {
 			return name;
 		}
 
-	}
-}
-
-/**
- * HBox to hold a label and node. This component steals horizontal space.
- * 
- * @author ICT-2
- */
-class LabeledNode extends HBox {
-	/**
-	 * Int default space between elements.
-	 */
-	private static final int DEFAULT_SPACE = 10;
-
-	/**
-	 * Label for this labeled thing.
-	 */
-	private Label label;
-
-	/**
-	 * Node for this labeled node.
-	 */
-	private Node node;
-
-	/**
-	 * Constructs a LabeledNode with the specified label and node.
-	 * 
-	 * @param label
-	 *            - label to use
-	 * @param node
-	 *            - node to use
-	 */
-	public LabeledNode(String label, Node node) {
-		super(DEFAULT_SPACE);
-		this.node = node;
-		setAlignment(Pos.CENTER);
-		this.label = new Label(label);
-		getChildren().addAll(this.label, this.node);
-	}
-
-	/**
-	 * Returns this LabeledTextField's label.
-	 * 
-	 * @return label of this labeled text-field
-	 */
-	public Label getLabel() {
-		return this.label;
-	}
-
-	/**
-	 * Returns this LabeledTextField's text field.
-	 * 
-	 * @return text field of this labeled text-field
-	 */
-	public Node getNode() {
-		return this.node;
 	}
 }
