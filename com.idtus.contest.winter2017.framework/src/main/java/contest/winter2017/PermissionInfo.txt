@@ -3,149 +3,116 @@ createAccessControlContext
 What it Allows:
 Creation of an AccessControlContext
 Potential Risks:
-This allows someone to instantiate an AccessControlContext with a DomainCombiner. Extreme care must be taken when granting this
-permission. Malicious code could create a DomainCombiner that augments the set of permissions granted to code, and even grant 
-the code AllPermission.
+This allows someone to instantiate an AccessControlContext with a DomainCombiner. Extreme care must be taken when granting this permission. Malicious code could create a DomainCombiner that augments the set of permissions granted to code, and even grant the code AllPermission.
 --NEXT--
 getDomainCombiner
 What it Allows:
 Retrieval of an AccessControlContext's DomainCombiner
 Potential Risks:
-This allows someone to query the policy via the getPermissions call, which discloses which permissions would be granted to a given 
-CodeSource. While revealing the policy does not compromise the security of the system, it does provide malicious code with additional 
-information which it may use to better aim an attack. It is wise not to divulge more information than necessary.
+This allows someone to query the policy via the getPermissions call, which discloses which permissions would be granted to a given CodeSource. While revealing the policy does not compromise the security of the system, it does provide malicious code with additional  information which it may use to better aim an attack. It is wise not to divulge more information than necessary.
 --NEXT--
 getPolicy
 What it Allows:
 Retrieval of the system-wide security policy (specifically, of the currently-installed Policy object)
 Potential Risks:
-This allows someone to query the policy via the getPermissions call, which discloses which permissions would be granted to a given 
-CodeSource. While revealing the policy does not compromise the security of the system, it does provide malicious code with additional 
-information which it may use to better aim an attack. It is wise not to divulge more information than necessary.
+This allows someone to query the policy via the getPermissions call, which discloses which permissions would be granted to a given CodeSource. While revealing the policy does not compromise the security of the system, it does provide malicious code with additional information which it may use to better aim an attack. It is wise not to divulge more information than necessary.
 --NEXT--
 setPolicy
 What it Allows:
 Setting of the system-wide security policy (specifically, the Policy object)
 Potential Risks:
-Granting this permission is extremely dangerous, as malicious code may grant itself all the necessary permissions it needs to 
-successfully mount an attack on the system.
+Granting this permission is extremely dangerous, as malicious code may grant itself all the necessary permissions it needs to successfully mount an attack on the system.
 --NEXT--
 createPolicy.{policy type}
 What it Allows:
 Getting an instance of a Policy via Policy.getInstance
 Potential Risks:
-Granting this permission enables code to obtain a Policy object. Malicious code may query the Policy object to determine what 
-permissions have been granted to code other than itself.
+Granting this permission enables code to obtain a Policy object. Malicious code may query the Policy object to determine what permissions have been granted to code other than itself.
 --NEXT--
 getProperty.{key}
 What it Allows:
 Retrieval of the security property with the specified key
 Potential Risks:
-Depending on the particular key for which access has been granted, the code may have access to the list of security providers, 
-as well as the location of the system-wide and user security policies. while revealing this information does not compromise the 
-security of the system, it does provide malicious code with additional information which it may use to better aim an attack.
+Depending on the particular key for which access has been granted, the code may have access to the list of security providers, as well as the location of the system-wide and user security policies. while revealing this information does not compromise the security of the system, it does provide malicious code with additional information which it may use to better aim an attack.
 --NEXT--
 setProperty.{key}
 What it Allows:
 Setting of the security property with the specified key
 Potential Risks:
-This could include setting a security provider or defining the location of the system-wide security policy. Malicious code that 
-has permission to set a new security provider may set a rogue provider that steals confidential information such as cryptographic 
-private keys. In addition, malicious code with permission to set the location of the system-wide security policy may point it to a 
-security policy that grants the attacker all the necessary permissions it requires to successfully mount an attack on the system.
+This could include setting a security provider or defining the location of the system-wide security policy. Malicious code that has permission to set a new security provider may set a rogue provider that steals confidential information such as cryptographic private keys. In addition, malicious code with permission to set the location of the system-wide security policy may point it to a security policy that grants the attacker all the necessary permissions it requires to successfully mount an attack on the system.
 --NEXT--
 insertProvider.{provider name}
 What it Allows:
 Addition of a new provider, with the specified name
 Potential Risks:
-This would allow somebody to introduce a possibly malicious provider (e.g., one that discloses the private keys passed to it) as 
-the highest-priority provider. This would be possible because the Security object (which manages the installed providers) currently 
-does not check the integrity or authenticity of a provider before attaching it.
+This would allow somebody to introduce a possibly malicious provider (e.g., one that discloses the private keys passed to it) as the highest-priority provider. This would be possible because the Security object (which manages the installed providers) currently does not check the integrity or authenticity of a provider before attaching it.
 --NEXT--
 removeProvider.{provider name}
 What it Allows:
 Removal of the specified provider
 Potential Risks:
-This may change the behavior or disable execution of other parts of the program. If a provider subsequently requested by the 
-program has been removed, execution may fail. Also, if the removed provider is not explicitly requested by the rest of the program, 
-but it would normally be the provider chosen when a cryptography service is requested (due to its previous order in the list of 
-providers), a different provider will be chosen instead, or no suitable provider will be found, thereby resulting in program failure.
+This may change the behavior or disable execution of other parts of the program. If a provider subsequently requested by the program has been removed, execution may fail. Also, if the removed provider is not explicitly requested by the rest of the program, but it would normally be the provider chosen when a cryptography service is requested (due to its previous order in the list of providers), a different provider will be chosen instead, or no suitable provider will be found, thereby resulting in program failure.
 --NEXT--
 clearProviderProperties.{provider name}
 What it Allows:
 "Clearing" of a Provider so that it no longer contains the properties used to look up services implemented by the provider
 Potential Risks:
-This disables the lookup of services implemented by the provider. This may thus change the behavior or disable execution of other 
-parts of the program that would normally utilize the Provider, as described under the "removeProvider.{provider name}" permission.
+This disables the lookup of services implemented by the provider. This may thus change the behavior or disable execution of other parts of the program that would normally utilize the Provider, as described under the "removeProvider.{provider name}" permission.
 --NEXT--
 putProviderProperty.{provider name}
 What it Allows:
 Setting of properties for the specified Provider
 Potential Risks:
-The provider properties each specify the name and location of a particular service implemented by the provider. By granting this 
-permission, you let code replace the service specification with another one, thereby specifying a different implementation.
+The provider properties each specify the name and location of a particular service implemented by the provider. By granting this permission, you let code replace the service specification with another one, thereby specifying a different implementation.
 --NEXT--
 removeProviderProperty.{provider name}
 What it Allows:
 Removal of properties from the specified Provider
 Potential Risks:
-This disables the lookup of services implemented by the provider. They are no longer accessible due to removal of the properties 
-specifying their names and locations. This may change the behavior or disable execution of other parts of the program that would 
-normally utilize the Provider, as described under the "removeProvider.{provider name}" permission.
+This disables the lookup of services implemented by the provider. They are no longer accessible due to removal of the properties specifying their names and locations. This may change the behavior or disable execution of other parts of the program that would normally utilize the Provider, as described under the "removeProvider.{provider name}" permission.
 --NEXT--
 setSystemScope
 What it Allows:
 Setting of the system identity scope
 Potential Risks:
-This would allow an attacker to configure the system identity scope with certificates that should not be trusted, thereby granting
-applet or application code signed with those certificates privileges that would have been denied by the system's original identity
+This would allow an attacker to configure the system identity scope with certificates that should not be trusted, thereby granting applet or application code signed with those certificates privileges that would have been denied by the system's original identity
 scope.
 --NEXT--
 setIdentityPublicKey
 What it Allows:
 Setting of the public key for an Identity
 Potential Risks:
-If the identity is marked as "trusted", this allows an attacker to introduce a different public key (e.g., its own) that is not trusted
-by the system's identity scope, thereby granting applet or application code signed with that public key privileges that would have been
-denied otherwise.
+If the identity is marked as "trusted", this allows an attacker to introduce a different public key (e.g., its own) that is not trusted by the system's identity scope, thereby granting applet or application code signed with that public key privileges that would have been denied otherwise.
 --NEXT--
 setIdentityInfo
 What it Allows:
 Setting of a general information string for an Identity
 Potential Risks:
-This allows attackers to set the general description for an identity. This may trick applications into using a different identity than
-intended or may prevent applications from finding a particular identity.
+This allows attackers to set the general description for an identity. This may trick applications into using a different identity than sintended or may prevent applications from finding a particular identity.
 --NEXT--
 addIdentityCertificate
 What it Allows:
 Addition of a certificate for an Identity
 Potential Risks:
-This allows attackers to set a certificate for an identity's public key. This is dangerous because it affects the trust relationship
-across the system. This public key suddenly becomes trusted to a wider audience than it otherwise would be.
+This allows attackers to set a certificate for an identity's public key. This is dangerous because it affects the trust relationship across the system. This public key suddenly becomes trusted to a wider audience than it otherwise would be.
 --NEXT--
 removeIdentityCertificate
 What it Allows:
 Removal of a certificate for an Identity
 Potential Risks:
-This allows attackers to remove a certificate for an identity's public key. This is dangerous because it affects the trust relationship
-across the system. This public key suddenly becomes considered less trustworthy than it otherwise would be.
+This allows attackers to remove a certificate for an identity's public key. This is dangerous because it affects the trust relationship across the system. This public key suddenly becomes considered less trustworthy than it otherwise would be.
 --NEXT--
 printIdentity
 What it Allows:
 Viewing the name of a principal and optionally the scope in which it is used, and whether or not it is considered "trusted" in that scope.
 Potential Risks:
-The scope that is printed out may be a filename, in which case it may convey local system information. For example, here's a sample
-printout of an identity named "carol", who is marked not trusted in the user's identity database:
-carol[/home/luehe/identitydb.obj][not trusted]
+The scope that is printed out may be a filename, in which case it may convey local system information. For example, here's a sample printout of an identity named "carol", who is marked not trusted in the user's identity database: carol[/home/luehe/identitydb.obj][not trusted]
 --NEXT--
 setSignerKeyPair
 What it Allows:
 Setting of the key pair (public key and private key) for a Signer
 Potential Risks:
-This would allow an attacker to replace somebody else's (the "target's") keypair with a possibly weaker keypair (e.g., a keypair of a
-smaller keysize). This also would allow the attacker to listen in on encrypted communication between the target and its peers. The
-target's peers might wrap an encryption session key under the target's "new" public key, which would allow the attacker (who possesses
-the corresponding private key) to unwrap the session key and decipher the communication data encrypted under that session key.
+This would allow an attacker to replace somebody else's (the "target's") keypair with a possibly weaker keypair (e.g., a keypair of a smaller keysize). This also would allow the attacker to listen in on encrypted communication between the target and its peers. The target's peers might wrap an encryption session key under the target's "new" public key, which would allow the attacker (who possesses the corresponding private key) to unwrap the session key and decipher the communication data encrypted under that session key.
 --NEXT--
 accessClipboard
 What it Allows:
@@ -157,53 +124,43 @@ accessEventQueue
 What it Allows:
 Access to the AWT event queue
 Potential Risks:
-After retrieving the AWT event queue, malicious code may peek at and even remove existing events from the system, as well as post
-bogus events which may purposefully cause the application or applet to misbehave in an insecure manner.
+After retrieving the AWT event queue, malicious code may peek at and even remove existing events from the system, as well as post bogus events which may purposefully cause the application or applet to misbehave in an insecure manner.
 --NEXT--
 accessSystemTray
 What it Allows:
 Access to the AWT SystemTray instance
 Potential Risks:
-This would allow malicious code to add tray icons to the system tray. First, such an icon may look like the icon of some known
-application (such as a firewall or anti-virus) and order a user to do something unsafe (with help of balloon messages). Second,
-the system tray may be glutted with tray icons so that no one could add a tray icon anymore.
+This would allow malicious code to add tray icons to the system tray. First, such an icon may look like the icon of some known application (such as a firewall or anti-virus) and order a user to do something unsafe (with help of balloon messages). Second, the system tray may be glutted with tray icons so that no one could add a tray icon anymore.
 --NEXT--
 createRobot
 What it Allows:
 Create java.awt.Robot objects
 Potential Risks:
-The java.awt.Robot object allows code to generate native-level mouse and keyboard events as well as read the screen. It could
-allow malicious code to control the system, run other programs, read the display, and deny mouse and keyboard access to the user.
+The java.awt.Robot object allows code to generate native-level mouse and keyboard events as well as read the screen. It could allow malicious code to control the system, run other programs, read the display, and deny mouse and keyboard access to the user.
 --NEXT--
 fullScreenExclusive
 What it Allows:
 Enter full-screen exclusive mode
 Potential Risks:
-Entering full-screen exclusive mode allows direct access to low-level graphics card memory. This could be used to spoof the system,
-since the program is in direct control of rendering.
+Entering full-screen exclusive mode allows direct access to low-level graphics card memory. This could be used to spoof the system, since the program is in direct control of rendering.
 --NEXT--
 listenToAllAWTEvents
 What it Allows:
 Listen to all AWT events, system-wide
 Potential Risks:
-After adding an AWT event listener, malicious code may scan all AWT events dispatched in the system, allowing it to read all user
-input (such as passwords). Each AWT event listener is called from within the context of that event queue'sEventDispatchThread, so
-if the accessEventQueue permission is also enabled, malicious code could modify the contents of AWT event queues system-wide, causing
-the application or applet to misbehave in an insecure manner.
+After adding an AWT event listener, malicious code may scan all AWT events dispatched in the system, allowing it to read all user input (such as passwords). Each AWT event listener is called from within the context of that event queue'sEventDispatchThread, so if the accessEventQueue permission is also enabled, malicious code could modify the contents of AWT event queues system-wide, causing the application or applet to misbehave in an insecure manner.
 --NEXT--
 readDisplayPixels
 What it Allows:
 Readback of pixels from the display screen
 Potential Risks:
-Interfaces such as the java.awt.Composite interface which allow arbitrary code to examine pixels on the display enable malicious code
-to snoop on the activities of the user.
+Interfaces such as the java.awt.Composite interface which allow arbitrary code to examine pixels on the display enable malicious code to snoop on the activities of the user.
 --NEXT--
 replaceKeyboardFocusManager
 What it Allows:
 Sets the KeyboardFocusManager for a particular thread.
 Potential Risks:
-When a SecurityManager is installed, the invoking thread must be granted this permission in order to replace the current
-KeyboardFocusManager. If permission is not granted, a SecurityException will be thrown.
+When a SecurityManager is installed, the invoking thread must be granted this permission in order to replace the current KeyboardFocusManager. If permission is not granted, a SecurityException will be thrown.
 --NEXT--
 setAppletStub
 What it Allows:
@@ -215,40 +172,31 @@ setWindowsAlwaysOnTop
 What it Allows:
 Setting always-on-top property of the window:Window.setAlwaysOnTop(boolean)
 Potential Risks:
-The malicious window might make itself look and behave like a real full desktop, so that information entered by the unsuspecting user
-is captured and subsequently misused.
+The malicious window might make itself look and behave like a real full desktop, so that information entered by the unsuspecting user is captured and subsequently misused.
 --NEXT--
 showWindowWithoutWarningBanner
 What it Allows:
 Display of a window without also displaying a banner warning that the window was created by an applet
 Potential Risks:
-Without this warning, an applet may pop up windows without the user knowing that they belong to an applet. Since users may make
-security-sensitive decisions based on whether or not the window belongs to an applet (entering a username and password into a dialog
-box, for example), disabling this warning banner may allow applets to trick the user into entering such information.
+Without this warning, an applet may pop up windows without the user knowing that they belong to an applet. Since users may make security-sensitive decisions based on whether or not the window belongs to an applet (entering a username and password into a dialog box, for example), disabling this warning banner may allow applets to trick the user into entering such information.
 --NEXT--
 toolkitModality
 What it Allows:
 Creating TOOLKIT_MODAL dialogs and setting the TOOLKIT_EXCLUDE window property.
 Potential Risks:
-When a toolkit-modal dialog is shown from an applet, it blocks all other applets in the browser. When launching applications from
-Java Web Start, its windows (such as the security dialog) may also be blocked by toolkit-modal dialogs, shown from these applications.
+When a toolkit-modal dialog is shown from an applet, it blocks all other applets in the browser. When launching applications from Java Web Start, its windows (such as the security dialog) may also be blocked by toolkit-modal dialogs, shown from these applications.
 --NEXT--
 watchMousePointer
 What it Allows:
 Getting the information about the mouse pointer position at any time
 Potential Risks:
-Constantly watching the mouse pointer, an applet can make guesses about what the user is doing, i.e. moving the mouse to the lower
-left corner of the screen most likely means that the user is about to launch an application. If a virtual keypad is used so that
-keyboard is emulated using the mouse, an applet may guess what is being typed.
+Constantly watching the mouse pointer, an applet can make guesses about what the user is doing, i.e. moving the mouse to the lower left corner of the screen most likely means that the user is about to launch an application. If a virtual keypad is used so that keyboard is emulated using the mouse, an applet may guess what is being typed.
 --NEXT--
 enableSubclassImplementation
 What it Allows:
-Implementing a subclass of ObjectOutputStream orObjectInputStream to override the default serialization or deserialization,
-respectively, of objects
+Implementing a subclass of ObjectOutputStream orObjectInputStream to override the default serialization or deserialization, respectively, of objects
 Potential Risks:
-Code can use this to serialize or deserialize classes in a purposefully malfeasant manner. For example, during serialization,
-malicious code can use this to purposefully store confidential private field data in a way easily accessible to attackers. Or,
-during deserializaiton it could, for example, deserialize a class with all its private fields zeroed out.
+Code can use this to serialize or deserialize classes in a purposefully malfeasant manner. For example, during serialization, malicious code can use this to purposefully store confidential private field data in a way easily accessible to attackers. Or, during deserializaiton it could, for example, deserialize a class with all its private fields zeroed out.
 --NEXT--
 enableSubstitution
 What it Allows:
@@ -258,8 +206,7 @@ This is dangerous because malicious code can replace the actual object with one 
 --NEXT--
 suppressAccessChecks
 What it Allows:
-Warning: Extreme caution should be taken before granting this permission to code, for it provides the ability to access fields
-and invoke methods in a class. This includes not only public, but protected and private fields and methods as well.
+Warning: Extreme caution should be taken before granting this permission to code, for it provides the ability to access fields and invoke methods in a class. This includes not only public, but protected and private fields and methods as well.
 Potential Risks:
 This is dangerous in that information (possibly confidential) and methods normally unavailable would be accessible to malicious
 code.
@@ -268,56 +215,43 @@ createClassLoader
 What it Allows:
 Creation of a class loader
 Potential Risks:
-This is an extremely dangerous permission to grant. Malicious applications that can instantiate their own class loaders could
-then load their own rogue classes into the system. These newly loaded classes could be placed into any protection domain by the
-class loader, thereby automatically granting the classes the permissions for that domain.
+This is an extremely dangerous permission to grant. Malicious applications that can instantiate their own class loaders could then load their own rogue classes into the system. These newly loaded classes could be placed into any protection domain by the class loader, thereby automatically granting the classes the permissions for that domain.
 --NEXT--
 getClassLoader
 What it Allows:
 Retrieval of a class loader (e.g., the class loader for the calling class)
 Potential Risks:
-This would grant an attacker permission to get the class loader for a particular class. This is dangerous because having access
-to a class's class loader allows the attacker to load other classes available to that class loader. The attacker would typically
-otherwise not have access to those classes.
+This would grant an attacker permission to get the class loader for a particular class. This is dangerous because having access to a class's class loader allows the attacker to load other classes available to that class loader. The attacker would typically otherwise not have access to those classes.
 --NEXT--
 setContextClassLoader
 What it Allows:
 Setting of the context class loader used by a thread
 Potential Risks:
-The context class loader is used by system code and extensions when they need to lookup resources that might not exist in the
-system class loader. Granting setContextClassLoader permission would allow code to change which context class loader is used
-for a particular thread, including system threads.
+The context class loader is used by system code and extensions when they need to lookup resources that might not exist in the system class loader. Granting setContextClassLoader permission would allow code to change which context class loader is used for a particular thread, including system threads.
 --NEXT--
 enableContextClassLoaderOverride
 What it Allows:
 Subclass implementation of the thread context class loader methods
 Potential Risks:
-The context class loader is used by system code and extensions when they need to lookup resources that might not exist in the
-system class loader. Granting enableContextClassLoaderOverride permission would allow a subclass of Thread to override the
-methods that are used to get or set the context class loader for a particular thread.
+The context class loader is used by system code and extensions when they need to lookup resources that might not exist in the system class loader. Granting enableContextClassLoaderOverride permission would allow a subclass of Thread to override the methods that are used to get or set the context class loader for a particular thread.
 --NEXT--
 setSecurityManager
 What it Allows:
 Setting of the security manager (possibly replacing an existing one)
 Potential Risks:
-The security manager is a class that allows applications to implement a security policy. Granting the setSecurityManager
-permission would allow code to change which security manager is used by installing a different, possibly less restrictive
-security manager, thereby bypassing checks that would have been enforced by the original security manager.
+The security manager is a class that allows applications to implement a security policy. Granting the setSecurityManager permission would allow code to change which security manager is used by installing a different, possibly less restrictive security manager, thereby bypassing checks that would have been enforced by the original security manager.
 --NEXT--
 getenv.{variable name}
 What it Allows:
 Reading of the value of the specified environment variable
 Potential Risks:
-This would allow code to read the value, or determine the existence, of a particular environment variable. This is dangerous
-if the variable contains confidential data.
+This would allow code to read the value, or determine the existence, of a particular environment variable. This is dangerous if the variable contains confidential data.
 --NEXT--
 exitVM.{exit status}
 What it Allows:
 Halting of the Java Virtual Machine with the specified exit status
 Potential Risks:
-This allows an attacker to mount a denial-of-service attack by automatically forcing the virtual machine to halt. Note: The
-"exitVM.*" permission is automatically granted to all code loaded from the application class path, thus enabling applications
-to terminate themselves. Also, the "exitVM" permission is equivalent to "exitVM.*".
+This allows an attacker to mount a denial-of-service attack by automatically forcing the virtual machine to halt. Note: The "exitVM.*" permission is automatically granted to all code loaded from the application class path, thus enabling applications to terminate themselves. Also, the "exitVM" permission is equivalent to "exitVM.*".
 --NEXT--
 shutdownHooks
 What it Allows:
@@ -329,8 +263,7 @@ setFactory
 What it Allows:
 Setting of the socket factory used by ServerSocket or Socket, or of the stream handler factory used by URL
 Potential Risks:
-This allows code to set the actual implementation for the socket, server socket, stream handler, or RMI socket factory. An
-attacker may set a faulty implementation which mangles the data stream.
+This allows code to set the actual implementation for the socket, server socket, stream handler, or RMI socket factory. An attacker may set a faulty implementation which mangles the data stream.
 --NEXT--
 setIO
 What it Allows:
