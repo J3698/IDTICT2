@@ -169,6 +169,7 @@ public class Tester {
 	/**
 	 * List of outputs encountered.
 	 */
+	@SuppressWarnings("unchecked")
 	private List<Output> outputs = Collections.synchronizedList(new ArrayList<Output>(2000));
 
 	/**
@@ -464,6 +465,7 @@ public class Tester {
 	 * 
 	 * @return list of this testers outputs
 	 */
+	@SuppressWarnings("unchecked")
 	public List<Output> getOutputs() {
 		return Collections.unmodifiableList(this.outputs);
 	}
