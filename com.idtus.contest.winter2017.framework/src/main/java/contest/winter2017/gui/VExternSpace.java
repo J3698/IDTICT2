@@ -29,4 +29,13 @@ class VExternSpace extends VBox {
 		setAlignment(Pos.CENTER);
 		setPadding(new Insets(spaceTop, 0, spaceBottom, 0));
 	}
+
+	/**
+	 * Returns this spacers child.
+	 * 
+	 * @return this spacers child
+	 */
+	public Node getChild() {
+		return this.child;
+	}
 }
