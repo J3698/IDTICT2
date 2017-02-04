@@ -1,9 +1,5 @@
 package contest.winter2017;
 
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Random;
 /**
  * This class is deprecated, to be deleted. Currently
  * retained as part of the project in case some methods
