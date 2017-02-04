@@ -128,7 +128,6 @@ public class Main {
 					String jarToTestPath = cliArgs.getOptionValue(JAR_TO_TEST_PATH);
 					String jacocoOutputDirPath = cliArgs.getOptionValue(JACOCO_OUTPUT_PATH);
 					String jacocoAgentJarPath = cliArgs.getOptionValue(JACOCO_AGENT_JAR_PATH);
-					String permissionToShow = cliArgs.getOptionValue(PERMISSION_INFO);
 					String bbTests = cliArgs.getOptionValue(BLACK_BOX_TESTS);
 					String timeGoal = cliArgs.getOptionValue(TIME_GOAL);
 					String toolChain = "" + cliArgs.hasOption(TOOL_CHAIN);
@@ -169,6 +168,8 @@ public class Main {
 
 					String info = cliArgs.getOptionValue(PERMISSION_INFO);
 					System.out.println(PermissionInfo.getInfo(info));
+					System.out.println("-----------");
+					System.out.println(PermissionInfo.copyrightNotice());
 
 				} else if (cliArgs.hasOption(GUI)) {
 
