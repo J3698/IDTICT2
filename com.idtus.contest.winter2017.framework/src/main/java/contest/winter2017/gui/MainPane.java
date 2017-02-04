@@ -106,7 +106,7 @@ public class MainPane extends TabPane {
 		Tab outputTab = new Tab("Output", outputPane);
 
 		// parameter pane
-		this.parameterPane = new ParameterPane(this.test);
+		this.parameterPane = new ParameterPane();
 		Tab parameterTab = new Tab("Parameter Bounds", parameterPane);
 
 		// add undeletable tabs
@@ -209,7 +209,6 @@ class RunPane extends BorderPane {
 	private File jacocoPathFile = null;
 	private GUITestPackage test;
 
-	private boolean validName;
 	private boolean validTimeGoal;
 	private boolean validTestNumber;
 	private boolean validOutputPath;
@@ -266,7 +265,6 @@ class RunPane extends BorderPane {
 
 		// track whether name is valid
 		name.setStyle("-fx-border-color: green;");
-		this.validName = false;
 		name.textProperty().addListener(new ChangeListener<String>() {
 			@Override
 			public void changed(ObservableValue<? extends String> arg0, String oldVal, String newVal) {
@@ -275,10 +273,8 @@ class RunPane extends BorderPane {
 				if (!usedNames.contains(newVal) && !newVal.equals("")) {
 					RunPane.this.test.setName(newVal);
 					usedNames.remove(oldVal);
-					RunPane.this.validName = true;
 					name.setStyle("-fx-border-color: green;");
 				} else {
-					RunPane.this.validName = true;
 					name.setStyle("-fx-border-color: red;");
 				}
 			}
