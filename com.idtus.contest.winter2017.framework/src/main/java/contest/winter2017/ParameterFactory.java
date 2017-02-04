@@ -88,10 +88,19 @@ public class ParameterFactory {
 		 */
 	}
 
-	private void printList(List list) {
+	/**
+	 * Prints a list for debeug purposes.
+	 * <p>
+	 * Prints maps in the list using printMap.
+	 * 
+	 * @param list
+	 *            - list to print
+	 */
+	@SuppressWarnings({ "unused", "unchecked" })
+	private void printList(List<?> list) {
 		for (Object obj : list) {
 			if (obj instanceof Map) {
-				printMap((Map) obj, "$: ");
+				printMap((Map<Object, Object>) obj, "$: ");
 			} else {
 				System.out.print(obj);
 			}
@@ -99,13 +108,20 @@ public class ParameterFactory {
 		System.out.println();
 	}
 
-	private void printMap(Map m, String lvl) {
+	/**
+	 * Prints a map for debeug purposes.
+	 * 
+	 * @param map
+	 *            - map to print
+	 */
+	@SuppressWarnings("unchecked")
+	private void printMap(Map<Object, Object> map, String lvl) {
 
-		for (Entry<Object, Object> e : (Set<Entry<Object, Object>>) m.entrySet()) {
+		for (Entry<Object, Object> e : (Set<Entry<Object, Object>>) map.entrySet()) {
 			System.out.println(lvl + e.getKey());
 			lvl = "   " + lvl;
 			if (e.getValue() instanceof Map) {
-				printMap((Map) e.getValue(), lvl);
+				printMap((Map<Object, Object>) e.getValue(), lvl);
 			} else if (e.getValue() instanceof Iterable) {
 				System.out.println(e.getValue());
 			} else {
