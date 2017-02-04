@@ -3,7 +3,9 @@ package contest.winter2017.gui;
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 
 import contest.winter2017.Parameter;
@@ -41,18 +43,12 @@ class ParameterPane extends ScrollPane {
 	private VBox content;
 
 	/**
-	 * Test for this ParameterPane.
-	 */
-	private GUITestPackage test;
-
-	/**
 	 * Constructs a ParameterPane with the given test.
 	 * 
 	 * @param test
 	 *            - test for the parameters
 	 */
-	public ParameterPane(GUITestPackage test) {
-		this.test = test;
+	public ParameterPane() {
 
 		// styling and components
 		setFitToWidth(true);
@@ -61,7 +57,7 @@ class ParameterPane extends ScrollPane {
 		this.content.setAlignment(Pos.CENTER);
 
 		// parameter builder
-		ParameterBuilder parameterBuilder = new ParameterBuilder(this.test);
+		ParameterBuilder parameterBuilder = new ParameterBuilder();
 
 		// check box for using jar test bounds
 		CheckBox box = new CheckBox("Use Parameter Test Bounds from Jar");
@@ -89,12 +85,7 @@ class ParameterPane extends ScrollPane {
  * @author ICT-2
  */
 class ParameterBuilder extends VBox {
-	private final String okString = "User Defined Parameters OK!";
-
-	/**
-	 * Test for this ParameterBuilder.
-	 */
-	private GUITestPackage test;
+	private final String statusOkString = "User Defined Parameters OK!";
 
 	/**
 	 * Box to hold the parameter editors.
@@ -112,18 +103,24 @@ class ParameterBuilder extends VBox {
 	private Text statusText;
 
 	/**
+	 * Stack of status errors to display.
+	 */
+	private LinkedList<String> errors;
+
+	/**
 	 * Constructs a ParameterBuilder with the given test.
 	 * 
 	 * @param test
 	 *            - test for this ParameterBuilder.
 	 */
-	public ParameterBuilder(GUITestPackage test) {
-		this.test = test;
+	public ParameterBuilder() {
 		setVisible(false);
 		setAlignment(Pos.CENTER);
 
+		errors = new LinkedList<String>();
+
 		// status of parameters
-		statusText = new Text(okString);
+		statusText = new Text(statusOkString);
 		statusText.setFill(Color.GREEN);
 		VExternSpace paramsOkay = new VExternSpace(statusText, 7, 35);
 
@@ -208,8 +205,9 @@ class ParameterBuilder extends VBox {
 	 *            - error to add
 	 */
 	public void addParameterError(String error) {
+		errors.addFirst(error);
 		statusText.setFill(Color.RED);
-		statusText.setText(error);
+		statusText.setText(errors.peek());
 	}
 
 	/**
@@ -222,7 +220,13 @@ class ParameterBuilder extends VBox {
 	 *            - error to remove
 	 */
 	public void removeParameterError(String error) {
-
+		errors.remove(error);
+		if (errors.size() == 0) {
+			statusText.setFill(Color.GREEN);
+			statusText.setText(this.statusOkString);
+		} else {
+			statusText.setText(errors.peek());
+		}
 	}
 
 	/**
@@ -295,8 +299,8 @@ class ParameterEditor extends TitledPane {
 		AnchorPane exitPane = new AnchorPane();
 		exitPane.setPickOnBounds(false);
 		Button exitButton = new Button("X");
-		exitPane.setTopAnchor(exitButton, 0.0);
-		exitPane.setLeftAnchor(exitButton, 0.0);
+		AnchorPane.setTopAnchor(exitButton, 0.0);
+		AnchorPane.setLeftAnchor(exitButton, 0.0);
 		exitPane.getChildren().add(exitButton);
 
 		// style editor box
@@ -399,6 +403,12 @@ class ParameterEditor extends TitledPane {
  * @author ICT-2
  */
 class FormatString extends VBox {
+	// constants which represent different errors
+	private final String minErrorString = "Illegal: Min bound could not be parsed.";
+	private final String maxErrorString = "Illegal: Max bound could not be parsed.";
+	private final String replaceMeErrorString = "Illegal: Two replace-me numbers in one format string.";
+	private final String overlapErrorString = "Illegal: Min and max overlap.";
+
 	/**
 	 * Whether there is an error in the min field.
 	 */
@@ -422,17 +432,22 @@ class FormatString extends VBox {
 	/**
 	 * Min value for replace-me number.
 	 */
-	private Number min = null;
+	private BigDecimal min = null;
 
 	/**
 	 * Max value for replace-me number.
 	 */
-	private Number max = null;
+	private BigDecimal max = null;
 
 	/**
 	 * The format string.
 	 */
 	private String formatString;
+
+	/**
+	 * The parent parameter editor.
+	 */
+	private ParameterEditor parameterEditor;
 
 	/**
 	 * Constructs a format string with the given parameter editor.
@@ -442,6 +457,8 @@ class FormatString extends VBox {
 	 */
 	public FormatString(ParameterEditor parameterEditor) {
 		super(3);
+
+		this.parameterEditor = parameterEditor;
 
 		// delete button and text field
 		HBox withString = new HBox(2);
@@ -463,25 +480,54 @@ class FormatString extends VBox {
 		closeButton.setOnAction(new EventHandler<ActionEvent>() {
 			@Override
 			public void handle(ActionEvent event) {
+				removeAllErrors();
 				parameterEditor.removeFormatString(FormatString.this);
 			}
 		});
 		minField.textProperty().addListener(new ChangeListener<String>() {
 			@Override
 			public void changed(ObservableValue<? extends String> observable, String oldValue, String newValue) {
+				// clear errors if number blank
 				if (newValue.equals("")) {
-					if (FormatString.this.overlapError) {
-						FormatString.this.overlapError = false;
-						parameterEditor.getBuilder().removeParameterError("Illegal: Min and max overlap.");
-					}
+					FormatString.this.min = null;
 					if (FormatString.this.minError) {
 						FormatString.this.minError = false;
-						parameterEditor.getBuilder().removeParameterError("Illegal: Unparsable min value.");
+						parameterEditor.getBuilder().removeParameterError(minErrorString);
 					}
-					FormatString.this.min = null;
 				} else {
+					// attempt to parse number
 					try {
-						
+						min = new BigDecimal(newValue);
+						if (FormatString.this.minError) {
+							FormatString.this.minError = false;
+							parameterEditor.getBuilder().removeParameterError(minErrorString);
+						}
+					} catch (NumberFormatException nfe) {
+						FormatString.this.min = null;
+						if (!FormatString.this.minError) {
+							FormatString.this.minError = true;
+							parameterEditor.getBuilder().addParameterError(minErrorString);
+						}
+					}
+				}
+
+				// determine if there is an overlap error
+				if (min == null || max == null) {
+					if (FormatString.this.overlapError) {
+						FormatString.this.overlapError = false;
+						parameterEditor.getBuilder().removeParameterError(overlapErrorString);
+					}
+				} else {
+					if (min.compareTo(max) > 0) {
+						if (!FormatString.this.overlapError) {
+							FormatString.this.overlapError = true;
+							parameterEditor.getBuilder().addParameterError(overlapErrorString);
+						}
+					} else {
+						if (FormatString.this.overlapError) {
+							FormatString.this.overlapError = false;
+							parameterEditor.getBuilder().removeParameterError(overlapErrorString);
+						}
 					}
 				}
 			}
@@ -489,7 +535,49 @@ class FormatString extends VBox {
 		maxField.textProperty().addListener(new ChangeListener<String>() {
 			@Override
 			public void changed(ObservableValue<? extends String> observable, String oldValue, String newValue) {
+				// clear errors if number blank
+				if (newValue.equals("")) {
+					FormatString.this.max = null;
+					if (FormatString.this.maxError) {
+						FormatString.this.maxError = false;
+						parameterEditor.getBuilder().removeParameterError(maxErrorString);
+					}
+				} else {
+					// attempt to parse number
+					try {
+						max = new BigDecimal(newValue);
+						if (FormatString.this.maxError) {
+							FormatString.this.maxError = false;
+							parameterEditor.getBuilder().removeParameterError(maxErrorString);
+						}
+					} catch (NumberFormatException nfe) {
+						FormatString.this.max = null;
+						if (!FormatString.this.maxError) {
+							FormatString.this.maxError = true;
+							parameterEditor.getBuilder().addParameterError(maxErrorString);
+						}
+					}
+				}
 
+				// determine if there is an overlap error
+				if (FormatString.this.min == null || FormatString.this.max == null) {
+					if (FormatString.this.overlapError) {
+						FormatString.this.overlapError = false;
+						parameterEditor.getBuilder().removeParameterError(overlapErrorString);
+					}
+				} else {
+					if (FormatString.this.min.compareTo(FormatString.this.max) > 0) {
+						if (!FormatString.this.overlapError) {
+							FormatString.this.overlapError = true;
+							parameterEditor.getBuilder().addParameterError(overlapErrorString);
+						}
+					} else {
+						if (FormatString.this.overlapError) {
+							FormatString.this.overlapError = false;
+							parameterEditor.getBuilder().removeParameterError(overlapErrorString);
+						}
+					}
+				}
 			}
 		});
 		formatField.textProperty().addListener(new ChangeListener<String>() {
@@ -497,6 +585,7 @@ class FormatString extends VBox {
 			public void changed(ObservableValue<? extends String> observable, String oldValue, String newValue) {
 				FormatString.this.formatString = newValue;
 
+				// count replace-me numbers
 				int nums = 0;
 				for (String string : Parameter.REPLACABLES) {
 					if (!string.equals(Parameter.REPLACE_STRING)) {
@@ -507,25 +596,28 @@ class FormatString extends VBox {
 						}
 					}
 				}
+
+				// hide bounds if there are no replace-me numbers
 				if (nums == 0) {
+					removeAllErrors();
+					((TextField) minLabel.getNode()).setText("");
+					((TextField) maxLabel.getNode()).setText("");
 					bounds.getChildren().removeAll(minLabel, maxLabel);
 				} else {
 					if (!bounds.getChildren().contains(minLabel)) {
 						bounds.getChildren().addAll(minLabel, maxLabel);
 					}
 				}
+
+				// give error if there are multiple replace-me numbers
 				if (nums > 1) {
 					if (!FormatString.this.replaceMeError) {
-						formatField.setStyle("-fx-border-color: red");
-						parameterEditor.getBuilder()
-								.addParameterError("Illegal: Two replace-me numbers in one format string.");
+						parameterEditor.getBuilder().addParameterError(replaceMeErrorString);
 						FormatString.this.replaceMeError = true;
 					}
 				} else {
 					if (FormatString.this.replaceMeError) {
-						formatField.setStyle("-fx-border-color: transparent");
-						parameterEditor.getBuilder()
-								.removeParameterError("Illegal: Two replace-me numbers in one format string.");
+						parameterEditor.getBuilder().removeParameterError(replaceMeErrorString);
 						FormatString.this.replaceMeError = false;
 					}
 				}
@@ -535,6 +627,24 @@ class FormatString extends VBox {
 		// add children
 		withString.getChildren().addAll(closeButton, formatField);
 		getChildren().addAll(withString, bounds);
+	}
+
+	/**
+	 * Unregisters any errors associated with this format string.
+	 */
+	public void removeAllErrors() {
+		if (FormatString.this.minError) {
+			parameterEditor.getBuilder().removeParameterError(minErrorString);
+			FormatString.this.minError = false;
+		}
+		if (FormatString.this.maxError) {
+			parameterEditor.getBuilder().removeParameterError(maxErrorString);
+			FormatString.this.maxError = false;
+		}
+		if (FormatString.this.overlapError) {
+			parameterEditor.getBuilder().removeParameterError(replaceMeErrorString);
+			FormatString.this.overlapError = false;
+		}
 	}
 
 	/**
