@@ -59,6 +59,7 @@ class ExceptionLogger {
 	static void errorLogDialog(RuntimeException re, LocalDateTime now) {
 		System.out.println("The tester has encountered an exception.");
 		System.out.println("Save error log to jacoco output directory? (Y/n) ");
+		@SuppressWarnings("resource")
 		Scanner in = new Scanner(System.in);
 		if (!in.nextLine().equalsIgnoreCase("n")) {
 			if (!saveErrorLog(jacocoOutputDir, re, now)) {
