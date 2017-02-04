@@ -61,6 +61,7 @@ public class GUITestPackage {
 	/**
 	 * Synchronized list of outputs for this test.
 	 */
+	@SuppressWarnings("unchecked")
 	private List<Output> outputs = Collections.synchronizedList(new ArrayList<Output>());
 
 	/**
