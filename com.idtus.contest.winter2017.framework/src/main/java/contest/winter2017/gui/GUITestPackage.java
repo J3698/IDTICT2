@@ -2,7 +2,9 @@ package contest.winter2017.gui;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import contest.winter2017.Output;
 import contest.winter2017.Tester;
@@ -135,6 +137,83 @@ public class GUITestPackage {
 	}
 
 	/**
+	 * Returns whether user bounds are to be used.
+	 * 
+	 * @return true if user bounds are to be used, false if they are not
+	 */
+	public boolean hasUserTestBounds() {
+		return this.getMainPane().getParameterPane().hasUserTestBounds();
+	}
+
+	/**
+	 * Returns whether user bounds valid.
+	 * 
+	 * @return true if user bounds are valid, false if they are not
+	 */
+	public boolean hasValidUserTestBounds() {
+		ParameterPane pane = this.getMainPane().getParameterPane();
+		return (pane.getParameterBuilder().getCurrentError() == null);
+	}
+
+	/**
+	 * Returns user defined test bounds if they exist.
+	 * 
+	 * @return user defined test bounds or null if they are not defined
+	 */
+	public Map getUserTestBounds() {
+		if (this.getMainPane().getParameterPane().hasUserTestBounds()) {
+			ParameterBuilder builder = this.getMainPane().getParameterPane().getParameterBuilder();
+			List<ParameterEditor> editors = builder.getParameterEditors();
+			Map<Object, Object> parameters = new HashMap<Object, Object>();
+			if (builder.isDynamic()) {
+				for (ParameterEditor editor : editors) {
+					Map<Object, Object> parameter = new HashMap<Object, Object>();
+					// put dynamic options
+					parameter.put("optional", new Boolean(editor.isOptional()));
+
+					List<FormatString> formatStrings = editor.getFormatStrings();
+					if (formatStrings.size() == 1) {
+						// handle non enumerations
+						FormatString formatString = formatStrings.get(0);
+						parameter.put("format", formatString.getFormatString());
+						parameter.put("min", formatString.getMin());
+						parameter.put("max", formatString.getMax());
+						parameters.put(editor.getRegexKey(), parameter);
+					} else {
+						// handle enumerations
+						List<String> enumeratedValues = new ArrayList<String>();
+						List<Object> minimums = new ArrayList<Object>();
+						List<Object> maximums = new ArrayList<Object>();
+						for (FormatString formatString : formatStrings) {
+							enumeratedValues.add(formatString.getFormatString());
+							minimums.add(formatString.getMin());
+							maximums.add(formatString.getMax());
+						}
+						parameter.put("enumerated values", enumeratedValues);
+						parameter.put("min", minimums);
+						parameter.put("max", maximums);
+						parameters.put(editor.getRegexKey(), parameter);
+					}
+				}
+			} else {
+				List<Map> fixedParameterList = new ArrayList<Map>();
+				for (ParameterEditor editor : editors) {
+					Map<Object, Object> parameter = new HashMap<Object, Object>();
+					FormatString formatString = editor.getFormatStrings().get(0);
+					parameter.put("format", formatString.getFormatString());
+					parameter.put("min", formatString.getMin());
+					parameter.put("max", formatString.getMax());
+					fixedParameterList.add(parameter);
+				}
+				parameters.put("fixed parameter list", fixedParameterList);
+			}
+			return parameters;
+		} else {
+			return null;
+		}
+	}
+
+	/**
 	 * Returns this test's TestListPane.
 	 * 
 	 * @return TestListPane parent
@@ -216,8 +295,8 @@ class TestInfo extends VBox {
 			 * <p>
 			 * If required tests are not completed, progress bar shows the
 			 * percent completed. If required tests are completed, but the time
-			 * goal has not been fulfilled, the progress bar shows
-			 * indeterminate.
+			 * goal has not been fulfilled, the progress bar shows indeterminate
+			 * (bounces back and forth).
 			 * 
 			 * @param observable
 			 *            - percent complete being obsesrved
