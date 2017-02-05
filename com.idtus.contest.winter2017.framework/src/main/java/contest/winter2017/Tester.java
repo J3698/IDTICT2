@@ -439,12 +439,12 @@ public class Tester {
 		TestGenerator generator = new TestGenerator(this.parameterFactory, getOutputs());
 		for (int i = 0; i < this.bbTests; i++) {
 			Object[] params = generator.nextTest();
-			// instrumentAndExecuteCode(params);
+			instrumentAndExecuteCode(params);
 		}
 
 		while (minutesPassed(start) < this.timeGoal) {
 			Object[] params = generator.nextTest();
-			// instrumentAndExecuteCode(params);
+			instrumentAndExecuteCode(params);
 		}
 	}
 
@@ -557,7 +557,7 @@ public class Tester {
 				command += SecurityWatchdog.class.getCanonicalName();
 				command += " \"" + this.jarToTestPath + "\" " + this.toolChain;
 			} else {
-				command += " -javaagent:" + this.jacocoAgentJarPath + "=destfile=" + this.jacocoOutputFilePath;
+				command += " -javaagent:" + this.jacocoAgentJarPath + "=destfile=" + this.jacocoOutputFilePath + "temp";
 				command += " -cp \"" + this.watchdogPath + "\" ";
 				command += SecurityWatchdog.class.getCanonicalName();
 				command += " \"" + this.jarToTestPath + "\" " + this.toolChain;

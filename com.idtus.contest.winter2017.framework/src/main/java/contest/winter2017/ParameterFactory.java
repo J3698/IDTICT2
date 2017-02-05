@@ -1,7 +1,6 @@
 package contest.winter2017;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -42,23 +41,18 @@ import java.util.Set;
 public class ParameterFactory {
 
 	/**
-	 * input map associated with a tests inputs
+	 * Input map associated with a test's inputs.
 	 */
 	@SuppressWarnings("rawtypes")
 	private Map inputMap;
 
 	/**
-	 * map to map a parameter to the parameters can come after it
+	 * Map to map a parameter to the parameters can come after it.
 	 */
 	private Map<String, Object> dependentParametersMap;
 
 	/**
-	 * ParameterList representing required parameters
-	 */
-	private List<Parameter> requiredParamList;
-
-	/**
-	 * if this jar takes a fixed parameter list
+	 * Whether the jar to test takes a fixed parameter list.
 	 */
 	private boolean bounded;
 
@@ -88,6 +82,7 @@ public class ParameterFactory {
 			printMap(dependentParametersMap, "$: ");
 		}
 		System.out.println("______DEBUG______");
+
 	}
 
 	/**
@@ -150,8 +145,9 @@ public class ParameterFactory {
 	 * fixed parameters. For more information about dependent and fixed
 	 * parameters, see explanation at the top of this class. We are essentially
 	 * determining the potential parameters for a given index, and that index is
-	 * determined by Parameters in previousParameterValues (hence, we call this
-	 * iteratively and build the definition).
+	 * determined by the values in previous ParameterValues (hence, we call this
+	 * iteratively and build the definition). This code is certainly fair game
+	 * for change.
 	 * 
 	 * @param previousParameterValues
 	 *            - since this method is used iteratively to build up the
@@ -161,50 +157,32 @@ public class ParameterFactory {
 	 *         each Parameter
 	 */
 	@SuppressWarnings({ "rawtypes", "unchecked" })
-	public List<Parameter> getNext(List<Parameter> previousParameterValues) {
+	public List<Parameter> getNext(List<String> previousParameterValues) {
 
-		// we are returning all possible parameters for a given index
+		// ultimately we are returning all possible parameters for a given index
+		// (since we could be dealing with dependent parameters
+		// and enumeration parameters)
 		List<Parameter> possibleParamsList = new ArrayList<Parameter>();
 
-		// keep track of used parameters
-		Set<Parameter> oldParams = new HashSet<Parameter>();
-		for (Parameter parameter : previousParameterValues) {
-			oldParams.add(parameter);
+		StringBuffer sb = new StringBuffer();
+		for (String paramString : previousParameterValues) {
+			sb.append(" " + paramString);
 		}
+		String currentParamsString = sb.toString();
 
 		// process all dependent parameters
 		if (this.dependentParametersMap != null) {
 
 			for (Map.Entry<String, Object> mapEntry : this.dependentParametersMap.entrySet()) {
-				boolean validParam = false;
 
-				// if this parameter is the first paramter of the parameter list
-				if (mapEntry.getKey().isEmpty() && previousParameterValues.size() == 0) {
-					validParam = true;
-				} else {
-					// if this parameter's key is in the parameter list
-					for (Parameter p : previousParameterValues) {
-						if (("" + p).matches(mapEntry.getKey())) {
-							validParam = true;
-							break;
-						}
-					}
-				}
-
-				// check if the one or more parameters already used
-				if (validParam) {
+				if (currentParamsString.matches(mapEntry.getKey())
+						|| (mapEntry.getKey().isEmpty() && currentParamsString.isEmpty())) {
 					Object obj = mapEntry.getValue();
 					if (obj instanceof Map) {
-						Parameter p = new Parameter((Map) mapEntry.getValue());
-						if (!oldParams.contains(p)) {
-							possibleParamsList.add(new Parameter((Map) mapEntry.getValue()));
-						}
+						possibleParamsList.add(new Parameter((Map) mapEntry.getValue()));
 					} else {
 						for (Map paramMap : (List<Map>) obj) {
-							Parameter p = new Parameter(paramMap);
-							if (!oldParams.contains(p)) {
-								possibleParamsList.add(new Parameter(paramMap));
-							}
+							possibleParamsList.add(new Parameter(paramMap));
 						}
 					}
 				}
@@ -214,6 +192,7 @@ public class ParameterFactory {
 			// parameters
 		} else {
 			List fixedParamList = (List) this.inputMap.get("fixed parameter list");
+
 			if (previousParameterValues.size() < fixedParamList.size()) {
 				Map paramMap = (Map) fixedParamList.get(previousParameterValues.size());
 				possibleParamsList.add(new Parameter(paramMap));
@@ -222,38 +201,5 @@ public class ParameterFactory {
 
 		// return the list of possible parameters for this index
 		return possibleParamsList;
-	}
-
-	/**
-	 * Method to return required parameters as a ParameterList
-	 * 
-	 * @return required ParameterList
-	 */
-	public List<Parameter> requiredParamLists() {
-		if (this.requiredParamList != null) {
-			return this.requiredParamList;
-		} else {
-			this.requiredParamList = new ArrayList<Parameter>();
-			boolean moreParams = true;
-			while (moreParams) {
-				moreParams = false;
-				List<Parameter> possibleParameters = getNext(requiredParamList);
-				// add non-optional parameters
-				for (Parameter parameter : possibleParameters) {
-					if (!parameter.isOptional()) {
-						moreParams = true;
-						if (parameter.isEnumeration()) {
-							parameter = parameter.getSubParameters().get(0);
-							requiredParamList.add(parameter);
-						} else {
-							requiredParamList.add(parameter);
-						}
-
-					}
-				}
-			}
-
-			return this.requiredParamList;
-		}
 	}
 }
