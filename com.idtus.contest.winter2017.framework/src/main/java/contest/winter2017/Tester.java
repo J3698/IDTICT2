@@ -12,10 +12,13 @@ import java.net.JarURLConnection;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.jar.Attributes;
 
 import org.jacoco.core.analysis.Analyzer;
@@ -29,7 +32,6 @@ import org.jacoco.core.data.ISessionInfoVisitor;
 import org.jacoco.core.data.SessionInfo;
 import org.jacoco.core.tools.ExecFileLoader;
 
-import edu.emory.mathcs.backport.java.util.Collections;
 import javafx.beans.property.SimpleDoubleProperty;
 
 /**
@@ -148,6 +150,9 @@ public class Tester {
 	 */
 	private int failCount = 0;
 
+	/**
+	 * Percent of testing completed.
+	 */
 	private SimpleDoubleProperty percentDone = new SimpleDoubleProperty(0);
 
 	/**
@@ -196,8 +201,8 @@ public class Tester {
 	 *         if it does not
 	 */
 	@SuppressWarnings({ "unchecked", "rawtypes" })
-	public boolean init(String initJarToTestPath, String initJacocoOutputDirPath, String initJacocoAgentJarPath,
-			String initbbTests, String initTimeGoal, String initToolChain) {
+	public boolean init(Map parameterBounds, String initJarToTestPath, String initJacocoOutputDirPath,
+			String initJacocoAgentJarPath, String initbbTests, String initTimeGoal, String initToolChain) {
 
 		this.watchdogPath = Tester.class.getResource("Tester.class").getPath();
 		this.watchdogPath = this.watchdogPath.replace("contest/winter2017/Tester.class", "");
@@ -284,52 +289,60 @@ public class Tester {
 			return false;
 		}
 
-		// load the TestBounds class from the jar under test
-		String mainClassTestBoundsName = mainClassName + "TestBounds";
-		Class<?> mainClassTestBounds = null;
-		try {
-			mainClassTestBounds = cl.loadClass(mainClassTestBoundsName);
-		} catch (ClassNotFoundException cnfe) {
-			initError("Cannot test jar without a [MainClassName]TestBounds.class file.");
-			return false;
-		}
-
-		// use reflection to invoke the TestBounds class to get the usage
-		// information from the jar
-		Method testBoundsMethod = null;
-		try {
-			testBoundsMethod = mainClassTestBounds.getMethod("testBounds");
-		} catch (NoSuchMethodException nsme) {
-			initError("Could not get testBounds method from [MainClassName]TestBounds class.");
-			return false;
-		}
-		Object mainClassTestBoundsInstance = null;
-		try {
-			mainClassTestBoundsInstance = mainClassTestBounds.newInstance();
-		} catch (InstantiationException | IllegalAccessException e) {
-			initError("Could not instantiate [MainClassName]TestBounds class from jar to test.");
-			return false;
-		}
-
-		// get test bounds
+		// only get test bounds if they were not supplied
+		this.predefinedTests = new ArrayList<Test>();
 		Map<String, Object> mainClassTestBoundsMap = null;
-		try {
-			mainClassTestBoundsMap = (Map<String, Object>) testBoundsMethod.invoke(mainClassTestBoundsInstance);
-		} catch (ExceptionInInitializerError | IllegalAccessException | IllegalArgumentException
-				| InvocationTargetException e) {
-			initError("Could not invoke method testBounds from [MainClassName]TestBounds class.");
-			return false;
+		if (parameterBounds == null) {
+			// load the TestBounds class from the jar under test
+			String mainClassTestBoundsName = mainClassName + "TestBounds";
+			Class<?> mainClassTestBounds = null;
+			try {
+				mainClassTestBounds = cl.loadClass(mainClassTestBoundsName);
+			} catch (ClassNotFoundException cnfe) {
+				initError("Cannot test jar without a [MainClassName]TestBounds.class file.");
+				return false;
+			}
+
+			// use reflection to invoke the TestBounds class to get the usage
+			// information from the jar
+			Method testBoundsMethod = null;
+			try {
+				testBoundsMethod = mainClassTestBounds.getMethod("testBounds");
+			} catch (NoSuchMethodException nsme) {
+				initError("Could not get testBounds method from [MainClassName]TestBounds class.");
+				return false;
+			}
+			Object mainClassTestBoundsInstance = null;
+			try {
+				mainClassTestBoundsInstance = mainClassTestBounds.newInstance();
+			} catch (InstantiationException | IllegalAccessException e) {
+				initError("Could not instantiate [MainClassName]TestBounds class from jar to test.");
+				return false;
+			}
+
+			// get test bounds
+			try {
+				mainClassTestBoundsMap = (Map<String, Object>) testBoundsMethod.invoke(mainClassTestBoundsInstance);
+			} catch (ExceptionInInitializerError | IllegalAccessException | IllegalArgumentException
+					| InvocationTargetException e) {
+				initError("Could not invoke method testBounds from [MainClassName]TestBounds class.");
+				return false;
+			}
+
+			// get a list of basic tests from the TestBounds class
+			List testList = (List) mainClassTestBoundsMap.get("tests");
+			for (Object inTest : testList) {
+				this.predefinedTests.add(new Test((Map) inTest));
+			}
+		}
+
+		// use user supplied bounds if supplied
+		if (parameterBounds != null) {
+			mainClassTestBoundsMap = parameterBounds;
 		}
 
 		// instantiating a new Parameter Factory using the Test Bounds map
 		this.parameterFactory = new ParameterFactory(mainClassTestBoundsMap);
-
-		// get a list of basic tests from the TestBounds class
-		this.predefinedTests = new ArrayList<Test>();
-		List testList = (List) mainClassTestBoundsMap.get("tests");
-		for (Object inTest : testList) {
-			this.predefinedTests.add(new Test((Map) inTest));
-		}
 
 		return true;
 	}
@@ -953,6 +966,79 @@ public class Tester {
 	 * (!this.toolChain) { System.out.println("\n");
 	 * System.out.println(generateDetailedCodeCoverageResults()); } }
 	 */
+}
+
+/**
+ * Class to read output from a process without causing the input stream to
+ * block.
+ * 
+ * @author ICT-2
+ */
+class ProcessStreamReader extends Thread {
+	/**
+	 * Inputstream to read from.
+	 */
+	private InputStream iStream;
+
+	/**
+	 * Boolean whether this thread should stop due to time constraints.
+	 */
+	private AtomicBoolean timeUp;
+
+	/**
+	 * List of lines read from the proess.
+	 */
+	private List<String> lines;
+
+	/**
+	 * Constructs a proces stream reader with the given input stream.
+	 * 
+	 * @param iStream
+	 *            - input stream to read from
+	 */
+	public ProcessStreamReader(InputStream iStream) {
+		this.iStream = iStream;
+		this.timeUp = new AtomicBoolean(false);
+		this.lines = Collections.synchronizedList(new LinkedList<String>());
+	}
+
+	/**
+	 * Reads from the given input stream.
+	 * <p>
+	 * Stops reading once the stream ends or time is up.
+	 */
+	@Override
+	public void run() {
+		InputStreamReader iReader = new InputStreamReader(this.iStream);
+		BufferedReader bReader = new BufferedReader(iReader);
+		String line;
+		try {
+			while ((line = bReader.readLine()) != null && !this.timeUp.get()) {
+				lines.add(line);
+			}
+		} catch (Exception e) {
+		}
+	}
+
+	/**
+	 * Notifies the process stream reader that time is up.
+	 */
+	public void endProcess() {
+		this.timeUp.set(true);
+	}
+
+	/**
+	 * Gets and removes the next line from the proess stream reader.
+	 * 
+	 * @return the next line from the process stream reader
+	 */
+	public String pollLine() {
+		if (lines.isEmpty()) {
+			return null;
+		} else {
+			return lines.remove(0);
+		}
+	}
 }
 
 /**
