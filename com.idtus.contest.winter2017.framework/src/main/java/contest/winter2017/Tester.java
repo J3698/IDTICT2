@@ -588,7 +588,7 @@ public class Tester {
 			stdErrReader.start();
 
 			long start = System.currentTimeMillis();
-			while ((System.currentTimeMillis() - start) / 1000.0 < 2) {
+			while ((System.currentTimeMillis() - start) < this.maxMillisPerTest) {
 				String outLine = stdOutReader.pollLine();
 				if (outLine != null) {
 					if (outLine.equals("<<WATCHDOG_OUTPUT_START>>")) {
@@ -606,7 +606,12 @@ public class Tester {
 						stdErrBuff.append(errLine + "\n");
 					}
 				}
+
+				if (stdErrReader.isDone() && stdOutReader.isDone()) {
+					break;
+				}
 			}
+
 			stdErrReader.endProcess();
 			stdOutReader.endProcess();
 
@@ -968,6 +973,11 @@ class ProcessStreamReader extends Thread {
 	private AtomicBoolean timeUp;
 
 	/**
+	 * Boolean whether this thread is done reading.
+	 */
+	private AtomicBoolean isDone;
+
+	/**
 	 * List of lines read from the proess.
 	 */
 	private List<String> lines;
@@ -981,6 +991,7 @@ class ProcessStreamReader extends Thread {
 	public ProcessStreamReader(InputStream iStream) {
 		this.iStream = iStream;
 		this.timeUp = new AtomicBoolean(false);
+		this.isDone = new AtomicBoolean(false);
 		this.lines = Collections.synchronizedList(new LinkedList<String>());
 	}
 
@@ -1000,6 +1011,7 @@ class ProcessStreamReader extends Thread {
 			}
 		} catch (Exception e) {
 		}
+		this.isDone.set(true);
 	}
 
 	/**
@@ -1020,6 +1032,15 @@ class ProcessStreamReader extends Thread {
 		} else {
 			return lines.remove(0);
 		}
+	}
+
+	/**
+	 * Returns whether this process stream reader is done.
+	 * 
+	 * @return true if this process stream reader is done, or false if not.
+	 */
+	public boolean isDone() {
+		return this.isDone.get();
 	}
 }
 

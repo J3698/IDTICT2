@@ -56,7 +56,6 @@ public class TestGenerator {
 	 * Another idea: Test simple cases, dedicate more time to those which cover
 	 * more code (using Jacoco).
 	 * 
-	 * 
 	 * @return an array of objects which represents parameters to be tested.
 	 */
 	public Object[] nextTest() {
