@@ -32,14 +32,18 @@ public class TestGenerator {
 	}
 
 	/**
-	 * Method to get the next test to be run. Currently returns the same test
-	 * every time for a given jar.
+	 * Gets the next test to be run.
+	 * <p>
+	 * Currently returns the same test every time for a given jar.
 	 * 
 	 * Some algo ideas:
 	 * https://www.tutorialspoint.com/software_testing_dictionary/black_box_testing.htm
 	 * 
 	 * Another idea: Test simple cases, dedicate more time to those which cover
 	 * more code (using Jacoco).
+	 * 
+	 * When using jacoco output, see generateSummaryCodeCoverageResults() in
+	 * Tester.java for reference.
 	 * 
 	 * @return an array of type String/StringBuffer/etc. which represents
 	 *         parameters to be tested.
