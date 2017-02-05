@@ -137,8 +137,8 @@ public class Main {
 						// the Tester class contains all of the logic for the
 						// testing framework
 						Tester tester = new Tester();
-						boolean init = tester.init(jarToTestPath, jacocoOutputDirPath, jacocoAgentJarPath, bbTests,
-								timeGoal, toolChain);
+						boolean init = tester.init(null, jarToTestPath, jacocoOutputDirPath, jacocoAgentJarPath,
+								bbTests, timeGoal, toolChain);
 						if (init) {
 							// implemented by IDT
 							tester.executeBasicTests();

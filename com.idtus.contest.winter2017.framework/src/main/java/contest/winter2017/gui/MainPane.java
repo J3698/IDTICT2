@@ -1,6 +1,7 @@
 package contest.winter2017.gui;
 
 import java.io.File;
+import java.util.Map;
 import java.util.Set;
 
 import contest.winter2017.Output;
@@ -397,6 +398,7 @@ class RunPane extends BorderPane {
 				} else {
 					alert.setContentText("Invalid jar path.");
 					alert.showAndWait();
+					return;
 				}
 
 				String outputPath = null;
@@ -405,6 +407,7 @@ class RunPane extends BorderPane {
 				} else {
 					alert.setContentText("Invalid output path.");
 					alert.showAndWait();
+					return;
 				}
 
 				String agentPath = null;
@@ -413,6 +416,7 @@ class RunPane extends BorderPane {
 				} else {
 					alert.setContentText("Invalid agent path.");
 					alert.showAndWait();
+					return;
 				}
 
 				String bbTests = null;
@@ -421,6 +425,7 @@ class RunPane extends BorderPane {
 				} else {
 					alert.setContentText("Invalid number of tests.");
 					alert.showAndWait();
+					return;
 				}
 
 				String timeGoal = null;
@@ -429,12 +434,25 @@ class RunPane extends BorderPane {
 				} else {
 					alert.setContentText("Invalid time goal.");
 					alert.showAndWait();
+					return;
+				}
+
+				Map testBounds = null;
+				if (RunPane.this.test.hasUserTestBounds()) {
+					if (!RunPane.this.test.hasValidUserTestBounds()) {
+						alert.setContentText("Invalid user defined parameter bounds.");
+						alert.showAndWait();
+						return;
+					} else {
+						testBounds = RunPane.this.test.getUserTestBounds();
+					}
 				}
 
 				String toolChain = "false";
 
 				// initialize and run tester
-				if (!RunPane.this.test.getTester().init(jarPath, outputPath, agentPath, bbTests, timeGoal, toolChain)) {
+				if (!RunPane.this.test.getTester().init(testBounds, jarPath, outputPath, agentPath, bbTests, timeGoal,
+						toolChain)) {
 					alert.setContentText("Unknown initialization error.");
 					alert.showAndWait();
 					runButton.setDisable(false);
