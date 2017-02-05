@@ -203,13 +203,22 @@ class RunPane extends BorderPane {
 	 * Int default space between elements.
 	 */
 	private static final int DEFAULT_SPACE = 10;
+
+	/**
+	 * Test for this RunPane.
+	 */
+	private GUITestPackage test;
+
+	// textfieds for several settings
 	private TextField name;
 	private TextField toRun;
 	private TextField timeGoal;
+
+	// file paths for several settings
 	private File outputPathFile = null;
 	private File jacocoPathFile = null;
-	private GUITestPackage test;
 
+	// whether or not several settings are valid
 	private boolean validTimeGoal;
 	private boolean validTestNumber;
 	private boolean validOutputPath;
@@ -266,6 +275,51 @@ class RunPane extends BorderPane {
 
 		// track whether name is valid
 		name.setStyle("-fx-border-color: green;");
+
+		// track whether number of tests to run is valid
+		toRun.setStyle("-fx-border-color: green;");
+		this.validTestNumber = true;
+
+		// track whether time goal is valid
+		timeGoal.setStyle("-fx-border-color: green;");
+		this.validTimeGoal = true;
+
+		// default path for jacoco output
+		File defaultFile = new File(".");
+		if (defaultFile.exists()) {
+			outputPathFile = defaultFile;
+			outputPath.setStyle("-fx-border-color: green;");
+			outputPath.setText("Current Folder");
+			this.validOutputPath = true;
+		}
+
+		// default path for jacoco agent
+		defaultFile = new File("C:\\idt_contest\\jacoco\\lib\\jacocoagent.jar");
+		if (defaultFile.exists()) {
+			this.validJacocoPath = true;
+			agentPath.setStyle("-fx-border-color: green;");
+			this.jacocoPathFile = defaultFile;
+			outputPath.setText(clipName(defaultFile.getAbsolutePath()));
+		}
+
+		addHandlers(outputPath, agentPath, runButton);
+
+		box.getChildren().addAll(jarNameSpacer, nameInput, testsToRunInput, timeGoalInput);
+		box.getChildren().addAll(outputPathButton, agentPathButton, runButtonSpacer);
+		setCenter(box);
+	}
+
+	/**
+	 * Adds handlers to this component.
+	 * 
+	 * @param outputPath
+	 *            - componen to add handlers to
+	 * @param agentPath
+	 *            - componen to add handlers to
+	 * @param runButton
+	 *            - componen to add handlers to
+	 */
+	public void addHandlers(Button outputPath, Button agentPath, Button runButton) {
 		name.textProperty().addListener(new ChangeListener<String>() {
 			@Override
 			public void changed(ObservableValue<? extends String> arg0, String oldVal, String newVal) {
@@ -281,9 +335,6 @@ class RunPane extends BorderPane {
 			}
 		});
 
-		// track whether number of tests to run is valid
-		toRun.setStyle("-fx-border-color: green;");
-		this.validTestNumber = true;
 		toRun.textProperty().addListener(new ChangeListener<String>() {
 			@Override
 			public void changed(ObservableValue<? extends String> arg0, String oldVal, String newVal) {
@@ -304,9 +355,6 @@ class RunPane extends BorderPane {
 			}
 		});
 
-		// track whether time goal is valid
-		timeGoal.setStyle("-fx-border-color: green;");
-		this.validTimeGoal = true;
 		timeGoal.textProperty().addListener(new ChangeListener<String>() {
 			@Override
 			public void changed(ObservableValue<? extends String> arg0, String oldVal, String newVal) {
@@ -328,15 +376,6 @@ class RunPane extends BorderPane {
 			}
 		});
 
-		// default path for jacoco output
-		File defaultFile = new File(".");
-		if (defaultFile.exists()) {
-			outputPathFile = defaultFile;
-			outputPath.setStyle("-fx-border-color: green;");
-			outputPath.setText("Current Folder");
-			this.validOutputPath = true;
-		}
-
 		// get a directory for the jacoco output path
 		outputPath.setOnAction(new EventHandler<ActionEvent>() {
 			@Override
@@ -353,15 +392,6 @@ class RunPane extends BorderPane {
 				}
 			}
 		});
-
-		// default path for jacoco agent
-		defaultFile = new File("C:\\idt_contest\\jacoco\\lib\\jacocoagent.jar");
-		if (defaultFile.exists()) {
-			this.validJacocoPath = true;
-			agentPath.setStyle("-fx-border-color: green;");
-			this.jacocoPathFile = defaultFile;
-			outputPath.setText(clipName(defaultFile.getAbsolutePath()));
-		}
 
 		// get a jacoco agent jar
 		agentPath.setOnAction(new EventHandler<ActionEvent>() {
@@ -461,10 +491,6 @@ class RunPane extends BorderPane {
 				}
 			}
 		});
-
-		box.getChildren().addAll(jarNameSpacer, nameInput, testsToRunInput, timeGoalInput);
-		box.getChildren().addAll(outputPathButton, agentPathButton, runButtonSpacer);
-		setCenter(box);
 	}
 
 	/**

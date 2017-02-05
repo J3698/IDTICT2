@@ -101,6 +101,21 @@ class TestListPane extends ScrollPane {
 		Text drag = new Text("Or Drag and Drop Jar");
 		drag.setFont(new Font(10));
 
+		addHandlers(addButton, adder);
+
+		adder.getChildren().addAll(new VExternSpace(addButton, 13, 4), new VExternSpace(drag, 4, 13));
+		this.contentPane.getChildren().add(adder);
+	}
+
+	/**
+	 * Adds handlers to this component.
+	 * 
+	 * @param addButton
+	 *            - component to add handlers to
+	 * @param adder
+	 *            - component to add handlers to
+	 */
+	public void addHandlers(Button addButton, VBox adder) {
 		// manually select a jar
 		addButton.setOnAction(new EventHandler<ActionEvent>() {
 			@Override
@@ -165,9 +180,6 @@ class TestListPane extends ScrollPane {
 				event.consume();
 			}
 		});
-
-		adder.getChildren().addAll(new VExternSpace(addButton, 13, 4), new VExternSpace(drag, 4, 13));
-		this.contentPane.getChildren().add(adder);
 	}
 
 	/**

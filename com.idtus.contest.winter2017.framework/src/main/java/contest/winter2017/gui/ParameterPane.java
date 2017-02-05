@@ -200,6 +200,23 @@ class ParameterBuilder extends VBox {
 		Button newParamButton = new Button("Add Parameter");
 		VExternSpace newSpacer = new VExternSpace(newParamButton, 10, 0);
 
+		addHandlers(newParamButton, fixedButton, dynamicButton);
+
+		// add children
+		getChildren().addAll(paramsOkay, typeText, typeBoxSpace, helpPane, params, newSpacer);
+	}
+
+	/**
+	 * Adds handlers to this component.
+	 * 
+	 * @param newParamButton
+	 *            - component to add handlers to
+	 * @param fixedButton
+	 *            - component to add handlers to
+	 * @param dynamicButton
+	 *            - component to add handlers to
+	 */
+	public void addHandlers(Button newParamButton, ToggleButton fixedButton, ToggleButton dynamicButton) {
 		// add handlers
 		newParamButton.setOnAction(new EventHandler<ActionEvent>() {
 			@Override
@@ -232,9 +249,6 @@ class ParameterBuilder extends VBox {
 				}
 			}
 		});
-
-		// add children
-		getChildren().addAll(paramsOkay, typeText, typeBoxSpace, helpPane, params, newSpacer);
 	}
 
 	/**
@@ -425,6 +439,27 @@ class ParameterEditor extends TitledPane {
 
 		Button newFormatString = new Button("Add Format String");
 
+		addHandlers(newFormatString, exitButton, optional, keyField);
+
+		// add children
+		content.getChildren().addAll(initialSpacer, newFormatString);
+		container.getChildren().addAll(content, exitPane);
+		setContent(container);
+	}
+
+	/**
+	 * Adds handlers to this component.
+	 * 
+	 * @param newFormatString
+	 *            - component to add handlers to
+	 * @param exitButton
+	 *            - component to add handlers to
+	 * @param optional
+	 *            - component to add handlers to
+	 * @param keyField
+	 *            - component to add handlers to
+	 */
+	public void addHandlers(Button newFormatString, Button exitButton, CheckBox optional, TextField keyField) {
 		// handlers
 		newFormatString.setOnAction(new EventHandler<ActionEvent>() {
 			@Override
@@ -468,11 +503,6 @@ class ParameterEditor extends TitledPane {
 				}
 			}
 		});
-
-		// add children
-		content.getChildren().addAll(initialSpacer, newFormatString);
-		container.getChildren().addAll(content, exitPane);
-		setContent(container);
 	}
 
 	/**
@@ -669,6 +699,21 @@ class FormatString extends VBox {
 	private ParameterEditor parameterEditor;
 
 	/**
+	 * Box for holding replace-me number bounds.
+	 */
+	private VBox bounds;
+
+	/**
+	 * Labeled text field for min bound of replace-me numbers
+	 */
+	private LabeledNode minLabel;
+
+	/**
+	 * Labeled text field for max bound of replace-me numbers
+	 */
+	private LabeledNode maxLabel;
+
+	/**
 	 * Constructs a format string with the given parameter editor.
 	 * 
 	 * @param parameterEditor
@@ -689,14 +734,28 @@ class FormatString extends VBox {
 		formatField.setPrefColumnCount(20);
 
 		// min and max fields for number replace-mes
-		VBox bounds = new VBox();
+		bounds = new VBox();
 		minField = new TextField();
 		minField.setPrefColumnCount(7);
-		LabeledNode minLabel = new LabeledNode("Min", minField);
+		minLabel = new LabeledNode("Min", minField);
 		maxField = new TextField();
 		maxField.setPrefColumnCount(7);
-		LabeledNode maxLabel = new LabeledNode("Max", maxField);
+		maxLabel = new LabeledNode("Max", maxField);
 
+		addHandlers(closeButton);
+
+		// add children
+		withString.getChildren().addAll(closeButton, formatField);
+		getChildren().addAll(withString, bounds);
+	}
+
+	/**
+	 * Adds handlers to this component.
+	 * 
+	 * @param closeButton
+	 *            - component to add handlers to
+	 */
+	public void addHandlers(Button closeButton) {
 		// handlers
 		closeButton.setOnAction(new EventHandler<ActionEvent>() {
 			@Override
@@ -820,8 +879,8 @@ class FormatString extends VBox {
 				// hide bounds if there are no replace-me numbers
 				if (nums == 0) {
 					removeAllErrors();
-					((TextField) minLabel.getNode()).setText("");
-					((TextField) maxLabel.getNode()).setText("");
+					minField.setText("");
+					maxField.setText("");
 					bounds.getChildren().removeAll(minLabel, maxLabel);
 				} else {
 					if (!bounds.getChildren().contains(minLabel)) {
@@ -843,10 +902,6 @@ class FormatString extends VBox {
 				}
 			}
 		});
-
-		// add children
-		withString.getChildren().addAll(closeButton, formatField);
-		getChildren().addAll(withString, bounds);
 	}
 
 	/**
