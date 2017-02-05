@@ -552,7 +552,7 @@ public class Tester {
 
 			if (runningFromJar()) {
 				System.out.println("Running from Jar.");
-				command += " -javaagent:" + this.jacocoAgentJarPath + "=destfile=" + this.jacocoOutputFilePath;
+				command += " -javaagent:" + this.jacocoAgentJarPath + "=destfile=" + this.jacocoOutputFilePath + "temp";
 				command += " -cp" + " com.idtus.contest.winter2017.framework.jar ";
 				command += SecurityWatchdog.class.getCanonicalName();
 				command += " \"" + this.jarToTestPath + "\" " + this.toolChain;
@@ -617,9 +617,7 @@ public class Tester {
 			}
 			output.setStdErrString(stdErrBuff.toString());
 
-		} catch (
-
-		IOException e) {
+		} catch (IOException e) {
 			if (!this.toolChain) {
 				System.out.println("ERROR: IOException has prevented execution of the command: " + command);
 			}
@@ -632,6 +630,23 @@ public class Tester {
 			e.printStackTrace();
 			return null;
 		}
+
+		CoverageBuilder builder;
+		try {
+			ExecFileLoader loader = new ExecFileLoader();
+			loader.load(new File(this.jacocoOutputFilePath + "temp"));
+			loader.save(new File(this.jacocoOutputFilePath), true);
+			builder = new CoverageBuilder();
+			Analyzer analyzer = new Analyzer(loader.getExecutionDataStore(), builder);
+			analyzer.analyzeAll(new File(this.jarToTestPath));
+		} catch (IOException e) {
+			if (!this.toolChain) {
+				System.out.println("ERROR: Unable to save and load Jacoco output.");
+			}
+			e.printStackTrace();
+			return null;
+		}
+		output.setCoverageBuilder(builder);
 
 		this.outputs.add(output);
 		this.exceptionSet.addAll(output.getExceptions());
