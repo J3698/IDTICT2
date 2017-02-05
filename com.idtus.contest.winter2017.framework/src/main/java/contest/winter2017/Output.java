@@ -8,6 +8,8 @@ import java.util.StringTokenizer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.jacoco.core.analysis.CoverageBuilder;
+
 /**
  * Class to hold output associated with a given test run. Output includes
  * standard err, standard out, and permissions requested during a test.
@@ -32,6 +34,11 @@ public class Output {
 	 * String of the standard error associated with a given test run.
 	 */
 	private String stdErrString = null;
+
+	/**
+	 * Coeverage builder associated with a given test run.
+	 */
+	private CoverageBuilder coverageBuilder;
 
 	/**
 	 * HashMap representing how many times different permissions have been used
@@ -173,5 +180,24 @@ public class Output {
 	 */
 	public void setStdErrString(String stdErrString) {
 		this.stdErrString = stdErrString;
+	}
+
+	/**
+	 * Returns this outputs coverage builder.
+	 * 
+	 * @return this outputs coverage builder
+	 */
+	public CoverageBuilder getCoverageBuilder() {
+		return this.coverageBuilder;
+	}
+
+	/**
+	 * Sets the coverage builder.
+	 * 
+	 * @param builder
+	 *            - coverage builder to set
+	 */
+	public void setCoverageBuilder(CoverageBuilder builder) {
+		this.coverageBuilder = builder;
 	}
 }
