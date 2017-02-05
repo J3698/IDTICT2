@@ -569,87 +569,46 @@ public class Tester {
 
 			// show the user the command to run and prepare the process using
 			// the command
-
 			if (!this.toolChain) {
 				System.out.println("command to run: " + command);
 			}
 
 			process = Runtime.getRuntime().exec(command);
 
-			// prepare the stream needed to capture standard output
 			InputStream isOut = process.getInputStream();
-			InputStreamReader isrOut = new InputStreamReader(isOut);
-			BufferedReader brOut = new BufferedReader(isrOut);
-			StringBuffer stdOutBuff = new StringBuffer();
-
-			// prepare the stream needed to capture standard error
 			InputStream isErr = process.getErrorStream();
-			InputStreamReader isrErr = new InputStreamReader(isErr);
-			BufferedReader brErr = new BufferedReader(isrErr);
+
+			ProcessStreamReader stdOutReader = new ProcessStreamReader(isOut);
+			ProcessStreamReader stdErrReader = new ProcessStreamReader(isErr);
+
+			StringBuffer stdOutBuff = new StringBuffer();
 			StringBuffer stdErrBuff = new StringBuffer();
 
-			String line;
-			boolean outDone = false;
-			boolean errDone = false;
+			stdOutReader.start();
+			stdErrReader.start();
 
-			// while standard out is not complete OR standard error is not
-			// complete
-			// continue to probe the output/error streams for the applications
-			// output
-			int i = 0;
-			while ((!outDone || !errDone)) {
-				// monitoring the standard output from the application
-				boolean outReady = brOut.ready();
-				if (outReady) {
-					line = brOut.readLine();
-					if (line == null) {
-						outDone = true;
-					} else if (line.equals("<<WATCHDOG_OUTPUT_START>>")) {
-						handleWatchdogOutput(brOut, output);
+			long start = System.currentTimeMillis();
+			while ((System.currentTimeMillis() - start) / 1000.0 < 2) {
+				String outLine = stdOutReader.pollLine();
+				if (outLine != null) {
+					if (outLine.equals("<<WATCHDOG_OUTPUT_START>>")) {
+						handleWatchdogOutput(stdOutReader, output);
 					} else {
-						stdOutBuff.append(line);
+						stdOutBuff.append(outLine);
 					}
 				}
 
-				// monitoring the standard error from the application
-				boolean errReady = brErr.ready();
-				if (errReady) {
-					line = brErr.readLine();
-					if (line == null) {
-						errDone = true;
+				String errLine = stdErrReader.pollLine();
+				if (errLine != null) {
+					if (errLine.equals("<<WATCHDOG_OUTPUT_START>>")) {
+						handleWatchdogError(stdErrReader);
 					} else {
-						if (line.equals("<<WATCHDOG_OUTPUT_START>>")) {
-							handleWatchdogError(brErr);
-						} else {
-							stdErrBuff.append(line + "\n");
-						}
-					}
-				}
-
-				// if standard out and standard error are not ready, wait for
-				// 250ms
-				// and try again to monitor the streams
-				if (!outReady && !errReady) {
-					i++;
-					if (i > 6) {
-						break;
-					}
-					try {
-						Thread.sleep(250);
-					} catch (InterruptedException e) {
-						// NOP
+						stdErrBuff.append(errLine + "\n");
 					}
 				}
 			}
-
-			while (brErr.ready()) {
-				stdErrBuff.append(brErr.readLine());
-			}
-
-			// we now have the output as an object from the run of the black-box
-			// jar
-			// this output object contains both the standard output and the
-			// standard error
+			stdErrReader.endProcess();
+			stdOutReader.endProcess();
 
 			output.setStdOutString(stdOutBuff.toString());
 			// trim extra newline character
@@ -658,7 +617,9 @@ public class Tester {
 			}
 			output.setStdErrString(stdErrBuff.toString());
 
-		} catch (IOException e) {
+		} catch (
+
+		IOException e) {
 			if (!this.toolChain) {
 				System.out.println("ERROR: IOException has prevented execution of the command: " + command);
 			}
@@ -704,10 +665,13 @@ public class Tester {
 	 * @param output
 	 * @throws IOException
 	 */
-	private void handleWatchdogOutput(BufferedReader brOut, Output output) throws IOException {
+	private void handleWatchdogOutput(ProcessStreamReader brOut, Output output) throws IOException {
 		String next;
 		output.resetPermissionLog();
-		while (!(next = brOut.readLine()).equals("<<WATCHDOG_OUTPUT_END>>")) {
+		while (!"<<WATCHDOG_OUTPUT_END>>".equals(next = brOut.pollLine())) {
+			if (next == null) {
+				continue;
+			}
 			output.logPermission(next);
 		}
 	}
@@ -720,10 +684,13 @@ public class Tester {
 	 * @param error
 	 *            - the error to handle
 	 */
-	private void handleWatchdogError(BufferedReader brErr) throws IOException, WatchdogException {
+	private void handleWatchdogError(ProcessStreamReader brErr) throws IOException, WatchdogException {
 		String next;
 		StringBuffer errBuff = new StringBuffer();
-		while (!(next = brErr.readLine()).equals("<<WATCHDOG_OUTPUT_END>>")) {
+		while (!"<<WATCHDOG_OUTPUT_END>>".equals(next = brErr.pollLine())) {
+			if (next == null) {
+				continue;
+			}
 			errBuff.append(next + "\n");
 		}
 		System.err.println(errBuff);
