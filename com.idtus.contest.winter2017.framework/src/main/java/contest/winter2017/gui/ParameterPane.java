@@ -5,8 +5,11 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 
 import contest.winter2017.Parameter;
 import javafx.beans.value.ChangeListener;
@@ -35,12 +38,21 @@ import javafx.scene.text.Text;
 
 /**
  * Pane to control what parameters are used.
+ * 
+ * @author ICT-2
  */
 class ParameterPane extends ScrollPane {
 	/**
 	 * Content for this ParameterPane.
 	 */
 	private VBox content;
+
+	private CheckBox userDefinedBounds;
+
+	/**
+	 * Parameter builder for this parameter pane.
+	 */
+	private ParameterBuilder parameterBuilder;
 
 	/**
 	 * Constructs a ParameterPane with the given test.
@@ -57,25 +69,43 @@ class ParameterPane extends ScrollPane {
 		this.content.setAlignment(Pos.CENTER);
 
 		// parameter builder
-		ParameterBuilder parameterBuilder = new ParameterBuilder();
+		parameterBuilder = new ParameterBuilder();
 
 		// check box for using jar test bounds
-		CheckBox box = new CheckBox("Use Parameter Test Bounds from Jar");
-		box.setSelected(true);
-		box.selectedProperty().addListener(new ChangeListener<Boolean>() {
+		userDefinedBounds = new CheckBox("Use Custom Parameter Bounds\n(Predefined tests will not be run)");
+		userDefinedBounds.setSelected(false);
+		userDefinedBounds.selectedProperty().addListener(new ChangeListener<Boolean>() {
 			@Override
 			public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
-				if (!newValue) {
+				if (newValue) {
 					parameterBuilder.setVisible(true);
 				} else {
 					parameterBuilder.setVisible(false);
 				}
 			}
 		});
-		VExternSpace testBoundsBox = new VExternSpace(box, 20, 0);
+		VExternSpace testBoundsBox = new VExternSpace(userDefinedBounds, 20, 0);
 
 		// add children
 		this.content.getChildren().addAll(testBoundsBox, parameterBuilder);
+	}
+
+	/**
+	 * Returns whether user bounds are to be used.
+	 * 
+	 * @return true if user bounds are to be used, false if they are not
+	 */
+	public boolean hasUserTestBounds() {
+		return userDefinedBounds.isSelected();
+	}
+
+	/**
+	 * Returns this parameter pane's parameter builder.
+	 * 
+	 * @return this parameter pane's parameter builder
+	 */
+	public ParameterBuilder getParameterBuilder() {
+		return this.parameterBuilder;
 	}
 }
 
@@ -95,7 +125,7 @@ class ParameterBuilder extends VBox {
 	/**
 	 * Whether parameters should be dynamic or fixed by default.
 	 */
-	private boolean defaultDynamic = true;
+	private boolean dynamic = true;
 
 	/**
 	 * Text with the status of user defined parameters.
@@ -108,6 +138,11 @@ class ParameterBuilder extends VBox {
 	private LinkedList<String> errors;
 
 	/**
+	 * List of parameter editors.
+	 */
+	private List<ParameterEditor> parameterEditors;
+
+	/**
 	 * Constructs a ParameterBuilder with the given test.
 	 * 
 	 * @param test
@@ -118,6 +153,7 @@ class ParameterBuilder extends VBox {
 		setAlignment(Pos.CENTER);
 
 		errors = new LinkedList<String>();
+		parameterEditors = new LinkedList<ParameterEditor>();
 
 		// status of parameters
 		statusText = new Text(statusOkString);
@@ -127,13 +163,13 @@ class ParameterBuilder extends VBox {
 		// fixed or dynamic parameters
 		Text typeText = new Text("Parameter Types");
 		ToggleGroup type = new ToggleGroup();
-		ToggleButton fixed = new ToggleButton("Fixed");
-		fixed.setToggleGroup(type);
-		ToggleButton dynamic = new ToggleButton("Dynamic");
-		dynamic.setToggleGroup(type);
-		type.selectToggle(dynamic);
+		ToggleButton fixedButton = new ToggleButton("Fixed");
+		fixedButton.setToggleGroup(type);
+		ToggleButton dynamicButton = new ToggleButton("Dynamic");
+		dynamicButton.setToggleGroup(type);
+		type.selectToggle(dynamicButton);
 		HBox typeBox = new HBox();
-		typeBox.getChildren().addAll(fixed, dynamic);
+		typeBox.getChildren().addAll(fixedButton, dynamicButton);
 		typeBox.setAlignment(Pos.CENTER);
 		VExternSpace typeBoxSpace = new VExternSpace(typeBox, 0, 8);
 
@@ -168,13 +204,16 @@ class ParameterBuilder extends VBox {
 		newParamButton.setOnAction(new EventHandler<ActionEvent>() {
 			@Override
 			public void handle(ActionEvent e) {
-				params.getChildren().add(new ParameterEditor(ParameterBuilder.this, defaultDynamic));
+				ParameterEditor newParam = new ParameterEditor(ParameterBuilder.this, dynamic);
+				newParam.setExpanded(true);
+				params.getChildren().add(newParam);
+				ParameterBuilder.this.parameterEditors.add(newParam);
 			}
 		});
-		fixed.setOnAction(new EventHandler<ActionEvent>() {
+		fixedButton.setOnAction(new EventHandler<ActionEvent>() {
 			@Override
 			public void handle(ActionEvent e) {
-				ParameterBuilder.this.defaultDynamic = false;
+				ParameterBuilder.this.dynamic = false;
 				for (Node node : params.getChildren()) {
 					if (node instanceof ParameterEditor) {
 						((ParameterEditor) node).setDynamic(false);
@@ -182,10 +221,10 @@ class ParameterBuilder extends VBox {
 				}
 			}
 		});
-		dynamic.setOnAction(new EventHandler<ActionEvent>() {
+		dynamicButton.setOnAction(new EventHandler<ActionEvent>() {
 			@Override
 			public void handle(ActionEvent e) {
-				ParameterBuilder.this.defaultDynamic = true;
+				ParameterBuilder.this.dynamic = true;
 				for (Node node : params.getChildren()) {
 					if (node instanceof ParameterEditor) {
 						((ParameterEditor) node).setDynamic(true);
@@ -241,8 +280,42 @@ class ParameterBuilder extends VBox {
 		alert.setContentText("Are you sure you want to delete this parameter? This action cannot be undone.");
 		alert.showAndWait();
 		if (alert.getResult().getButtonData() == ButtonData.OK_DONE) {
-			params.getChildren().remove(parameter);
+			parameter.removeAllErrors();
+			this.params.getChildren().remove(parameter);
+			this.parameterEditors.remove(parameter);
 		}
+	}
+
+	/**
+	 * Returns whether this parameter builder has dynamic parameters.
+	 * 
+	 * @return true if this parameter builder has dynamic parameters or false
+	 *         otherwise
+	 */
+	public boolean isDynamic() {
+		return this.dynamic;
+	}
+
+	/**
+	 * Returns the current error with parameters.
+	 * 
+	 * @return current error with parameters or null if there are no errors
+	 */
+	public String getCurrentError() {
+		if (this.statusText.getText().equals(statusOkString)) {
+			return null;
+		} else {
+			return this.statusText.getText();
+		}
+	}
+
+	/**
+	 * Returns an unmodifiable list of the parameter editors.
+	 * 
+	 * @return an unmodifiable list of the parameter editors
+	 */
+	public List<ParameterEditor> getParameterEditors() {
+		return Collections.unmodifiableList(parameterEditors);
 	}
 }
 
@@ -252,6 +325,18 @@ class ParameterBuilder extends VBox {
  * @author ICT-2
  */
 class ParameterEditor extends TitledPane {
+	private static final String keyErrorString = "Illegal: Key regex invalid.";
+
+	/**
+	 * Whether there is an error in the key regex.
+	 */
+	private boolean keyError;
+
+	/**
+	 * The string regex key for this parameter.
+	 */
+	private String regexKey;
+
 	/**
 	 * ParameterBuilder for this ParameterEditor.
 	 */
@@ -265,7 +350,17 @@ class ParameterEditor extends TitledPane {
 	/**
 	 * Whether this parameter is fixed or not.
 	 */
-	private boolean dynamic;
+	private boolean isDynamic;
+
+	/**
+	 * Whether this parameter is optional or not.
+	 */
+	private boolean isOptional;
+
+	/**
+	 * List of format strings for this paramter.
+	 */
+	private List<FormatString> formatStrings;
 
 	/**
 	 * Components to hide if this parameter is fixed.
@@ -292,6 +387,9 @@ class ParameterEditor extends TitledPane {
 		setExpanded(false);
 		setText("Parameter");
 
+		this.formatStrings = new LinkedList<FormatString>();
+		this.keyError = false;
+
 		// for stacking delete button on other settings
 		StackPane container = new StackPane();
 
@@ -304,18 +402,20 @@ class ParameterEditor extends TitledPane {
 		exitPane.getChildren().add(exitButton);
 
 		// style editor box
-		content = new VBox(10);
-		content.setAlignment(Pos.CENTER);
+		this.content = new VBox(10);
+		this.content.setAlignment(Pos.CENTER);
 
 		// add dynamic settings
 		TextField keyField = new TextField();
 		keyField.setPrefColumnCount(7);
+		this.regexKey = "";
 		LabeledNode key = new LabeledNode("Key", keyField);
 		CheckBox optional = new CheckBox("Optional");
-		initialSettings = new HBox(45);
-		initialSettings.setAlignment(Pos.CENTER);
-		this.dynamic = dynamic;
-		if (this.dynamic) {
+		this.isOptional = false;
+		this.initialSettings = new HBox(45);
+		this.initialSettings.setAlignment(Pos.CENTER);
+		this.isDynamic = dynamic;
+		if (this.isDynamic) {
 			initialSettings.getChildren().addAll(optional, key);
 		}
 		dynamicSettings = new ArrayList<Node>();
@@ -329,7 +429,9 @@ class ParameterEditor extends TitledPane {
 		newFormatString.setOnAction(new EventHandler<ActionEvent>() {
 			@Override
 			public void handle(ActionEvent event) {
-				content.getChildren().add(new FormatString(ParameterEditor.this));
+				FormatString newFormat = new FormatString(ParameterEditor.this);
+				content.getChildren().add(newFormat);
+				ParameterEditor.this.formatStrings.add(newFormat);
 			}
 		});
 
@@ -341,10 +443,50 @@ class ParameterEditor extends TitledPane {
 			}
 		});
 
+		optional.selectedProperty().addListener(new ChangeListener<Boolean>() {
+			@Override
+			public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
+				ParameterEditor.this.isOptional = newValue;
+			}
+		});
+
+		keyField.textProperty().addListener(new ChangeListener<String>() {
+			@Override
+			public void changed(ObservableValue<? extends String> observable, String oldValue, String newValue) {
+				ParameterEditor.this.regexKey = newValue;
+				try {
+					Pattern.compile(newValue);
+					if (ParameterEditor.this.keyError) {
+						ParameterEditor.this.keyError = false;
+						parameterBuilder.removeParameterError(keyErrorString);
+					}
+				} catch (PatternSyntaxException e) {
+					if (!ParameterEditor.this.keyError) {
+						ParameterEditor.this.keyError = true;
+						parameterBuilder.addParameterError(keyErrorString);
+					}
+				}
+			}
+		});
+
 		// add children
 		content.getChildren().addAll(initialSpacer, newFormatString);
 		container.getChildren().addAll(content, exitPane);
 		setContent(container);
+	}
+
+	/**
+	 * Removes all status errors associated with this editor and its children.
+	 */
+	public void removeAllErrors() {
+		if (this.keyError) {
+			this.parameterBuilder.removeParameterError(keyErrorString);
+			this.keyError = false;
+		}
+
+		for (FormatString formatString : this.formatStrings) {
+			formatString.removeAllErrors();
+		}
 	}
 
 	/**
@@ -359,7 +501,9 @@ class ParameterEditor extends TitledPane {
 		alert.setContentText("Are you sure you want to delete this format string? This action cannot be undone.");
 		alert.showAndWait();
 		if (alert.getResult().getButtonData() == ButtonData.OK_DONE) {
+			toRemove.removeAllErrors();
 			this.content.getChildren().remove(toRemove);
+			this.formatStrings.remove(toRemove);
 		}
 	}
 
@@ -373,18 +517,59 @@ class ParameterEditor extends TitledPane {
 	 *            - whether this parameter is dynamic or not
 	 */
 	public void setDynamic(boolean dynamic) {
-		if (this.dynamic != dynamic) {
+		if (this.isDynamic != dynamic) {
 			if (dynamic) {
-				for (Node node : dynamicSettings) {
+				// add dynamic only settings
+				for (Node node : this.dynamicSettings) {
 					initialSettings.getChildren().add(node);
 				}
+				// enable all format strings
+				for (Node node : this.content.getChildren()) {
+					if (node instanceof FormatString) {
+						((FormatString) node).enable();
+						System.out.println("Stuff Enabled.");
+					}
+				}
 			} else {
-				for (Node node : dynamicSettings) {
+				for (Node node : this.dynamicSettings) {
 					initialSettings.getChildren().remove(node);
+				}
+				// disable all but first formst strings
+				boolean first = true;
+				for (Node node : this.content.getChildren()) {
+					if (node instanceof FormatString) {
+						if (first) {
+							first = false;
+						} else {
+							((FormatString) node).disable();
+							System.out.println("Stuff Disabled.");
+						}
+					}
 				}
 			}
 		}
-		this.dynamic = dynamic;
+		this.isDynamic = dynamic;
+	}
+
+	/**
+	 * Returns whether this parameter is optional or not.
+	 * 
+	 * @return true if this parameter is optional or false if it is not.
+	 */
+	public boolean isOptional() {
+		return this.isOptional;
+	}
+
+	/**
+	 * Returns the regex key for this parameter.
+	 * <p>
+	 * A key for a parameter is a previous parameter passed to an application
+	 * which signifies that the new parameter is now eligible for use.
+	 * 
+	 * @return the regex key for this parameter
+	 */
+	public String getRegexKey() {
+		return this.regexKey;
 	}
 
 	/**
@@ -395,6 +580,15 @@ class ParameterEditor extends TitledPane {
 	public ParameterBuilder getBuilder() {
 		return parameterBuilder;
 	}
+
+	/**
+	 * Returns this parameter editor's format strings.
+	 * 
+	 * @return this parameter editor's format strings
+	 */
+	public List<FormatString> getFormatStrings() {
+		return this.formatStrings;
+	}
 }
 
 /**
@@ -404,10 +598,10 @@ class ParameterEditor extends TitledPane {
  */
 class FormatString extends VBox {
 	// constants which represent different errors
-	private final String minErrorString = "Illegal: Min bound could not be parsed.";
-	private final String maxErrorString = "Illegal: Max bound could not be parsed.";
-	private final String replaceMeErrorString = "Illegal: Two replace-me numbers in one format string.";
-	private final String overlapErrorString = "Illegal: Min and max overlap.";
+	private static final String minErrorString = "Illegal: Min bound could not be parsed.";
+	private static final String maxErrorString = "Illegal: Max bound could not be parsed.";
+	private static final String replaceMeErrorString = "Illegal: Two replace-me numbers in one format string.";
+	private static final String overlapErrorString = "Illegal: Min and max overlap.";
 
 	/**
 	 * Whether there is an error in the min field.
@@ -445,6 +639,31 @@ class FormatString extends VBox {
 	private String formatString;
 
 	/**
+	 * The text field for min.
+	 */
+	private TextField minField;
+
+	/**
+	 * The text field for max.
+	 */
+	private TextField maxField;
+
+	/**
+	 * The text field for the format string.
+	 */
+	private TextField formatField;
+
+	/**
+	 * List of errors to stash.
+	 */
+	private List<String> errorStash;
+
+	/**
+	 * Whether this format string is enabled.
+	 */
+	private boolean enabled;
+
+	/**
 	 * The parent parameter editor.
 	 */
 	private ParameterEditor parameterEditor;
@@ -459,20 +678,22 @@ class FormatString extends VBox {
 		super(3);
 
 		this.parameterEditor = parameterEditor;
+		this.errorStash = new LinkedList<String>();
+		this.enabled = true;
 
 		// delete button and text field
 		HBox withString = new HBox(2);
 		withString.setAlignment(Pos.CENTER);
 		Button closeButton = new Button("X");
-		TextField formatField = new TextField();
+		formatField = new TextField();
 		formatField.setPrefColumnCount(20);
 
 		// min and max fields for number replace-mes
 		VBox bounds = new VBox();
-		TextField minField = new TextField();
+		minField = new TextField();
 		minField.setPrefColumnCount(7);
 		LabeledNode minLabel = new LabeledNode("Min", minField);
-		TextField maxField = new TextField();
+		maxField = new TextField();
 		maxField.setPrefColumnCount(7);
 		LabeledNode maxLabel = new LabeledNode("Max", maxField);
 
@@ -480,7 +701,6 @@ class FormatString extends VBox {
 		closeButton.setOnAction(new EventHandler<ActionEvent>() {
 			@Override
 			public void handle(ActionEvent event) {
-				removeAllErrors();
 				parameterEditor.removeFormatString(FormatString.this);
 			}
 		});
@@ -644,6 +864,69 @@ class FormatString extends VBox {
 		if (FormatString.this.overlapError) {
 			parameterEditor.getBuilder().removeParameterError(replaceMeErrorString);
 			FormatString.this.overlapError = false;
+		}
+	}
+
+	/**
+	 * Enables this format field.
+	 * <p>
+	 * Adds back error statuses from error stash.
+	 */
+	public void enable() {
+		if (!this.enabled) {
+			this.enabled = true;
+
+			minField.setDisable(false);
+			maxField.setDisable(false);
+			formatField.setDisable(false);
+
+			ParameterBuilder builder = parameterEditor.getBuilder();
+			if (this.minError) {
+				builder.addParameterError(minErrorString);
+			}
+			if (this.maxError) {
+				builder.addParameterError(maxErrorString);
+			}
+			if (this.replaceMeError) {
+				builder.addParameterError(replaceMeErrorString);
+			}
+			if (this.overlapError) {
+				builder.addParameterError(overlapErrorString);
+			}
+		}
+	}
+
+	/**
+	 * Disables this format field.
+	 * <p>
+	 * Rescinds error statuses and stashes them.
+	 */
+	public void disable() {
+		if (this.enabled) {
+			this.enabled = false;
+
+			minField.setDisable(true);
+			maxField.setDisable(true);
+			formatField.setDisable(true);
+
+			this.errorStash.clear();
+			ParameterBuilder builder = parameterEditor.getBuilder();
+			if (this.minError) {
+				this.errorStash.add(minErrorString);
+				builder.removeParameterError(minErrorString);
+			}
+			if (this.maxError) {
+				this.errorStash.add(maxErrorString);
+				builder.removeParameterError(maxErrorString);
+			}
+			if (this.replaceMeError) {
+				this.errorStash.add(replaceMeErrorString);
+				builder.removeParameterError(replaceMeErrorString);
+			}
+			if (this.overlapError) {
+				this.errorStash.add(overlapErrorString);
+				builder.removeParameterError(overlapErrorString);
+			}
 		}
 	}
 
