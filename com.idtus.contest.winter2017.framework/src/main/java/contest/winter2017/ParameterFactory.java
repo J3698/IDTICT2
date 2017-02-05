@@ -79,13 +79,15 @@ public class ParameterFactory {
 		}
 		this.dependentParametersMap = (Map) this.inputMap.get("dependent parameters");
 
-		/*
-		 * Testing Code System.out.println("______DEBUG______"); if
-		 * (dependentParametersMap == null) { System.out.println("FIXED");
-		 * printList((List) this.inputMap.get("fixed parameter list")); } else {
-		 * System.out.println("DEPENDENT"); printMap(dependentParametersMap,
-		 * "$: "); } System.out.println("______DEBUG______");
-		 */
+		System.out.println("______DEBUG______");
+		if (dependentParametersMap == null) {
+			System.out.println("FIXED");
+			printList((List) this.inputMap.get("fixed parameter list"));
+		} else {
+			System.out.println("DEPENDENT");
+			printMap(dependentParametersMap, "$: ");
+		}
+		System.out.println("______DEBUG______");
 	}
 
 	/**
@@ -96,11 +98,11 @@ public class ParameterFactory {
 	 * @param list
 	 *            - list to print
 	 */
-	@SuppressWarnings({ "unused", "unchecked" })
+	@SuppressWarnings("rawtypes")
 	private void printList(List<?> list) {
 		for (Object obj : list) {
 			if (obj instanceof Map) {
-				printMap((Map<Object, Object>) obj, "$: ");
+				printMap((Map) obj, "$: ");
 			} else {
 				System.out.print(obj);
 			}
@@ -114,8 +116,8 @@ public class ParameterFactory {
 	 * @param map
 	 *            - map to print
 	 */
-	@SuppressWarnings("unchecked")
-	private void printMap(Map<Object, Object> map, String lvl) {
+	@SuppressWarnings({ "unchecked", "rawtypes" })
+	private void printMap(Map map, String lvl) {
 
 		for (Entry<Object, Object> e : (Set<Entry<Object, Object>>) map.entrySet()) {
 			System.out.println(lvl + e.getKey());
