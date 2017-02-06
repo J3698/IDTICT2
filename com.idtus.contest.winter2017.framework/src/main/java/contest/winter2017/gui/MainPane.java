@@ -87,19 +87,19 @@ public class MainPane extends TabPane {
 		stdOutText = new TextArea();
 		stdOutText.setEditable(false);
 		stdOutText.setWrapText(true);
-		stdOutText.setMouseTransparent(true);
+		// stdOutText.setMouseTransparent(true);
 		stdOutText.setFocusTraversable(false);
 		Tab stdOut = new Tab("Standard Out", stdOutText);
 		stdErrText = new TextArea();
 		stdErrText.setEditable(false);
 		stdErrText.setWrapText(true);
-		stdErrText.setMouseTransparent(true);
+		// stdErrText.setMouseTransparent(true);
 		stdErrText.setFocusTraversable(false);
 		Tab stdErr = new Tab("Standard Error", stdErrText);
 		permissionsText = new TextArea();
 		permissionsText.setEditable(false);
 		permissionsText.setWrapText(true);
-		permissionsText.setMouseTransparent(true);
+		// permissionsText.setMouseTransparent(true);
 		permissionsText.setFocusTraversable(false);
 		Tab permissions = new Tab("Permissions", permissionsText);
 		outputPane.getTabs().addAll(stdOut, stdErr, permissions);
@@ -191,6 +191,7 @@ public class MainPane extends TabPane {
 	public GUITestPackage getTest() {
 		return this.test;
 	}
+
 }
 
 /**
@@ -223,6 +224,11 @@ class RunPane extends BorderPane {
 	private boolean validTestNumber;
 	private boolean validOutputPath;
 	private boolean validJacocoPath;
+
+	/**
+	 * Run button for this test.
+	 */
+	private Button runButton;
 
 	/**
 	 * Constructs a RunPane.
@@ -268,8 +274,8 @@ class RunPane extends BorderPane {
 		timeGoal.setText("" + Tester.DEFAULT_TIME_GOAL);
 		LabeledNode timeGoalInput = new LabeledNode("Time Goal", timeGoal);
 
-		// run button
-		Button runButton = new Button("Start Testing");
+		// run and stop buttons
+		this.runButton = new Button("Start Testing");
 		runButton.setFont(new Font(15));
 		VExternSpace runButtonSpacer = new VExternSpace(runButton, 40, 0);
 
@@ -299,10 +305,10 @@ class RunPane extends BorderPane {
 			this.validJacocoPath = true;
 			agentPath.setStyle("-fx-border-color: green;");
 			this.jacocoPathFile = defaultFile;
-			outputPath.setText(clipName(defaultFile.getAbsolutePath()));
+			agentPath.setText(clipName(defaultFile.getAbsolutePath()));
 		}
 
-		addHandlers(outputPath, agentPath, runButton);
+		addHandlers(outputPath, agentPath);
 
 		box.getChildren().addAll(jarNameSpacer, nameInput, testsToRunInput, timeGoalInput);
 		box.getChildren().addAll(outputPathButton, agentPathButton, runButtonSpacer);
@@ -319,7 +325,7 @@ class RunPane extends BorderPane {
 	 * @param runButton
 	 *            - componen to add handlers to
 	 */
-	public void addHandlers(Button outputPath, Button agentPath, Button runButton) {
+	public void addHandlers(Button outputPath, Button agentPath) {
 		name.textProperty().addListener(new ChangeListener<String>() {
 			@Override
 			public void changed(ObservableValue<? extends String> arg0, String oldVal, String newVal) {
@@ -412,85 +418,100 @@ class RunPane extends BorderPane {
 		});
 
 		// run the tests
-		runButton.setOnAction(new EventHandler<ActionEvent>() {
+		RunPane.this.runButton.setOnAction(new EventHandler<ActionEvent>() {
 			@Override
 			public void handle(ActionEvent event) {
-				runButton.setDisable(true);
 
-				// prepare an error alert
-				Alert alert = new Alert(Alert.AlertType.ERROR);
-				alert.setTitle("Tester Failed to Initialize");
+				if (RunPane.this.runButton.getText().equals("Start Testing")) {
+					// prepare an error alert
+					Alert alert = new Alert(Alert.AlertType.ERROR);
+					alert.setTitle("Tester Failed to Initialize");
 
-				// ensure options are all correct
-
-				String jarPath = RunPane.this.test.getToTest().getAbsolutePath();
-				if (RunPane.this.validOutputPath) {
-				} else {
-					alert.setContentText("Invalid jar path.");
-					alert.showAndWait();
-					return;
-				}
-
-				String outputPath = null;
-				if (RunPane.this.validOutputPath) {
-					outputPath = RunPane.this.outputPathFile.getAbsolutePath();
-				} else {
-					alert.setContentText("Invalid output path.");
-					alert.showAndWait();
-					return;
-				}
-
-				String agentPath = null;
-				if (RunPane.this.validJacocoPath) {
-					agentPath = RunPane.this.jacocoPathFile.getAbsolutePath();
-				} else {
-					alert.setContentText("Invalid agent path.");
-					alert.showAndWait();
-					return;
-				}
-
-				String bbTests = null;
-				if (RunPane.this.validTestNumber) {
-					bbTests = RunPane.this.toRun.getText();
-				} else {
-					alert.setContentText("Invalid number of tests.");
-					alert.showAndWait();
-					return;
-				}
-
-				String timeGoal = null;
-				if (RunPane.this.validTimeGoal) {
-					timeGoal = RunPane.this.timeGoal.getText();
-				} else {
-					alert.setContentText("Invalid time goal.");
-					alert.showAndWait();
-					return;
-				}
-
-				Map testBounds = null;
-				if (RunPane.this.test.hasUserTestBounds()) {
-					if (!RunPane.this.test.hasValidUserTestBounds()) {
-						alert.setContentText("Invalid user defined parameter bounds.");
+					// ensure options are all correct
+					String jarPath = RunPane.this.test.getToTest().getAbsolutePath();
+					if (RunPane.this.validOutputPath) {
+					} else {
+						alert.setContentText("Invalid jar path.");
 						alert.showAndWait();
 						return;
-					} else {
-						testBounds = RunPane.this.test.getUserTestBounds();
 					}
-				}
 
-				String toolChain = "false";
+					String outputPath = null;
+					if (RunPane.this.validOutputPath) {
+						outputPath = RunPane.this.outputPathFile.getAbsolutePath();
+					} else {
+						alert.setContentText("Invalid output path.");
+						alert.showAndWait();
+						return;
+					}
 
-				// initialize and run tester
-				if (!RunPane.this.test.getTester().init(testBounds, jarPath, outputPath, agentPath, bbTests, timeGoal,
-						toolChain)) {
-					alert.setContentText("Unknown initialization error.");
-					alert.showAndWait();
-					runButton.setDisable(false);
+					String agentPath = null;
+					if (RunPane.this.validJacocoPath) {
+						agentPath = RunPane.this.jacocoPathFile.getAbsolutePath();
+					} else {
+						alert.setContentText("Invalid agent path.");
+						alert.showAndWait();
+						return;
+					}
+
+					String bbTests = null;
+					if (RunPane.this.validTestNumber) {
+						bbTests = RunPane.this.toRun.getText();
+					} else {
+						alert.setContentText("Invalid number of tests.");
+						alert.showAndWait();
+						return;
+					}
+
+					String timeGoal = null;
+					if (RunPane.this.validTimeGoal) {
+						timeGoal = RunPane.this.timeGoal.getText();
+					} else {
+						alert.setContentText("Invalid time goal.");
+						alert.showAndWait();
+						return;
+					}
+
+					Map testBounds = null;
+					if (RunPane.this.test.hasUserTestBounds()) {
+						if (!RunPane.this.test.hasValidUserTestBounds()) {
+							alert.setContentText("Invalid user defined parameter bounds.");
+							alert.showAndWait();
+							return;
+						} else {
+							testBounds = RunPane.this.test.getUserTestBounds();
+						}
+					}
+
+					boolean quiet = false;
+					boolean watchdog = true;
+
+					// initialize and run tester
+					if (!RunPane.this.test.getTester().init(testBounds, jarPath, outputPath, agentPath, bbTests,
+							timeGoal, GUIMain.getGuiID(), quiet, watchdog)) {
+						alert.setContentText("Unknown initialization error.");
+						alert.showAndWait();
+						RunPane.this.runButton.setDisable(false);
+					} else {
+						RunPane.this.test.startTests();
+						RunPane.this.runButton.setText("Pause Testing");
+					}
+				} else if (RunPane.this.runButton.getText().equals("Pause Testing")) {
+					RunPane.this.test.pauseTests();
+					RunPane.this.runButton.setText("Resume Testing");
 				} else {
-					test.startTests();
+					RunPane.this.test.resumeTests();
+					RunPane.this.runButton.setText("Pause Testing");
 				}
 			}
 		});
+	}
+
+	/**
+	 * Disables run button.
+	 */
+	public void endTests() {
+		this.runButton.setDisable(true);
 	}
 
 	/**
