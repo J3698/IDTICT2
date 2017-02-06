@@ -84,7 +84,7 @@ class TestListPane extends ScrollPane {
 		this.contentPane = new VBox(SPACING);
 		setContent(this.contentPane);
 
-		infoAdderIndex = this.contentPane.getChildren().size();
+		infoAdderIndex = this.contentPane.getChildren().size() - 1;
 		makeTestAdder();
 	}
 
@@ -211,7 +211,7 @@ class TestListPane extends ScrollPane {
 		}
 		GUITestPackage newTest = new GUITestPackage(this, "test" + i, toTest);
 
-		// register the test's name and keep track of it
+		// register the test's name
 		TestListPane.this.testNames.add("test" + i);
 		newTest.getName().addListener(new ChangeListener<String>() {
 			@Override
@@ -221,7 +221,7 @@ class TestListPane extends ScrollPane {
 			}
 		});
 
-		// add the test to the GUi at some point
+		// add the test to the GUI at some point
 		this.tests.add(newTest);
 		Platform.runLater(new Runnable() {
 			@Override
