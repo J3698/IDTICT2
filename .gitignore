@@ -1,0 +1,6 @@
+# Jacoco output
+*.exec
+*.exectemp
+
+# Java Memory errors
+*.log
