@@ -130,7 +130,8 @@ public class Main {
 					String jacocoAgentJarPath = cliArgs.getOptionValue(JACOCO_AGENT_JAR_PATH);
 					String bbTests = cliArgs.getOptionValue(BLACK_BOX_TESTS);
 					String timeGoal = cliArgs.getOptionValue(TIME_GOAL);
-					String toolChain = "" + cliArgs.hasOption(TOOL_CHAIN);
+					boolean quiet = cliArgs.hasOption(TOOL_CHAIN);
+					boolean watchdog = quiet;
 
 					// catch and report runtime exceptions
 					try {
@@ -138,7 +139,7 @@ public class Main {
 						// testing framework
 						Tester tester = new Tester();
 						boolean init = tester.init(null, jarToTestPath, jacocoOutputDirPath, jacocoAgentJarPath,
-								bbTests, timeGoal, toolChain);
+								bbTests, timeGoal, "", quiet, watchdog);
 						if (init) {
 							// implemented by IDT
 							tester.executeBasicTests();
@@ -151,7 +152,7 @@ public class Main {
 						}
 					} catch (RuntimeException re) {
 						re.printStackTrace();
-						if (!toolChain.equals("true")) {
+						if (!quiet) {
 							ExceptionLogger.errorLogDialog(re, LocalDateTime.now());
 						}
 						System.exit(0);
