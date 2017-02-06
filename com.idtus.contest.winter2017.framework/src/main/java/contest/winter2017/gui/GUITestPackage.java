@@ -95,11 +95,34 @@ public class GUITestPackage {
 			@Override
 			protected Void call() {
 				GUITestPackage.this.tester.executeBasicTests();
-				// GUITestPackage.this.tester.executeSecurityTests();
+				GUITestPackage.this.tester.executeSecurityTests();
+				Platform.runLater(new Runnable() {
+					@Override
+					public void run() {
+						GUITestPackage.this.testInfo.endTests();
+						GUITestPackage.this.mainPane.getRunPane().endTests();
+					}
+				});
 				return null;
 			}
 		};
 		new Thread(task).start();
+	}
+
+	/**
+	 * Resumes tests for this test.
+	 */
+	public void resumeTests() {
+		GUITestPackage.this.tester.setPaused(false);
+		this.testInfo.getProgressBar().setDisable(false);
+	}
+
+	/**
+	 * Pauses tests for this test.
+	 */
+	public void pauseTests() {
+		GUITestPackage.this.tester.setPaused(true);
+		this.testInfo.getProgressBar().setDisable(true);
 	}
 
 	/**
@@ -160,6 +183,7 @@ public class GUITestPackage {
 	 * 
 	 * @return user defined test bounds or null if they are not defined
 	 */
+	@SuppressWarnings("rawtypes")
 	public Map getUserTestBounds() {
 		if (this.getMainPane().getParameterPane().hasUserTestBounds()) {
 			ParameterBuilder builder = this.getMainPane().getParameterPane().getParameterBuilder();
@@ -271,7 +295,17 @@ class TestInfo extends VBox {
 	private GUITestPackage test;
 
 	/**
-	 * Constructs a TestInfo.
+	 * Progress bar for this test.
+	 */
+	private ProgressBar progressBar;
+
+	/**
+	 * Completion status of this test.
+	 */
+	private Text percent;
+
+	/**
+	 * Constructs a TestInfo with the given test.
 	 */
 	public TestInfo(GUITestPackage test) {
 		this.test = test;
@@ -282,12 +316,21 @@ class TestInfo extends VBox {
 		Text name = new Text("");
 		name.textProperty().bind(this.test.getName());
 		name.setFont(new Font(20));
-		Text percent = new Text("0%");
-		percent.setFont(new Font(10));
-		ProgressBar progressBar = new ProgressBar(0);
-		progressBar.setMouseTransparent(true);
-		progressBar.setPadding(new Insets(3, 0, 0, 2));
+		this.percent = new Text("0%");
+		this.percent.setFont(new Font(10));
+		this.progressBar = new ProgressBar(0);
+		this.progressBar.setMouseTransparent(true);
+		this.progressBar.setPadding(new Insets(3, 0, 0, 2));
 
+		addHandlers();
+
+		getChildren().addAll(name, this.percent, progressBar);
+	}
+
+	/**
+	 * Adds handlers to this component.
+	 */
+	public void addHandlers() {
 		// keep track of progress
 		this.test.getTester().getPercentDone().addListener(new ChangeListener<Number>() {
 			/**
@@ -309,27 +352,43 @@ class TestInfo extends VBox {
 			public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
 				TestInfo.this.test.updateOutput();
 
+				// don't update a disabled progress bar
+				if (TestInfo.this.progressBar.isDisabled()) {
+					if (TestInfo.this.progressBar.isIndeterminate()) {
+						Platform.runLater(new Runnable() {
+							@Override
+							public void run() {
+								TestInfo.this.progressBar.setProgress(0);
+							}
+						});
+					}
+					return;
+				}
+
 				double progress = newValue.doubleValue();
 				if (progress <= 1) {
-					progressBar.setProgress(progress);
-					String progressRep = "" + (100 * progress);
-					if (progressRep.length() > 4) {
-						progressRep = progressRep.substring(0, 4);
-					}
-					percent.setText(progressRep + "%");
-				} else if (!progressBar.isIndeterminate()) {
-					percent.setText("Extra Tests");
 					Platform.runLater(new Runnable() {
 						@Override
 						public void run() {
-							progressBar.setProgress(ProgressBar.INDETERMINATE_PROGRESS);
+							TestInfo.this.progressBar.setProgress(progress);
+							String progressRep = "" + (100 * progress);
+							if (progressRep.length() > 4) {
+								progressRep = progressRep.substring(0, 4);
+							}
+							TestInfo.this.percent.setText(progressRep + "%");
+						}
+					});
+				} else if (!TestInfo.this.progressBar.isIndeterminate()) {
+					TestInfo.this.percent.setText("Extra Tests");
+					Platform.runLater(new Runnable() {
+						@Override
+						public void run() {
+							TestInfo.this.progressBar.setProgress(ProgressBar.INDETERMINATE_PROGRESS);
 						}
 					});
 				}
 			}
 		});
-
-		getChildren().addAll(name, percent, progressBar);
 
 		// grabs focus if testinfo is selected
 		setOnMouseClicked(new EventHandler<MouseEvent>() {
@@ -341,4 +400,22 @@ class TestInfo extends VBox {
 			}
 		});
 	}
+
+	/**
+	 * Signify that testing has ended.
+	 */
+	void endTests() {
+		this.progressBar.setProgress(1.0);
+		this.percent.setText("Done");
+	}
+
+	/**
+	 * Returns this test info's progress bar.
+	 * 
+	 * @return progress bar for this test info
+	 */
+	public ProgressBar getProgressBar() {
+		return this.progressBar;
+	}
+
 }
