@@ -40,7 +40,7 @@ public class MainPane extends TabPane {
 	/**
 	 * ParameterPane of this MainPane.
 	 */
-	private ParameterPane parameterPane;
+	private ParameterPane parameterPane = new ParameterPane();;
 
 	/**
 	 * RunPane of this MainPane.
@@ -50,22 +50,22 @@ public class MainPane extends TabPane {
 	/**
 	 * TabPane of this MainPane.
 	 */
-	private TabPane outputPane;
+	private TabPane outputPane = new TabPane();
 
 	/**
 	 * TextArea for this test's std out.
 	 */
-	private TextArea stdOutText;
+	private TextArea stdOutText = new TextArea();
 
 	/**
 	 * TextArea for this test's std err.
 	 */
-	private TextArea stdErrText;
+	private TextArea stdErrText = new TextArea();
 
 	/**
 	 * TextArea for this test's permissions.
 	 */
-	private TextArea permissionsText;
+	private TextArea permissionsText = new TextArea();
 
 	/**
 	 * Int tests recorded so far.
@@ -83,20 +83,16 @@ public class MainPane extends TabPane {
 		Tab runTab = new Tab("Run", this.runPane);
 
 		// three tabs of output pane
-		outputPane = new TabPane();
-		stdOutText = new TextArea();
 		stdOutText.setEditable(false);
 		stdOutText.setWrapText(true);
 		// stdOutText.setMouseTransparent(true);
 		stdOutText.setFocusTraversable(false);
 		Tab stdOut = new Tab("Standard Out", stdOutText);
-		stdErrText = new TextArea();
 		stdErrText.setEditable(false);
 		stdErrText.setWrapText(true);
 		// stdErrText.setMouseTransparent(true);
 		stdErrText.setFocusTraversable(false);
 		Tab stdErr = new Tab("Standard Error", stdErrText);
-		permissionsText = new TextArea();
 		permissionsText.setEditable(false);
 		permissionsText.setWrapText(true);
 		// permissionsText.setMouseTransparent(true);
@@ -107,7 +103,6 @@ public class MainPane extends TabPane {
 		Tab outputTab = new Tab("Output", outputPane);
 
 		// parameter pane
-		this.parameterPane = new ParameterPane();
 		Tab parameterTab = new Tab("Parameter Bounds", parameterPane);
 
 		// add undeletable tabs
@@ -211,24 +206,24 @@ class RunPane extends BorderPane {
 	private GUITestPackage test;
 
 	// textfieds for several settings
-	private TextField name;
-	private TextField toRun;
-	private TextField timeGoal;
+	private TextField name = new TextField();
+	private TextField toRun = new TextField();
+	private TextField timeGoal = new TextField();
 
 	// file paths for several settings
 	private File outputPathFile = null;
 	private File jacocoPathFile = null;
 
 	// whether or not several settings are valid
-	private boolean validTimeGoal;
-	private boolean validTestNumber;
-	private boolean validOutputPath;
-	private boolean validJacocoPath;
+	private boolean validTimeGoal = true;
+	private boolean validTestNumber = true;
+	private boolean validOutputPath = false;
+	private boolean validJacocoPath = false;
 
 	/**
 	 * Run button for this test.
 	 */
-	private Button runButton;
+	private Button runButton = new Button("Start Testing");
 
 	/**
 	 * Constructs a RunPane.
@@ -244,11 +239,9 @@ class RunPane extends BorderPane {
 		Button outputPath = new Button("Set Output Path");
 		LabeledNode outputPathButton = new LabeledNode("Jacoco Output Path", outputPath);
 		outputPath.setStyle("-fx-border-color: red;");
-		this.validOutputPath = false;
 		Button agentPath = new Button("Set Agent Path");
 		LabeledNode agentPathButton = new LabeledNode("Jacoco Agent Path", agentPath);
 		agentPath.setStyle("-fx-border-color: red;");
-		this.validJacocoPath = false;
 
 		// label name of jar to test
 		Text jarName = new Text();
@@ -257,38 +250,28 @@ class RunPane extends BorderPane {
 		VExternSpace jarNameSpacer = new VExternSpace(jarName, 0, 40);
 
 		// name setting
-		name = new TextField();
 		name.setPrefColumnCount(5);
 		name.setText(this.test.getName().get());
 		LabeledNode nameInput = new LabeledNode("Test Name", name);
 
 		// number of test setting
-		toRun = new TextField();
 		toRun.setPrefColumnCount(5);
 		toRun.setText("" + Tester.DEFAULT_BB_TESTS);
 		LabeledNode testsToRunInput = new LabeledNode("Tests to Run", toRun);
 
 		// time goal setting
-		timeGoal = new TextField();
 		timeGoal.setPrefColumnCount(5);
 		timeGoal.setText("" + Tester.DEFAULT_TIME_GOAL);
 		LabeledNode timeGoalInput = new LabeledNode("Time Goal", timeGoal);
 
 		// run and stop buttons
-		this.runButton = new Button("Start Testing");
 		runButton.setFont(new Font(15));
 		VExternSpace runButtonSpacer = new VExternSpace(runButton, 40, 0);
 
-		// track whether name is valid
+		// these fields are initally valid
 		name.setStyle("-fx-border-color: green;");
-
-		// track whether number of tests to run is valid
 		toRun.setStyle("-fx-border-color: green;");
-		this.validTestNumber = true;
-
-		// track whether time goal is valid
 		timeGoal.setStyle("-fx-border-color: green;");
-		this.validTimeGoal = true;
 
 		// default path for jacoco output
 		File defaultFile = new File(".");

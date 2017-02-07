@@ -202,4 +202,8 @@ public class ParameterFactory {
 		// return the list of possible parameters for this index
 		return possibleParamsList;
 	}
+
+	public Map getParameterMap() {
+		return inputMap;
+	}
 }

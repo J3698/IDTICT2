@@ -45,14 +45,15 @@ class ParameterPane extends ScrollPane {
 	/**
 	 * Content for this ParameterPane.
 	 */
-	private VBox content;
+	private VBox content = new VBox();
 
-	private CheckBox userDefinedBounds;
+	private CheckBox userDefinedBounds = new CheckBox(
+			"Use Custom Parameter Bounds\n(Predefined tests will not be run)");
 
 	/**
 	 * Parameter builder for this parameter pane.
 	 */
-	private ParameterBuilder parameterBuilder;
+	private ParameterBuilder parameterBuilder = new ParameterBuilder();
 
 	/**
 	 * Constructs a ParameterPane with the given test.
@@ -64,30 +65,33 @@ class ParameterPane extends ScrollPane {
 
 		// styling and components
 		setFitToWidth(true);
-		this.content = new VBox();
 		setContent(this.content);
 		this.content.setAlignment(Pos.CENTER);
 
-		// parameter builder
-		parameterBuilder = new ParameterBuilder();
-
 		// check box for using jar test bounds
-		userDefinedBounds = new CheckBox("Use Custom Parameter Bounds\n(Predefined tests will not be run)");
 		userDefinedBounds.setSelected(false);
-		userDefinedBounds.selectedProperty().addListener(new ChangeListener<Boolean>() {
-			@Override
-			public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
-				if (newValue) {
-					parameterBuilder.setVisible(true);
-				} else {
-					parameterBuilder.setVisible(false);
-				}
-			}
-		});
 		VExternSpace testBoundsBox = new VExternSpace(userDefinedBounds, 20, 0);
+
+		addListeners();
 
 		// add children
 		this.content.getChildren().addAll(testBoundsBox, parameterBuilder);
+	}
+
+	/**
+	 * Adds listeners to this component.
+	 */
+	public void addListeners() {
+		this.userDefinedBounds.selectedProperty().addListener(new ChangeListener<Boolean>() {
+			@Override
+			public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
+				if (newValue) {
+					ParameterPane.this.parameterBuilder.setVisible(true);
+				} else {
+					ParameterPane.this.parameterBuilder.setVisible(false);
+				}
+			}
+		});
 	}
 
 	/**
@@ -117,10 +121,17 @@ class ParameterPane extends ScrollPane {
 class ParameterBuilder extends VBox {
 	private final String statusOkString = "User Defined Parameters OK!";
 
+	private static final String keyConflictErrorString = "Illegal: Duplicate parameter keys.";
+
+	/**
+	 * List of keys
+	 */
+	private List<String> keys = new ArrayList<String>();
+
 	/**
 	 * Box to hold the parameter editors.
 	 */
-	private VBox params;
+	private VBox params = new VBox();
 
 	/**
 	 * Whether parameters should be dynamic or fixed by default.
@@ -130,17 +141,17 @@ class ParameterBuilder extends VBox {
 	/**
 	 * Text with the status of user defined parameters.
 	 */
-	private Text statusText;
+	private Text statusText = new Text(statusOkString);
 
 	/**
 	 * Stack of status errors to display.
 	 */
-	private LinkedList<String> errors;
+	private LinkedList<String> errors = new LinkedList<String>();
 
 	/**
 	 * List of parameter editors.
 	 */
-	private List<ParameterEditor> parameterEditors;
+	private List<ParameterEditor> parameterEditors = new LinkedList<ParameterEditor>();
 
 	/**
 	 * Constructs a ParameterBuilder with the given test.
@@ -152,11 +163,7 @@ class ParameterBuilder extends VBox {
 		setVisible(false);
 		setAlignment(Pos.CENTER);
 
-		errors = new LinkedList<String>();
-		parameterEditors = new LinkedList<ParameterEditor>();
-
 		// status of parameters
-		statusText = new Text(statusOkString);
 		statusText.setFill(Color.GREEN);
 		VExternSpace paramsOkay = new VExternSpace(statusText, 7, 35);
 
@@ -195,8 +202,6 @@ class ParameterBuilder extends VBox {
 		TitledPane helpPane = new TitledPane("Parameter Builder Help", helpText);
 		helpPane.setExpanded(false);
 
-		// box to hold parameter editors
-		this.params = new VBox();
 		Button newParamButton = new Button("Add Parameter");
 		VExternSpace newSpacer = new VExternSpace(newParamButton, 10, 0);
 
@@ -295,8 +300,45 @@ class ParameterBuilder extends VBox {
 		alert.showAndWait();
 		if (alert.getResult().getButtonData() == ButtonData.OK_DONE) {
 			parameter.removeAllErrors();
+			this.removeKey(parameter.getRegexKey());
 			this.params.getChildren().remove(parameter);
 			this.parameterEditors.remove(parameter);
+		}
+	}
+
+	/**
+	 * Adds a key to the key list.
+	 * <p>
+	 * If the key is already in the key list, sets the status to the appropriate
+	 * error.
+	 * 
+	 * @param key
+	 *            - key to add to the key list
+	 */
+	public void addKey(String key) {
+		int insert = Collections.binarySearch(this.keys, key);
+		if (insert >= 0) {
+			this.addParameterError(keyConflictErrorString);
+			this.keys.add(insert, key);
+		} else {
+			if (insert == this.keys.size()) {
+				this.keys.add(key);
+			} else {
+				this.keys.add(-(1 + insert), key);
+			}
+		}
+	}
+
+	/**
+	 * Removes a key from the list of keys.
+	 * 
+	 * @param key
+	 *            - key to remove from the list of keys
+	 */
+	public void removeKey(String key) {
+		this.keys.remove(key);
+		if (this.keys.contains(key)) {
+			this.removeParameterError(keyConflictErrorString);
 		}
 	}
 
@@ -344,12 +386,12 @@ class ParameterEditor extends TitledPane {
 	/**
 	 * Whether there is an error in the key regex.
 	 */
-	private boolean keyError;
+	private boolean keyError = false;
 
 	/**
 	 * The string regex key for this parameter.
 	 */
-	private String regexKey;
+	private String regexKey = "";
 
 	/**
 	 * ParameterBuilder for this ParameterEditor.
@@ -359,7 +401,7 @@ class ParameterEditor extends TitledPane {
 	/**
 	 * Box for editor settings of this parameter.
 	 */
-	private VBox content;
+	private VBox content = new VBox(10);
 
 	/**
 	 * Whether this parameter is fixed or not.
@@ -369,22 +411,22 @@ class ParameterEditor extends TitledPane {
 	/**
 	 * Whether this parameter is optional or not.
 	 */
-	private boolean isOptional;
+	private boolean isOptional = false;
 
 	/**
 	 * List of format strings for this paramter.
 	 */
-	private List<FormatString> formatStrings;
+	private List<FormatString> formatStrings = new LinkedList<FormatString>();
 
 	/**
 	 * Components to hide if this parameter is fixed.
 	 */
-	private List<Node> dynamicSettings;
+	private List<Node> dynamicSettings = new ArrayList<Node>();
 
 	/**
 	 * Components to hide if this parameter is fixed.
 	 */
-	private HBox initialSettings;
+	private HBox initialSettings = new HBox(45);
 
 	/**
 	 * Constructs a parameter editor with the given parameter builder and
@@ -397,12 +439,10 @@ class ParameterEditor extends TitledPane {
 	 */
 	public ParameterEditor(ParameterBuilder parameterBuilder, boolean dynamic) {
 		this.parameterBuilder = parameterBuilder;
+		this.isDynamic = dynamic;
 
 		setExpanded(false);
 		setText("Parameter");
-
-		this.formatStrings = new LinkedList<FormatString>();
-		this.keyError = false;
 
 		// for stacking delete button on other settings
 		StackPane container = new StackPane();
@@ -416,23 +456,18 @@ class ParameterEditor extends TitledPane {
 		exitPane.getChildren().add(exitButton);
 
 		// style editor box
-		this.content = new VBox(10);
 		this.content.setAlignment(Pos.CENTER);
 
 		// add dynamic settings
 		TextField keyField = new TextField();
 		keyField.setPrefColumnCount(7);
-		this.regexKey = "";
+		this.parameterBuilder.addKey(this.regexKey);
 		LabeledNode key = new LabeledNode("Key", keyField);
 		CheckBox optional = new CheckBox("Optional");
-		this.isOptional = false;
-		this.initialSettings = new HBox(45);
 		this.initialSettings.setAlignment(Pos.CENTER);
-		this.isDynamic = dynamic;
 		if (this.isDynamic) {
 			initialSettings.getChildren().addAll(optional, key);
 		}
-		dynamicSettings = new ArrayList<Node>();
 		dynamicSettings.add(optional);
 		dynamicSettings.add(key);
 		VExternSpace initialSpacer = new VExternSpace(initialSettings, 0, 25);
@@ -488,6 +523,9 @@ class ParameterEditor extends TitledPane {
 		keyField.textProperty().addListener(new ChangeListener<String>() {
 			@Override
 			public void changed(ObservableValue<? extends String> observable, String oldValue, String newValue) {
+				ParameterEditor.this.parameterBuilder.removeKey(oldValue);
+				ParameterEditor.this.parameterBuilder.addKey(newValue);
+
 				ParameterEditor.this.regexKey = newValue;
 				try {
 					Pattern.compile(newValue);
@@ -671,27 +709,27 @@ class FormatString extends VBox {
 	/**
 	 * The text field for min.
 	 */
-	private TextField minField;
+	private TextField minField = new TextField();
 
 	/**
 	 * The text field for max.
 	 */
-	private TextField maxField;
+	private TextField maxField = new TextField();
 
 	/**
 	 * The text field for the format string.
 	 */
-	private TextField formatField;
+	private TextField formatField = new TextField();
 
 	/**
 	 * List of errors to stash.
 	 */
-	private List<String> errorStash;
+	private List<String> errorStash = new LinkedList<String>();
 
 	/**
 	 * Whether this format string is enabled.
 	 */
-	private boolean enabled;
+	private boolean enabled = true;
 
 	/**
 	 * The parent parameter editor.
@@ -701,17 +739,17 @@ class FormatString extends VBox {
 	/**
 	 * Box for holding replace-me number bounds.
 	 */
-	private VBox bounds;
+	private VBox bounds = new VBox();
 
 	/**
 	 * Labeled text field for min bound of replace-me numbers
 	 */
-	private LabeledNode minLabel;
+	private LabeledNode minLabel = new LabeledNode("Min", minField);
 
 	/**
 	 * Labeled text field for max bound of replace-me numbers
 	 */
-	private LabeledNode maxLabel;
+	private LabeledNode maxLabel = new LabeledNode("Max", maxField);
 
 	/**
 	 * Constructs a format string with the given parameter editor.
@@ -723,24 +761,16 @@ class FormatString extends VBox {
 		super(3);
 
 		this.parameterEditor = parameterEditor;
-		this.errorStash = new LinkedList<String>();
-		this.enabled = true;
 
 		// delete button and text field
 		HBox withString = new HBox(2);
 		withString.setAlignment(Pos.CENTER);
 		Button closeButton = new Button("X");
-		formatField = new TextField();
-		formatField.setPrefColumnCount(20);
+		this.formatField.setPrefColumnCount(20);
 
 		// min and max fields for number replace-mes
-		bounds = new VBox();
-		minField = new TextField();
-		minField.setPrefColumnCount(7);
-		minLabel = new LabeledNode("Min", minField);
-		maxField = new TextField();
-		maxField.setPrefColumnCount(7);
-		maxLabel = new LabeledNode("Max", maxField);
+		this.minField.setPrefColumnCount(7);
+		this.maxField.setPrefColumnCount(7);
 
 		addHandlers(closeButton);
 

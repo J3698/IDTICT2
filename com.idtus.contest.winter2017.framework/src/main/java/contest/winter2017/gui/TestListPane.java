@@ -54,7 +54,7 @@ class TestListPane extends ScrollPane {
 	/**
 	 * Set of names for the tests.
 	 */
-	private Set<String> testNames;
+	private Set<String> testNames = new HashSet<String>();
 
 	/**
 	 * Int position where to place new TestInfo components.
@@ -64,7 +64,7 @@ class TestListPane extends ScrollPane {
 	/**
 	 * ContentPane for test info.
 	 */
-	private VBox contentPane;
+	private VBox contentPane = new VBox(SPACING);
 
 	/**
 	 * Constructs a TestListPane with the specified parent BorderPane.
@@ -72,16 +72,11 @@ class TestListPane extends ScrollPane {
 	public TestListPane(BorderPane mainPane) {
 		this.mainPane = mainPane;
 
-		// styling
 		setMinWidth(WIDTH);
 		setFitToWidth(true);
 		setHbarPolicy(ScrollBarPolicy.NEVER);
 		setVbarPolicy(ScrollBarPolicy.ALWAYS);
 		setStyle("-fx-focus-color: transparent; -fx-faint-focus-color: transparent;");
-
-		this.testNames = new HashSet<String>();
-
-		this.contentPane = new VBox(SPACING);
 		setContent(this.contentPane);
 
 		infoAdderIndex = this.contentPane.getChildren().size() - 1;

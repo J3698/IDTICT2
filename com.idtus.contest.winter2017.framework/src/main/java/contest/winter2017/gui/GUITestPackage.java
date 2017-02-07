@@ -48,7 +48,7 @@ public class GUITestPackage {
 	/**
 	 * Tester of this test.
 	 */
-	private Tester tester;
+	private Tester tester = new Tester();
 
 	/**
 	 * Name of this test.
@@ -82,7 +82,6 @@ public class GUITestPackage {
 		this.name = new SimpleStringProperty(name);
 		this.testListPane = testListPane;
 		this.toTest = toTest;
-		this.tester = new Tester();
 		this.testInfo = new TestInfo(this);
 		this.mainPane = new MainPane(this);
 	}
@@ -297,12 +296,12 @@ class TestInfo extends VBox {
 	/**
 	 * Progress bar for this test.
 	 */
-	private ProgressBar progressBar;
+	private ProgressBar progressBar = new ProgressBar(0);
 
 	/**
 	 * Completion status of this test.
 	 */
-	private Text percent;
+	private Text percent = new Text("0%");
 
 	/**
 	 * Constructs a TestInfo with the given test.
@@ -316,9 +315,7 @@ class TestInfo extends VBox {
 		Text name = new Text("");
 		name.textProperty().bind(this.test.getName());
 		name.setFont(new Font(20));
-		this.percent = new Text("0%");
 		this.percent.setFont(new Font(10));
-		this.progressBar = new ProgressBar(0);
 		this.progressBar.setMouseTransparent(true);
 		this.progressBar.setPadding(new Insets(3, 0, 0, 2));
 
