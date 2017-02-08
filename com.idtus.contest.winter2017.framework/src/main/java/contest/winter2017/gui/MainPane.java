@@ -1,33 +1,25 @@
 package contest.winter2017.gui;
 
-import java.io.File;
+import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
+import java.util.Map.Entry;
 
 import contest.winter2017.Output;
-import contest.winter2017.Tester;
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
-import javafx.event.ActionEvent;
-import javafx.event.EventHandler;
-import javafx.geometry.Pos;
-import javafx.scene.control.Alert;
-import javafx.scene.control.Button;
+import contest.winter2017.PermissionInfo;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
 import javafx.scene.control.TextArea;
-import javafx.scene.control.TextField;
-import javafx.scene.layout.BorderPane;
+import javafx.scene.control.TitledPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
-import javafx.stage.DirectoryChooser;
-import javafx.stage.FileChooser;
-import javafx.stage.FileChooser.ExtensionFilter;
-import javafx.stage.Window;
 
 /**
- * TabPane to control testing form.
+ * TabPane to control testing from. This component has three tabs. The first tab
+ * is for running tests, the second is for test output, and the third is for
+ * controlling parameter bounds to test with. This pane Takes up the majority of
+ * the GUI real estate.
  * 
  * @author ICT-2
  */
@@ -65,7 +57,7 @@ public class MainPane extends TabPane {
 	/**
 	 * TextArea for this test's permissions.
 	 */
-	private TextArea permissionsText = new TextArea();
+	private PermissionPane permissionsPane = new PermissionPane();
 
 	/**
 	 * Int tests recorded so far.
@@ -93,11 +85,11 @@ public class MainPane extends TabPane {
 		// stdErrText.setMouseTransparent(true);
 		stdErrText.setFocusTraversable(false);
 		Tab stdErr = new Tab("Standard Error", stdErrText);
-		permissionsText.setEditable(false);
-		permissionsText.setWrapText(true);
+		// permissionsText.setEditable(false);
+		// permissionsText.setWrapText(true);
 		// permissionsText.setMouseTransparent(true);
-		permissionsText.setFocusTraversable(false);
-		Tab permissions = new Tab("Permissions", permissionsText);
+		// permissionsText.setFocusTraversable(false);
+		Tab permissions = new Tab("Permissions", permissionsPane);
 		outputPane.getTabs().addAll(stdOut, stdErr, permissions);
 		outputPane.setTabClosingPolicy(TabClosingPolicy.UNAVAILABLE);
 		Tab outputTab = new Tab("Output", outputPane);
@@ -121,7 +113,7 @@ public class MainPane extends TabPane {
 		String prefix = "Test " + this.testsAdded + ":\n";
 		this.stdErrText.appendText(prefix + output.getStdErrString() + "\n\n");
 		this.stdOutText.appendText(prefix + output.getStdOutString() + "\n\n");
-		this.permissionsText.appendText(prefix + output.getPermissionLogString() + "\n\n");
+		this.permissionsPane.addPermission(output.getPermissionMap());
 	}
 
 	/**
@@ -170,12 +162,12 @@ public class MainPane extends TabPane {
 	}
 
 	/**
-	 * Returns this test's permissions text.
+	 * Returns this test's permissions pane.
 	 * 
-	 * @return this test's permissions text
+	 * @return this test's permissions pane
 	 */
-	public TextArea getPermissionsText() {
-		return this.permissionsText;
+	public PermissionPane getPermissionsPane() {
+		return this.permissionsPane;
 	}
 
 	/**
@@ -186,331 +178,58 @@ public class MainPane extends TabPane {
 	public GUITestPackage getTest() {
 		return this.test;
 	}
-
 }
 
-/**
- * VBox to expose basic test settings and allow running of a test.
- * 
- * @author ICT-2
- */
-class RunPane extends BorderPane {
-	/**
-	 * Int default space between elements.
-	 */
-	private static final int DEFAULT_SPACE = 10;
+class PermissionPane extends ScrollPane {
+	private Map<String, PermissionInfoPane> permissionInfosMap = new HashMap<String, PermissionInfoPane>();
 
-	/**
-	 * Test for this RunPane.
-	 */
-	private GUITestPackage test;
+	private VBox permissionInfos = new VBox();
 
-	// textfieds for several settings
-	private TextField name = new TextField();
-	private TextField toRun = new TextField();
-	private TextField timeGoal = new TextField();
-
-	// file paths for several settings
-	private File outputPathFile = null;
-	private File jacocoPathFile = null;
-
-	// whether or not several settings are valid
-	private boolean validTimeGoal = true;
-	private boolean validTestNumber = true;
-	private boolean validOutputPath = false;
-	private boolean validJacocoPath = false;
-
-	/**
-	 * Run button for this test.
-	 */
-	private Button runButton = new Button("Start Testing");
-
-	/**
-	 * Constructs a RunPane.
-	 */
-	public RunPane(GUITestPackage test) {
-		this.test = test;
-
-		// styling
-		VBox box = new VBox(DEFAULT_SPACE);
-		box.setAlignment(Pos.CENTER);
-
-		// buttons for output and agent path
-		Button outputPath = new Button("Set Output Path");
-		LabeledNode outputPathButton = new LabeledNode("Jacoco Output Path", outputPath);
-		outputPath.setStyle("-fx-border-color: red;");
-		Button agentPath = new Button("Set Agent Path");
-		LabeledNode agentPathButton = new LabeledNode("Jacoco Agent Path", agentPath);
-		agentPath.setStyle("-fx-border-color: red;");
-
-		// label name of jar to test
-		Text jarName = new Text();
-		jarName.setText(test.getToTest().getName());
-		jarName.setFont(new Font(20));
-		VExternSpace jarNameSpacer = new VExternSpace(jarName, 0, 40);
-
-		// name setting
-		name.setPrefColumnCount(5);
-		name.setText(this.test.getName().get());
-		LabeledNode nameInput = new LabeledNode("Test Name", name);
-
-		// number of test setting
-		toRun.setPrefColumnCount(5);
-		toRun.setText("" + Tester.DEFAULT_BB_TESTS);
-		LabeledNode testsToRunInput = new LabeledNode("Tests to Run", toRun);
-
-		// time goal setting
-		timeGoal.setPrefColumnCount(5);
-		timeGoal.setText("" + Tester.DEFAULT_TIME_GOAL);
-		LabeledNode timeGoalInput = new LabeledNode("Time Goal", timeGoal);
-
-		// run and stop buttons
-		runButton.setFont(new Font(15));
-		VExternSpace runButtonSpacer = new VExternSpace(runButton, 40, 0);
-
-		// these fields are initally valid
-		name.setStyle("-fx-border-color: green;");
-		toRun.setStyle("-fx-border-color: green;");
-		timeGoal.setStyle("-fx-border-color: green;");
-
-		// default path for jacoco output
-		File defaultFile = new File(".");
-		if (defaultFile.exists()) {
-			outputPathFile = defaultFile;
-			outputPath.setStyle("-fx-border-color: green;");
-			outputPath.setText("Current Folder");
-			this.validOutputPath = true;
-		}
-
-		// default path for jacoco agent
-		defaultFile = new File("C:\\idt_contest\\jacoco\\lib\\jacocoagent.jar");
-		if (defaultFile.exists()) {
-			this.validJacocoPath = true;
-			agentPath.setStyle("-fx-border-color: green;");
-			this.jacocoPathFile = defaultFile;
-			agentPath.setText(clipName(defaultFile.getAbsolutePath()));
-		}
-
-		addHandlers(outputPath, agentPath);
-
-		box.getChildren().addAll(jarNameSpacer, nameInput, testsToRunInput, timeGoalInput);
-		box.getChildren().addAll(outputPathButton, agentPathButton, runButtonSpacer);
-		setCenter(box);
+	public PermissionPane() {
+		setContent(permissionInfos);
+		setFitToWidth(true);
 	}
 
-	/**
-	 * Adds handlers to this component.
-	 * 
-	 * @param outputPath
-	 *            - componen to add handlers to
-	 * @param agentPath
-	 *            - componen to add handlers to
-	 * @param runButton
-	 *            - componen to add handlers to
-	 */
-	public void addHandlers(Button outputPath, Button agentPath) {
-		name.textProperty().addListener(new ChangeListener<String>() {
-			@Override
-			public void changed(ObservableValue<? extends String> arg0, String oldVal, String newVal) {
-				newVal = newVal.trim();
-				Set<String> usedNames = RunPane.this.test.getTestListPane().getTestNames();
-				if (!usedNames.contains(newVal) && !newVal.equals("")) {
-					RunPane.this.test.setName(newVal);
-					usedNames.remove(oldVal);
-					name.setStyle("-fx-border-color: green;");
-				} else {
-					name.setStyle("-fx-border-color: red;");
-				}
+	public void addPermission(Map<String, Integer> permissionLog) {
+		for (Entry<String, Integer> entry : permissionLog.entrySet()) {
+			PermissionInfoPane info = this.permissionInfosMap.get(entry.getKey());
+			if (info == null) {
+				info = new PermissionInfoPane(entry.getKey());
+				this.permissionInfosMap.put(entry.getKey(), info);
+				this.permissionInfos.getChildren().add(info);
 			}
-		});
-
-		toRun.textProperty().addListener(new ChangeListener<String>() {
-			@Override
-			public void changed(ObservableValue<? extends String> arg0, String oldVal, String newVal) {
-				RunPane.this.validTestNumber = false;
-				try {
-					if (Integer.parseInt(newVal.trim()) >= Tester.MIN_BB_TESTS) {
-						RunPane.this.validTestNumber = true;
-					}
-				} catch (NumberFormatException e) {
-					// prevent exception from bubbling up
-				}
-
-				if (RunPane.this.validTestNumber) {
-					toRun.setStyle("-fx-border-color: green;");
-				} else {
-					toRun.setStyle("-fx-border-color: red;");
-				}
-			}
-		});
-
-		timeGoal.textProperty().addListener(new ChangeListener<String>() {
-			@Override
-			public void changed(ObservableValue<? extends String> arg0, String oldVal, String newVal) {
-				RunPane.this.validTimeGoal = false;
-				try {
-					if (Integer.parseInt(newVal.trim()) >= Tester.MIN_TIME_GOAL) {
-						RunPane.this.validTimeGoal = true;
-					}
-				} catch (NumberFormatException e) {
-					// prevent exception from bubbling up,
-					// just leave validTimeGoal as false
-				}
-
-				if (RunPane.this.validTimeGoal) {
-					timeGoal.setStyle("-fx-border-color: green;");
-				} else {
-					timeGoal.setStyle("-fx-border-color: red;");
-				}
-			}
-		});
-
-		// get a directory for the jacoco output path
-		outputPath.setOnAction(new EventHandler<ActionEvent>() {
-			@Override
-			public void handle(ActionEvent event) {
-				DirectoryChooser dc = new DirectoryChooser();
-				dc.setTitle("Choose a Jacoco Output Path");
-				Window window = RunPane.this.getScene().getWindow();
-				RunPane.this.outputPathFile = dc.showDialog(window);
-				if (RunPane.this.outputPathFile != null && RunPane.this.outputPathFile.exists()) {
-					outputPath.setStyle("-fx-border-color: green;");
-					RunPane.this.validOutputPath = true;
-					String path = RunPane.this.outputPathFile.getAbsolutePath();
-					outputPath.setText(clipName(path));
-				}
-			}
-		});
-
-		// get a jacoco agent jar
-		agentPath.setOnAction(new EventHandler<ActionEvent>() {
-			@Override
-			public void handle(ActionEvent event) {
-				FileChooser fc = new FileChooser();
-				fc.setTitle("Choose a Jacoco Jar Agent");
-				fc.getExtensionFilters().addAll(new ExtensionFilter("Java Jar Files", "*.jar"));
-				Window window = RunPane.this.getScene().getWindow();
-				RunPane.this.jacocoPathFile = fc.showOpenDialog(window);
-				if (jacocoPathFile != null && jacocoPathFile.exists()) {
-					agentPath.setStyle("-fx-border-color: green;");
-					RunPane.this.validJacocoPath = true;
-					String path = RunPane.this.jacocoPathFile.getAbsolutePath();
-					agentPath.setText(clipName(path));
-				}
-			}
-		});
-
-		// run the tests
-		RunPane.this.runButton.setOnAction(new EventHandler<ActionEvent>() {
-			@Override
-			public void handle(ActionEvent event) {
-
-				if (RunPane.this.runButton.getText().equals("Start Testing")) {
-					// prepare an error alert
-					Alert alert = new Alert(Alert.AlertType.ERROR);
-					alert.setTitle("Tester Failed to Initialize");
-
-					// ensure options are all correct
-					String jarPath = RunPane.this.test.getToTest().getAbsolutePath();
-					if (RunPane.this.validOutputPath) {
-					} else {
-						alert.setContentText("Invalid jar path.");
-						alert.showAndWait();
-						return;
-					}
-
-					String outputPath = null;
-					if (RunPane.this.validOutputPath) {
-						outputPath = RunPane.this.outputPathFile.getAbsolutePath();
-					} else {
-						alert.setContentText("Invalid output path.");
-						alert.showAndWait();
-						return;
-					}
-
-					String agentPath = null;
-					if (RunPane.this.validJacocoPath) {
-						agentPath = RunPane.this.jacocoPathFile.getAbsolutePath();
-					} else {
-						alert.setContentText("Invalid agent path.");
-						alert.showAndWait();
-						return;
-					}
-
-					String bbTests = null;
-					if (RunPane.this.validTestNumber) {
-						bbTests = RunPane.this.toRun.getText();
-					} else {
-						alert.setContentText("Invalid number of tests.");
-						alert.showAndWait();
-						return;
-					}
-
-					String timeGoal = null;
-					if (RunPane.this.validTimeGoal) {
-						timeGoal = RunPane.this.timeGoal.getText();
-					} else {
-						alert.setContentText("Invalid time goal.");
-						alert.showAndWait();
-						return;
-					}
-
-					Map testBounds = null;
-					if (RunPane.this.test.hasUserTestBounds()) {
-						if (!RunPane.this.test.hasValidUserTestBounds()) {
-							alert.setContentText("Invalid user defined parameter bounds.");
-							alert.showAndWait();
-							return;
-						} else {
-							testBounds = RunPane.this.test.getUserTestBounds();
-						}
-					}
-
-					boolean quiet = false;
-					boolean watchdog = true;
-
-					// initialize and run tester
-					if (!RunPane.this.test.getTester().init(testBounds, jarPath, outputPath, agentPath, bbTests,
-							timeGoal, GUIMain.getGuiID(), quiet, watchdog)) {
-						alert.setContentText("Unknown initialization error.");
-						alert.showAndWait();
-						RunPane.this.runButton.setDisable(false);
-					} else {
-						RunPane.this.test.startTests();
-						RunPane.this.runButton.setText("Pause Testing");
-					}
-				} else if (RunPane.this.runButton.getText().equals("Pause Testing")) {
-					RunPane.this.test.pauseTests();
-					RunPane.this.runButton.setText("Resume Testing");
-				} else {
-					RunPane.this.test.resumeTests();
-					RunPane.this.runButton.setText("Pause Testing");
-				}
-			}
-		});
-	}
-
-	/**
-	 * Disables run button.
-	 */
-	public void endTests() {
-		this.runButton.setDisable(true);
-	}
-
-	/**
-	 * Clips a path name and prefixes it with ellipses.
-	 * 
-	 * @param name
-	 *            - name to clip
-	 * @return the clipped name
-	 */
-	public String clipName(String name) {
-		if (name.length() > 30) {
-			name = name.substring(name.length() - 1 - 30);
-			return "..." + name.substring(3);
-		} else {
-			return name;
+			info.addOccurance(entry.getValue());
 		}
+	}
+}
 
+class PermissionInfoPane extends TitledPane {
+	private int occurances = 0;
+	private String name;
+
+	public PermissionInfoPane(String name) {
+		VBox content = new VBox();
+		setContent(content);
+		setExpanded(false);
+		setText(name);
+		this.name = name;
+		Text allowsTitle = new Text("What it Allows");
+		allowsTitle.setFont(new Font(15));
+		VExternSpace allowsSpacer = new VExternSpace(allowsTitle, 0, 10);
+
+		Text riskTitle = new Text("What it Risks");
+		riskTitle.setFont(new Font(15));
+		VExternSpace riskSpacer = new VExternSpace(riskTitle, 0, 10);
+
+		Text allows = new Text(PermissionInfo.getAllowance(this.name));
+		allows.setWrappingWidth(allows.getParent().);;
+		Text risks = new Text(PermissionInfo.getRisk(this.name));
+
+		content.getChildren().addAll(allowsSpacer, allows, riskSpacer, risks);
+	}
+
+	public void addOccurance(int occurances) {
+		this.occurances += occurances;
+		setText(name + " (" + this.occurances + " occurances)");
 	}
 }

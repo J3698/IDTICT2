@@ -98,7 +98,7 @@ public class TestGenerator {
 					// loop over the areas of the format that must be replaced
 					// and choose values
 					List<Object> formatVariableValues = new ArrayList<Object>();
-					for (Class type : potentialParameter.getFormatVariables(parameterString)) {
+					for (Class<?> type : potentialParameter.getFormatVariables(parameterString)) {
 						if (type == Integer.class) {
 							// dumb logic - always use 1 for an integer
 							formatVariableValues.add(new Integer(1));
@@ -133,7 +133,7 @@ public class TestGenerator {
 						// loop over the areas of the format that must be
 						// replaced and choose values
 						List<Object> formatVariableValues = new ArrayList<Object>();
-						for (Class type : potentialParameter.getFormatVariables()) {
+						for (Class<?> type : potentialParameter.getFormatVariables()) {
 							if (type == Integer.class) {
 								// dumb logic - always use '1' for an Integer
 								formatVariableValues.add(new Integer(1));

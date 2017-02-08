@@ -1,6 +1,7 @@
 package contest.winter2017;
 
 import java.time.LocalDateTime;
+import java.util.Scanner;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
@@ -15,9 +16,9 @@ import javafx.application.Application;
 /**
  * Entry-point class for the black-box testing framework.
  * <p>
- * This application has four basic modes of operation, testing mode, help mode,
- * permission info mode, and GUI mode. If the arguments for one of those modes
- * is given, the modes further down the list are ignored.
+ * This application has five basic modes of operation, testing mode, help mode,
+ * permission info mode, permission list mode, and GUI mode. If the arguments
+ * for one of those modes is given, the modes further down the list are ignored.
  * <p>
  * The first operation mode is testing mode. In this mode required arguments are
  * the path to the executable jar, the path to the directory for jacoco output,
@@ -29,7 +30,10 @@ import javafx.application.Application;
  * The third mode of operation is permission info mode. This mode supplies the
  * security risks associted with various java permissions to the user.
  * <p>
- * The fourth mode of operation is GUI mode. In this mode, a JavaFX application
+ * The fourth mode of operation is permission list mode. This mode lists the
+ * different sorts of permissions.
+ * <p>
+ * The fifth mode of operation is GUI mode. In this mode, a JavaFX application
  * is run, which exposes much of the functionality in other modes.
  * 
  * 
@@ -75,6 +79,11 @@ public class Main {
 	public static final String PERMISSION_INFO = "permissionInfo";
 
 	/**
+	 * Cli key for listing the different permissions.
+	 */
+	public static final String PERMISSION_LIST = "permissionList";
+
+	/**
 	 * Cli key for application help.
 	 */
 	public static final String HELP = "help";
@@ -110,6 +119,7 @@ public class Main {
 		options.addOption(TIME_GOAL, true, "time goal for black box testings to run in");
 		// optional parameters without arguments
 		options.addOption(TOOL_CHAIN, false, "option to print only necessary output");
+		options.addOption(PERMISSION_LIST, false, "print a list of different permissions");
 		options.addOption(HELP, false, "help");
 		options.addOption(ALT_HELP, false, "help");
 		options.addOption(GUI, false, "run the gui");
@@ -131,10 +141,11 @@ public class Main {
 					String bbTests = cliArgs.getOptionValue(BLACK_BOX_TESTS);
 					String timeGoal = cliArgs.getOptionValue(TIME_GOAL);
 					boolean quiet = cliArgs.hasOption(TOOL_CHAIN);
-					boolean watchdog = quiet;
+					boolean watchdog = !quiet;
 
 					// catch and report runtime exceptions
 					try {
+
 						// the Tester class contains all of the logic for the
 						// testing framework
 						Tester tester = new Tester();
@@ -167,10 +178,27 @@ public class Main {
 					// of arguments
 				} else if (cliArgs.hasOption(PERMISSION_INFO)) {
 
-					String info = cliArgs.getOptionValue(PERMISSION_INFO);
-					System.out.println(PermissionInfo.getInfo(info));
-					System.out.println("-----------");
-					System.out.println(PermissionInfo.copyrightNotice());
+					@SuppressWarnings("resource")
+					Scanner sc = new Scanner(System.in);
+					String next;
+					while (!(next = sc.nextLine()).equals("exit")) {
+						String info = next;
+
+						System.out.println("Allowances:");
+						System.out.println(PermissionInfo.getAllowance(next));
+
+						System.out.println("Risks:");
+						System.out.println(PermissionInfo.getRisk(next));
+
+						System.out.println("-----------");
+						System.out.println(PermissionInfo.COPYRIGHT_NOTICE);
+					}
+
+				} else if (cliArgs.hasOption(PERMISSION_LIST)) {
+
+					for (String name : PermissionInfo.getPermissionNames()) {
+						System.out.println("name");
+					}
 
 				} else if (cliArgs.hasOption(GUI)) {
 

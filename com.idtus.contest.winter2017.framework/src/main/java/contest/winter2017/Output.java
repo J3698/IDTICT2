@@ -1,8 +1,11 @@
 package contest.winter2017;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.StringTokenizer;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.jacoco.core.analysis.CoverageBuilder;
@@ -111,6 +114,15 @@ public class Output {
 	}
 
 	/**
+	 * Returns a map of permissions used to their occurrences.
+	 * 
+	 * @return Map of permissions used to their occurrences
+	 */
+	public HashMap<String, Integer> getPermissionMap() {
+		return this.permissionLogMap;
+	}
+
+	/**
 	 * Gets the std out string.
 	 * 
 	 * @return String representation of std out associated with a given test run
@@ -143,20 +155,22 @@ public class Output {
 	 */
 	public Set<String> getExceptions() {
 		// work in progress
-		/*
-		 * String toSplit = this.stdErrString;
-		 * System.out.println(this.stdErrString); Set<String> exceptions = new
-		 * HashSet<String>(); Matcher matcher =
-		 * exceptionFinder.matcher(toSplit); while (matcher.find()) { String
-		 * match = matcher.group(0); toSplit.replace(match,
-		 * "<<SPLIT_ERROR_STRING>>"); exceptions.add(match); } StringTokenizer
-		 * tokenizer = new StringTokenizer(toSplit, "<<SPLIT_ERROR_STRING>>");
-		 * while (tokenizer.hasMoreTokens()) {
-		 * exceptions.add(tokenizer.nextToken()); }
-		 * 
-		 * return exceptions;
-		 */
-		return null;
+		String toSplit = this.stdErrString;
+		System.out.println(this.stdErrString);
+		Set<String> exceptions = new HashSet<String>();
+		Matcher matcher = exceptionFinder.matcher(toSplit);
+		while (matcher.find()) {
+			String match = matcher.group(0);
+			toSplit.replace(match, "<<SPLIT_ERROR_STRING>>");
+			exceptions.add(match);
+		}
+		StringTokenizer tokenizer = new StringTokenizer(toSplit, "<<SPLIT_ERROR_STRING>>");
+		while (tokenizer.hasMoreTokens()) {
+			exceptions.add(tokenizer.nextToken());
+		}
+
+		return exceptions;
+
 	}
 
 	/**

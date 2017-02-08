@@ -2,13 +2,13 @@ package contest.winter2017.gui;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import contest.winter2017.Output;
 import contest.winter2017.Tester;
-import edu.emory.mathcs.backport.java.util.Collections;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.value.ChangeListener;
@@ -25,7 +25,10 @@ import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 
 /**
- * Class encapsulting a test run in the GUI interface.
+ * Class encapsulating a test run in the GUI interface.
+ * 
+ * This class is primarily responsible for encapsulating the main pane, tester,
+ * and test info for a given test.
  * 
  * @author ICT-2
  */
@@ -63,7 +66,6 @@ public class GUITestPackage {
 	/**
 	 * Synchronized list of outputs for this test.
 	 */
-	@SuppressWarnings("unchecked")
 	private List<Output> outputs = Collections.synchronizedList(new ArrayList<Output>());
 
 	/**
@@ -283,7 +285,14 @@ public class GUITestPackage {
 }
 
 /**
- * VBox used to hold basic info for tests.
+ * VBox used to hold basic info for a given test.
+ * 
+ * This component may be selected to show the test in the main pane.
+ * 
+ * This component shows the name of the test, a status string for the test, and
+ * a progress bar for the test. The text shows the percent of tests done, the
+ * fact that extra tests are being run, or "done". The progress bar changes
+ * accordingly.
  * 
  * @author ICT-2
  */
@@ -345,7 +354,6 @@ class TestInfo extends VBox {
 			 * @param newValue
 			 *            - the new percent complete.
 			 */
-			@Override
 			public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
 				TestInfo.this.test.updateOutput();
 

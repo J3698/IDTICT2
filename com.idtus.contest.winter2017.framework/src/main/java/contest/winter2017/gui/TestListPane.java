@@ -26,7 +26,12 @@ import javafx.stage.FileChooser.ExtensionFilter;
 import javafx.stage.Window;
 
 /**
- * ScrollPane to hold the tests.
+ * ScrollPane to hold the test infos.
+ * 
+ * This component is a scrollable pane containing test infos which show
+ * information about different tests. Test infos can be selected to show a test
+ * in the main pane.The last component in the scroll pane allows for adding
+ * tests.
  * 
  * @author ICT-2
  */
@@ -126,7 +131,7 @@ class TestListPane extends ScrollPane {
 			}
 		});
 
-		// light up if an aplpicable jar is dragged over
+		// light up if an applicable jar is dragged over
 		adder.setOnDragEntered(new EventHandler<DragEvent>() {
 			public void handle(DragEvent event) {
 				Dragboard db = event.getDragboard();

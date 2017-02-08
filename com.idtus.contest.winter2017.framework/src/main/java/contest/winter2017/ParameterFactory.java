@@ -73,16 +73,18 @@ public class ParameterFactory {
 		}
 		this.dependentParametersMap = (Map) this.inputMap.get("dependent parameters");
 
-		System.out.println("______DEBUG______");
-		if (dependentParametersMap == null) {
-			System.out.println("FIXED");
-			printList((List) this.inputMap.get("fixed parameter list"));
-		} else {
-			System.out.println("DEPENDENT");
-			printMap(dependentParametersMap, "$: ");
+		boolean debug = false;
+		if (debug) {
+			System.out.println("______DEBUG______");
+			if (dependentParametersMap == null) {
+				System.out.println("FIXED");
+				printList((List) this.inputMap.get("fixed parameter list"));
+			} else {
+				System.out.println("DEPENDENT");
+				printMap(dependentParametersMap, "$: ");
+			}
+			System.out.println("______DEBUG______");
 		}
-		System.out.println("______DEBUG______");
-
 	}
 
 	/**
@@ -203,7 +205,7 @@ public class ParameterFactory {
 		return possibleParamsList;
 	}
 
-	public Map getParameterMap() {
+	public Map<?, ?> getParameterMap() {
 		return inputMap;
 	}
 }

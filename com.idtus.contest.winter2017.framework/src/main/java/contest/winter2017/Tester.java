@@ -190,7 +190,6 @@ public class Tester {
 	/**
 	 * List of outputs encountered.
 	 */
-	@SuppressWarnings("unchecked")
 	private List<Output> outputs = Collections.synchronizedList(new ArrayList<Output>(2000));
 
 	/**
@@ -274,7 +273,7 @@ public class Tester {
 			outputFilePath.append(jarFileToTest.getName().replaceAll("\\.", "_"));
 			outputFilePath.append(JACOCO_OUTPUT_FILE_SUFFIX);
 
-			File jacocoOutputFile = new File(this.jacocoOutputFilePath);
+			File jacocoOutputFile = new File("" + outputFilePath);
 			if (jacocoOutputFile != null && jacocoOutputFile.exists()) {
 				jacocoOutputFile.delete();
 			}
@@ -515,7 +514,6 @@ public class Tester {
 	 * 
 	 * @return list of this testers outputs
 	 */
-	@SuppressWarnings("unchecked")
 	public List<Output> getOutputs() {
 		return Collections.unmodifiableList(this.outputs);
 	}
@@ -689,12 +687,12 @@ public class Tester {
 			stdErrReader.endProcess();
 			stdOutReader.endProcess();
 
-			output.setStdOutString(stdOutBuff.toString());
+			output.setStdOutString("" + stdOutBuff);
 			// trim extra newline character
 			if (stdErrBuff.length() != 0) {
 				stdErrBuff.deleteCharAt(stdErrBuff.length() - 1);
 			}
-			output.setStdErrString(stdErrBuff.toString());
+			output.setStdErrString("" + stdErrBuff);
 
 		} catch (IOException e) {
 			if (!this.quiet) {
@@ -816,6 +814,7 @@ public class Tester {
 	 * 
 	 * @throws IOException
 	 */
+	@SuppressWarnings("unused")
 	private void printRawCoverageStats() {
 		if (!this.quiet) {
 			System.out.printf("exec file: %s%n", this.jacocoOutputFilePath);
@@ -931,6 +930,7 @@ public class Tester {
 	 * 
 	 * @return String representing code coverage results
 	 */
+	@SuppressWarnings("unused")
 	private String generateDetailedCodeCoverageResults() {
 		String executionResults = "";
 		try {
