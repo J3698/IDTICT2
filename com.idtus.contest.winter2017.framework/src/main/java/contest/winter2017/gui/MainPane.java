@@ -6,6 +6,9 @@ import java.util.Map.Entry;
 
 import contest.winter2017.Output;
 import contest.winter2017.PermissionInfo;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
+import javafx.scene.control.Accordion;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
@@ -77,18 +80,12 @@ public class MainPane extends TabPane {
 		// three tabs of output pane
 		stdOutText.setEditable(false);
 		stdOutText.setWrapText(true);
-		// stdOutText.setMouseTransparent(true);
 		stdOutText.setFocusTraversable(false);
 		Tab stdOut = new Tab("Standard Out", stdOutText);
 		stdErrText.setEditable(false);
 		stdErrText.setWrapText(true);
-		// stdErrText.setMouseTransparent(true);
 		stdErrText.setFocusTraversable(false);
 		Tab stdErr = new Tab("Standard Error", stdErrText);
-		// permissionsText.setEditable(false);
-		// permissionsText.setWrapText(true);
-		// permissionsText.setMouseTransparent(true);
-		// permissionsText.setFocusTraversable(false);
 		Tab permissions = new Tab("Permissions", permissionsPane);
 		outputPane.getTabs().addAll(stdOut, stdErr, permissions);
 		outputPane.setTabClosingPolicy(TabClosingPolicy.UNAVAILABLE);
@@ -183,7 +180,7 @@ public class MainPane extends TabPane {
 class PermissionPane extends ScrollPane {
 	private Map<String, PermissionInfoPane> permissionInfosMap = new HashMap<String, PermissionInfoPane>();
 
-	private VBox permissionInfos = new VBox();
+	private Accordion permissionInfos = new Accordion();
 
 	public PermissionPane() {
 		setContent(permissionInfos);
@@ -194,9 +191,9 @@ class PermissionPane extends ScrollPane {
 		for (Entry<String, Integer> entry : permissionLog.entrySet()) {
 			PermissionInfoPane info = this.permissionInfosMap.get(entry.getKey());
 			if (info == null) {
-				info = new PermissionInfoPane(entry.getKey());
+				info = new PermissionInfoPane(entry.getKey(), PermissionPane.this);
 				this.permissionInfosMap.put(entry.getKey(), info);
-				this.permissionInfos.getChildren().add(info);
+				this.permissionInfos.getPanes().add(info);
 			}
 			info.addOccurance(entry.getValue());
 		}
@@ -206,13 +203,16 @@ class PermissionPane extends ScrollPane {
 class PermissionInfoPane extends TitledPane {
 	private int occurances = 0;
 	private String name;
+	private PermissionPane permissionPane;
 
-	public PermissionInfoPane(String name) {
+	public PermissionInfoPane(String name, PermissionPane permissionPane) {
 		VBox content = new VBox();
 		setContent(content);
 		setExpanded(false);
 		setText(name);
 		this.name = name;
+		this.permissionPane = permissionPane;
+
 		Text allowsTitle = new Text("What it Allows");
 		allowsTitle.setFont(new Font(15));
 		VExternSpace allowsSpacer = new VExternSpace(allowsTitle, 0, 10);
@@ -222,8 +222,20 @@ class PermissionInfoPane extends TitledPane {
 		VExternSpace riskSpacer = new VExternSpace(riskTitle, 0, 10);
 
 		Text allows = new Text(PermissionInfo.getAllowance(this.name));
-		allows.setWrappingWidth(allows.getParent().);;
+		allows.setWrappingWidth(this.permissionPane.getWidth() - 30);
+		allows.setFocusTraversable(false);
+
 		Text risks = new Text(PermissionInfo.getRisk(this.name));
+		risks.setWrappingWidth(this.permissionPane.getWidth() - 30);
+		risks.setFocusTraversable(false);
+
+		this.permissionPane.widthProperty().addListener(new ChangeListener<Number>() {
+			@Override
+			public void changed(ObservableValue<? extends Number> arg0, Number arg1, Number arg2) {
+				allows.setWrappingWidth(arg2.doubleValue() - 30);
+				risks.setWrappingWidth(arg2.doubleValue() - 30);
+			}
+		});
 
 		content.getChildren().addAll(allowsSpacer, allows, riskSpacer, risks);
 	}
