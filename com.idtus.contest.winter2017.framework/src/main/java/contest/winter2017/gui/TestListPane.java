@@ -44,7 +44,7 @@ class TestListPane extends ScrollPane {
 	/**
 	 * Double spacing between components in the TestListPane.
 	 */
-	private static final double SPACING = 4;
+	private static final double SPACING = 0;
 
 	/**
 	 * MainPane of the GUI.
@@ -180,6 +180,15 @@ class TestListPane extends ScrollPane {
 				event.consume();
 			}
 		});
+	}
+
+	/**
+	 * Stops all testing.
+	 */
+	public void stopTests() {
+		for (GUITestPackage test : this.tests) {
+			test.killTests();
+		}
 	}
 
 	/**

@@ -157,6 +157,11 @@ public class Tester {
 	private AtomicBoolean isPaused = new AtomicBoolean(false);
 
 	/**
+	 * Whether this tester is killed
+	 */
+	private AtomicBoolean isKilled = new AtomicBoolean(false);
+
+	/**
 	 * Number of predefined tests which have passed.
 	 */
 	private int passCount = 0;
@@ -397,6 +402,10 @@ public class Tester {
 	public void executeBasicTests() {
 		// iterate through the lists of tests and execute each one
 		for (Test test : this.predefinedTests) {
+			if (isKilled.get()) {
+				return;
+			}
+
 			// instrument the code to code coverage metrics, execute the test
 			// with given parameters, then show the output
 			Output output = instrumentAndExecuteCode(test.getParameters().toArray());
@@ -470,6 +479,10 @@ public class Tester {
 		Long start = System.currentTimeMillis();
 		TestGenerator generator = new TestGenerator(this.parameterFactory, getOutputs());
 		for (int i = 0; i < this.bbTests; i++) {
+			if (isKilled.get()) {
+				return;
+			}
+
 			Object[] params = generator.nextTest();
 			instrumentAndExecuteCode(params);
 		}
@@ -477,8 +490,10 @@ public class Tester {
 		System.out.println(minutesPassed(start));
 		System.out.println(this.timeGoal);
 		while (minutesPassed(start) < this.timeGoal) {
-			System.out.println(minutesPassed(start));
-			System.out.println(this.timeGoal);
+			if (isKilled.get()) {
+				return;
+			}
+
 			Object[] params = generator.nextTest();
 			instrumentAndExecuteCode(params);
 		}
@@ -525,6 +540,13 @@ public class Tester {
 	 */
 	public SimpleDoubleProperty getPercentDone() {
 		return percentDone;
+	}
+
+	/**
+	 * Stops this tester's current testing
+	 */
+	public void killTests() {
+		this.isKilled.set(true);
 	}
 
 	/**
@@ -789,10 +811,9 @@ public class Tester {
 			}
 			errBuff.append(next + "\n");
 		}
-		System.err.println(errBuff);
 
 		// TODO: handle Watchdog Error
-		throw new WatchdogException();
+		throw new WatchdogException("" + errBuff);
 	}
 
 	/**
@@ -815,6 +836,7 @@ public class Tester {
 	 * @throws IOException
 	 */
 	@SuppressWarnings("unused")
+	@Deprecated
 	private void printRawCoverageStats() {
 		if (!this.quiet) {
 			System.out.printf("exec file: %s%n", this.jacocoOutputFilePath);
@@ -931,6 +953,7 @@ public class Tester {
 	 * @return String representing code coverage results
 	 */
 	@SuppressWarnings("unused")
+	@Deprecated
 	private String generateDetailedCodeCoverageResults() {
 		String executionResults = "";
 		try {
@@ -979,6 +1002,7 @@ public class Tester {
 	 *         partially covered, fully covered)
 	 */
 	@SuppressWarnings("unused")
+	@Deprecated
 	private String getStatusString(final int status) {
 		switch (status) {
 		case ICounter.NOT_COVERED:
@@ -1041,7 +1065,7 @@ public class Tester {
  */
 class ProcessStreamReader extends Thread {
 	/**
-	 * Inputstream to read from.
+	 * Input stream to read from.
 	 */
 	private InputStream iStream;
 
@@ -1056,7 +1080,7 @@ class ProcessStreamReader extends Thread {
 	private AtomicBoolean isDone;
 
 	/**
-	 * List of lines read from the proess.
+	 * List of lines read from the process.
 	 */
 	private List<String> lines;
 
@@ -1123,7 +1147,7 @@ class ProcessStreamReader extends Thread {
 }
 
 /**
- * Thic class represents an exception thrown by the security watchdog, and not
+ * This class represents an exception thrown by the security watchdog, and not
  * the jar under test.
  * 
  * @author ICT-2
@@ -1131,4 +1155,7 @@ class ProcessStreamReader extends Thread {
 @SuppressWarnings("serial")
 class WatchdogException extends Exception {
 	// no overriden methods
+	public WatchdogException(String error) {
+		super(error);
+	}
 }
