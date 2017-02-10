@@ -68,6 +68,8 @@ public class GUITestPackage {
 	 */
 	private List<Output> outputs = Collections.synchronizedList(new ArrayList<Output>());
 
+	private boolean testsKilled = false;
+
 	/**
 	 * Constructs a GUITestPackage with the given testListPane, name, and file
 	 * to test.
@@ -127,6 +129,14 @@ public class GUITestPackage {
 	}
 
 	/**
+	 * Ungracefully Kills testing for this test.
+	 */
+	public void killTests() {
+		this.testsKilled = true;
+		this.tester.killTests();
+	}
+
+	/**
 	 * Updates the output for this test.
 	 */
 	public void updateOutput() {
@@ -176,7 +186,7 @@ public class GUITestPackage {
 	 */
 	public boolean hasValidUserTestBounds() {
 		ParameterPane pane = this.getMainPane().getParameterPane();
-		return (pane.getParameterBuilder().getCurrentError() == null);
+		return (pane.getFormatBuilder().getCurrentError() == null);
 	}
 
 	/**
@@ -187,7 +197,7 @@ public class GUITestPackage {
 	@SuppressWarnings("rawtypes")
 	public Map getUserTestBounds() {
 		if (this.getMainPane().getParameterPane().hasUserTestBounds()) {
-			ParameterBuilder builder = this.getMainPane().getParameterPane().getParameterBuilder();
+			FormatBuilder builder = this.getMainPane().getParameterPane().getFormatBuilder();
 			List<ParameterEditor> editors = builder.getParameterEditors();
 			Map<Object, Object> parameters = new HashMap<Object, Object>();
 			if (builder.isDynamic()) {

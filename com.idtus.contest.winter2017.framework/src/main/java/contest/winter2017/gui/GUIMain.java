@@ -3,9 +3,11 @@ package contest.winter2017.gui;
 import java.util.Random;
 
 import javafx.application.Application;
+import javafx.event.EventHandler;
 import javafx.scene.Scene;
 import javafx.scene.layout.BorderPane;
 import javafx.stage.Stage;
+import javafx.stage.WindowEvent;
 
 /**
  * Entry point for the GUI version of testing framework.
@@ -23,10 +25,19 @@ public class GUIMain extends Application {
 	 */
 	public void start(Stage stage) {
 		BorderPane pane = new BorderPane();
-		pane.setLeft(new TestListPane(pane));
+		TestListPane testLists = new TestListPane(pane);
+		pane.setLeft(testLists);
 		Scene scene = new Scene(pane, 640, 480);
 		stage.setScene(scene);
+		scene.getWindow().setOnCloseRequest(new EventHandler<WindowEvent>() {
+			@Override
+			public void handle(WindowEvent event) {
+				testLists.stopTests();
+			}
+		});
+
 		stage.show();
+
 		/*
 		 * BorderPane pane = new BorderPane(); pane.setLeft(new
 		 * TestListPane(pane)); TestListPane tPane = new TestListPane(pane);
