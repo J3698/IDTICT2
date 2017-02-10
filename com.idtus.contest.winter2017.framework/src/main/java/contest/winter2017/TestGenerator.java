@@ -2,6 +2,7 @@ package contest.winter2017;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 /**
  * Class to generate tests to be run from the Tester.
@@ -163,5 +164,81 @@ public class TestGenerator {
 			potentialParameters = this.parameterFactory.getNext(previousParameterStrings);
 		}
 		return previousParameterStrings.toArray();
+	}
+
+	//
+	// Utility method to get a random integer number. If the passed
+	// Parameter has an associated min or max, these values are used
+	// as the bounds of the random number.
+	//
+	// @param param - parameter to get possible min and max from
+	// @return Integer within bounds given by param
+	//
+	private Integer getIntegerNumber(Parameter param) {
+		Random rand = new Random();
+		Integer min;
+		try {
+			min = Integer.parseInt((String) param.getMin());
+		} catch (NumberFormatException nfe) {
+			min = null;
+		}
+
+		Integer max;
+		try {
+			max = Integer.parseInt((String) param.getMax());
+		} catch (NumberFormatException nfe) {
+			max = null;
+		}
+
+		if (min == null) {
+			min = Integer.MIN_VALUE;
+		}
+		if (max == null) {
+			max = Integer.MAX_VALUE;
+		}
+
+		if (max < min) {
+			throw new IllegalArgumentException("ERROR: Parameter's min cannot be bigger than its max.");
+		}
+
+		return min + rand.nextInt(max - min + 1);
+	}
+
+	//
+	// Utility method to get a random double number. If the passed
+	// Parameter has an associated min or max, these values are used
+	// as the bounds of the random number.
+	//
+	// @param param - parameter to get possible min and max from
+	// @return Double within bounds given by param
+	//
+	private Double getDoubleNumber(Parameter param) {
+		Random rand = new Random();
+		Double min;
+		try {
+			min = Double.parseDouble((String) param.getMin());
+		} catch (NumberFormatException nfe) {
+			min = null;
+		}
+
+		Double max;
+		try {
+			max = Double.parseDouble((String) param.getMax());
+		} catch (NumberFormatException nfe) {
+			max = null;
+		}
+
+		if (min == null) {
+			min = Double.MIN_VALUE;
+		}
+		if (max == null) {
+			max = Double.MAX_VALUE;
+		}
+
+		if (max < min) {
+			throw new IllegalArgumentException("ERROR: Parameter's min cannot be bigger than its max.");
+		}
+
+		return min + (max - min) * rand.nextDouble();
 	}
 }
