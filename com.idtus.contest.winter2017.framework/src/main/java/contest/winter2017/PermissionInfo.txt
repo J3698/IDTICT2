@@ -5,12 +5,6 @@ Reading, writing, or executing of files
 Potential Risks:
 This allows someone to read files with potentially sensitive information, overwrite sensitive files, or run files with nefarious code.
 --NEXT--
-delete
-What it Allows:
-Deletion of files
-Potential Risks:
-This allows someone to delete potentially sensitive files.
---NEXT--
 createAccessControlContext
 What it Allows:
 Creation of an AccessControlContext

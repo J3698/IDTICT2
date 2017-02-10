@@ -19,8 +19,8 @@ import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
-import javafx.stage.Window;
 import javafx.stage.FileChooser.ExtensionFilter;
+import javafx.stage.Window;
 
 /**
  * VBox to expose basic functionality of a tester.
@@ -201,8 +201,7 @@ class RunPane extends BorderPane {
 						RunPane.this.validTimeGoal = true;
 					}
 				} catch (NumberFormatException e) {
-					// prevent exception from bubbling up,
-					// just leave validTimeGoal as false
+					// prevent exception from bubbling up
 				}
 
 				if (RunPane.this.validTimeGoal) {

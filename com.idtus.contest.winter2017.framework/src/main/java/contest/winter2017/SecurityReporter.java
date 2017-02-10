@@ -78,11 +78,11 @@ public class SecurityReporter extends SecurityManager {
 			if (toCheck.getName().contains("" + WATCHDOG_EXIT_CODE)) {
 				outputSecurityLog();
 			} else {
-				permissionEvents.add(new PermissionEvent(toCheck, thread));
+				permissionEvents.add(new PermissionEvent(toCheck));
 				outputSecurityLog();
 			}
 		} else {
-			permissionEvents.add(new PermissionEvent(toCheck, thread));
+			permissionEvents.add(new PermissionEvent(toCheck));
 		}
 
 		// enable manager
@@ -129,11 +129,6 @@ class PermissionEvent {
 	private Permission permission;
 
 	/**
-	 * Stack trace logged to this permission event.
-	 */
-	private StackTraceElement[] traceElements;
-
-	/**
 	 * Constructs a PermissionEvent with the given permission and StackTrace.
 	 * 
 	 * @param permision
@@ -141,9 +136,8 @@ class PermissionEvent {
 	 * @param traceElements
 	 *            - stack trace to log
 	 */
-	public PermissionEvent(Permission permission, StackTraceElement[] traceElements) {
+	public PermissionEvent(Permission permission) {
 		this.permission = permission;
-		this.traceElements = traceElements;
 	}
 
 	/**
@@ -154,15 +148,6 @@ class PermissionEvent {
 	public Permission getPermission() {
 		return this.permission;
 	}
-
-	/**
-	 * Gets the stack trace logged to this permission event.
-	 * 
-	 * @return stack trace logged to this permission event.
-	 */
-	public StackTraceElement[] getTraceElements() {
-		return this.traceElements;
-	}
 }
 
 // on possible security issues :
@@ -170,20 +155,3 @@ class PermissionEvent {
 // make sure it's not the
 // securitymanager making the call
 // save the warning
-
-/*
- * checkAccept(String host, int port) checkAccess(Thread t)
- * checkAccess(ThreadGroup g) checkAwtEventQueueAccess() checkConnect(String
- * host, int port) checkConnect(String host, int port, Object context)
- * checkCreateClassLoader() checkDelete(String file) checkExec(String cmd)
- * checkExit(int status) checkLink(String lib) checkListen(int port)
- * checkMemberAccess(Class<?> clazz, int which) checkMulticast(InetAddress
- * maddr) checkPackageAccess(String pkg) checkPackageDefinition(String pkg)
- * checkPermission(Permission perm) checkPermission(Permission perm, Object
- * context) checkPrintJobAccess() checkPropertiesAccess()
- * checkPropertyAccess(String key) checkRead(FileDescriptor fd) checkRead(String
- * file) checkRead(String file, Object context) checkSecurityAccess(String
- * target) checkSetFactory() checkSystemClipboardAccess()
- * checkTopLevelWindow(Object window) checkWrite(FileDescriptor fd)
- * checkWrite(String file)
- */

@@ -9,18 +9,17 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.jar.Attributes;
 
-
 /**
- * This class installs a security manager to monitor a test
- * instance, and then runs that test instance.
+ * This class installs a security manager to monitor a test instance, and then
+ * runs that test instance.
  * 
  * @author ICT-2
  *
  */
 public class SecurityWatchdog {
 	/**
-	 * Int exit code to signify whether the jar under test
-	 * is trying to terminate the program.
+	 * Int exit code to signify whether the jar under test is trying to
+	 * terminate the program.
 	 */
 	private static final int WATCHDOG_EXIT_CODE = 302590835;
 
@@ -37,8 +36,10 @@ public class SecurityWatchdog {
 	/**
 	 * Runs an executable jar under test with the specified options.
 	 *
-	 * @param args - args with information for the executable jar under test
-	 * @throws Exception - any uncaught exceptions thrown
+	 * @param args
+	 *            - args with information for the executable jar under test
+	 * @throws Exception
+	 *             - any uncaught exceptions thrown
 	 */
 	public static void main(String[] args) throws Exception {
 		try {
@@ -63,20 +64,21 @@ public class SecurityWatchdog {
 			// laod the jar
 			URL fileURL = null;
 			URL jarURL = null;
-		    JarURLConnection jarURLconn = null;
-		    URLClassLoader cl = null;
-		    try {
+			JarURLConnection jarURLconn = null;
+			URLClassLoader cl = null;
+			try {
 				fileURL = jarFileToTest.toURI().toURL();
-				String jarUrlTemp = "jar:"+jarFileToTest.toURI().toString()+"!/";
+				String jarUrlTemp = "jar:" + jarFileToTest.toURI().toString() + "!/";
 				jarURL = new URL(jarUrlTemp);
-				cl = URLClassLoader.newInstance(new URL[]{fileURL});
+				cl = URLClassLoader.newInstance(new URL[] { fileURL });
 				jarURLconn = null;
-				jarURLconn = (JarURLConnection)jarURL.openConnection();
-		    } catch (IOException ioe) {
-		    	watchdogError("LOAD JAR");
-		    }
+				jarURLconn = (JarURLConnection) jarURL.openConnection();
+			} catch (IOException ioe) {
+				watchdogError("LOAD JAR");
+			}
 
-			// figure out where the entry-point (main class) is in the jar under test
+			// figure out where the entry-point (main class) is in the jar under
+			// test
 			Attributes attr = null;
 			try {
 				attr = jarURLconn.getMainAttributes();
@@ -88,7 +90,7 @@ public class SecurityWatchdog {
 			if (mainClassName == null) {
 				watchdogError("GET MAIN CLASS");
 			}
-	
+
 			// load the Main class from the jar under test
 			Class<?> mainClass = null;
 			try {
@@ -96,11 +98,11 @@ public class SecurityWatchdog {
 			} catch (ClassNotFoundException cnfe) {
 				watchdogError("LOAD MAIN CLASS");
 			}
-	
+
 			// use reflection to invoke the main method
 			Method mainMethod = null;
 			try {
-				Class<?>[] mainArgs = new Class[] {String[].class};
+				Class<?>[] mainArgs = new Class[] { String[].class };
 				mainMethod = mainClass.getDeclaredMethod("main", mainArgs);
 			} catch (NoSuchMethodException nsme) {
 				watchdogError("ERROR: Could not load main method of jar to test.");
@@ -124,7 +126,7 @@ public class SecurityWatchdog {
 			} catch (IllegalAccessException | IllegalArgumentException e) {
 				watchdogError("INVOKE MAIN METHOD", e);
 			}
-	
+
 			// notify tester of program end
 			System.exit(WATCHDOG_EXIT_CODE);
 		} catch (Exception e) {
@@ -135,8 +137,10 @@ public class SecurityWatchdog {
 	/**
 	 * Notifies the tester of errorss.
 	 * 
-	 * @param error - error to pass to tester
-	 * @param e - exception to pass to tester
+	 * @param error
+	 *            - error to pass to tester
+	 * @param e
+	 *            - exception to pass to tester
 	 */
 	private static void watchdogError(String error, Exception e) {
 		System.err.println("<<WATCHDOG_OUTPUT_START>>");
@@ -151,7 +155,8 @@ public class SecurityWatchdog {
 	/**
 	 * Notifies the tester of errorss.
 	 * 
-	 * @param error - error to pass to tester
+	 * @param error
+	 *            - error to pass to tester
 	 */
 	private static void watchdogError(String error) {
 		watchdogError(error, null);
@@ -160,55 +165,10 @@ public class SecurityWatchdog {
 
 /*
  * 
- * OTHER IDEAS:
- * 	 have thread with REAL sys out/err read the "fake" out/err
-
- * Wrapper class for protecting the std out/err streams from being closed. Documentation
- * for overriden methods can be found in the PrintStream javadoc. The close method only
- * flushes this PrintStream.
+ * IDEAS: have thread with REAL sys out/err read the "fake" out/err
  * 
- * @author ICT-2
- * @see java.io.PrintStream
- 
-class UnclosablePrintStream extends PrintStream {
-	private UnclosablePrintStream(File file) throws FileNotFoundException {
-		super(file);
-	}
-
-	public 
-
-	public PrintStream append(char c) {}
-	public PrintStream append(CharSequence csq) {}
-	public PrintStream append(CharSequence csq, int start, int end) {}
-	public boolean checkError() {}
-	protected void clearError() {}
-	public void close() {}
-	public void flush() {}
-	public PrintStream format(Locale l, String format, Object... args) {}
-	public PrintStream format(String format, Object... args) {}
-	public void print(boolean b) {}
-	public void print(char c) {]
-	public void print(char[] s) {}
-	public void print(double d) {}
-	public void print(float f) {}
-	public void print(int i) {}
-	public void print(long l) {}
-	public void print(Object obj) {}
-	public void print(String s) {}
-	public PrintStream printf(Locale l, String format, Object... args) {}
-	public PrintStream printf(String format, Object... args) {}
-	public void println() {}
-	public void println(boolean x) {}
-	public void println(char x) {}
-	public void println(char[] x) {}
-	public void println(double x) {}
-	public void println(float x) {}
-	public void println(int x) {}
-	public void println(long x) {}
-	public void println(Object x) {}
-	public void println(String x) {}
-	protected void setError() {}
-	public void write(byte[] buf, int off, int len) {}
-	public void write(int b) {}
-}
-	*/
+ * Wrapper class for protecting the std out/err streams from being closed.
+ * Documentation for overriden methods can be found in the PrintStream javadoc.
+ * The close method only flushes this PrintStream.
+ * 
+ */

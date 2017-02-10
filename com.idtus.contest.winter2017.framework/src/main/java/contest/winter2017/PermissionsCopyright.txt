@@ -1,7 +1,7 @@
 This program includes the risks of allowing certain java security permissions. These risks
 were written by Oracle. ICT-2 personally emailed Oracle requesting permission to quote Oracle
 on these risks. They gave ICT-2 permission to quote the risks, however IDT and other parties
-may have to separately request permission in order to redistribute that information.
+may have to separately request permission in order to use that information for other purposes.
 
 
 Below follows the correspondence between ICT-2 member Antioch Sanders and Oracle. Horizontal
