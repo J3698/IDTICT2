@@ -3,4 +3,4 @@
 *.exectemp
 
 # Java Memory errors
-*.log
+#*.log
