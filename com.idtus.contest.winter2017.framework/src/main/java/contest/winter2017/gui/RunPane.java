@@ -289,7 +289,7 @@ class RunPane extends BorderPane {
 					String agentPath = RunPane.this.jacocoPathFile.getAbsolutePath();
 					String bbTests = RunPane.this.toRun.getText();
 					String timeGoal = RunPane.this.timeGoal.getText();
-					boolean quiet = false;
+					boolean quiet = true;
 					boolean watchdog = true;
 
 					// initialize and run tester
