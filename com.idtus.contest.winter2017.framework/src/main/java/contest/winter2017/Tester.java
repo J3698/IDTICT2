@@ -8,7 +8,6 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.math.BigDecimal;
 import java.net.JarURLConnection;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -730,10 +729,21 @@ public class Tester {
 			return null;
 		}
 
+		File toLoad = new File(this.jacocoOutputFilePath + "temp");
+		File toSave = new File(this.jacocoOutputFilePath);
+
+		// wait while the file is locked
+		while (!toSave.renameTo(toSave)) {
+			try {
+				Thread.sleep(10);
+			} catch (InterruptedException ie) {
+			}
+		}
+
 		try {
 			ExecFileLoader loader = new ExecFileLoader();
-			loader.load(new File(this.jacocoOutputFilePath + "temp"));
-			loader.save(new File(this.jacocoOutputFilePath), true);
+			loader.load(toLoad);
+			loader.save(toSave, true);
 			CoverageBuilder builder = new CoverageBuilder();
 			Analyzer analyzer = new Analyzer(loader.getExecutionDataStore(), builder);
 			analyzer.analyzeAll(new File(this.jarToTestPath));
@@ -751,11 +761,6 @@ public class Tester {
 
 		double totalTests = this.bbTests + this.predefinedTests.size();
 		percentDone.set(outputs.size() / totalTests);
-
-		Runtime runtime = Runtime.getRuntime();
-		BigDecimal free = new BigDecimal(runtime.freeMemory() + ".00");
-		BigDecimal total = new BigDecimal(runtime.totalMemory() + ".00");
-		BigDecimal percent = free.divide(total, BigDecimal.ROUND_HALF_UP);
 
 		return output;
 	}
