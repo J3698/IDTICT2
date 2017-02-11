@@ -476,7 +476,7 @@ public class Tester {
 	 */
 	public void executeSecurityTests() {
 		Long start = System.currentTimeMillis();
-		TestGenerator generator = new TestGenerator(this.parameterFactory, getOutputs());
+		TestGenerator generator = new DummyTestGenerator(this.parameterFactory, this.outputs);
 		for (int i = 0; i < this.bbTests; i++) {
 			if (isKilled.get()) {
 				return;
@@ -747,6 +747,19 @@ public class Tester {
 			CoverageBuilder builder = new CoverageBuilder();
 			Analyzer analyzer = new Analyzer(loader.getExecutionDataStore(), builder);
 			analyzer.analyzeAll(new File(this.jarToTestPath));
+
+			// omit test bounds from coverage
+			IClassCoverage testBounds = null;
+			for (final IClassCoverage cc : builder.getClasses()) {
+				if (cc.getName().endsWith("TestBounds")) {
+					testBounds = cc;
+					break;
+				}
+			}
+			if (testBounds != null) {
+				builder.getClasses().remove(testBounds);
+			}
+
 			output.setCoverageBuilder(builder);
 		} catch (IOException e) {
 			if (!this.quiet) {
