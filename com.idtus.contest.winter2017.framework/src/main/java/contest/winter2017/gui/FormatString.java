@@ -374,7 +374,7 @@ public class FormatString extends VBox {
 	/**
 	 * Returns the min for the replace-me number.
 	 * 
-	 * @return the min for the replace-me number
+	 * @return the min for the replace-me number or null if there is none
 	 */
 	public Number getMin() {
 		return this.min;
@@ -383,7 +383,7 @@ public class FormatString extends VBox {
 	/**
 	 * Returns the max for the replace-me number.
 	 * 
-	 * @return the max for the replace-me number
+	 * @return the max for the replace-me number or null if there is none
 	 */
 	public Number getMax() {
 		return this.max;
