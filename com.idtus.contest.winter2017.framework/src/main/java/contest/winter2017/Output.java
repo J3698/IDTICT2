@@ -156,7 +156,7 @@ public class Output {
 	public Set<String> getExceptions() {
 		// work in progress
 		String toSplit = this.stdErrString;
-		System.out.println(this.stdErrString);
+		// System.out.println("Output 159: " + this.stdErrString);
 		Set<String> exceptions = new HashSet<String>();
 		Matcher matcher = exceptionFinder.matcher(toSplit);
 		while (matcher.find()) {

@@ -141,7 +141,7 @@ public class Main {
 					String bbTests = cliArgs.getOptionValue(BLACK_BOX_TESTS);
 					String timeGoal = cliArgs.getOptionValue(TIME_GOAL);
 					boolean quiet = cliArgs.hasOption(TOOL_CHAIN);
-					boolean watchdog = !quiet;
+					boolean watchdog = true;// !quiet;
 
 					// catch and report runtime exceptions
 					try {
