@@ -1,13 +1,16 @@
 package contest.winter2017.gui;
 
-import java.math.BigDecimal;
 import java.util.Random;
 
 import javafx.application.Application;
-import javafx.application.Platform;
 import javafx.event.EventHandler;
+import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.VBox;
+import javafx.scene.text.Font;
+import javafx.scene.text.Text;
+import javafx.scene.text.TextAlignment;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 
@@ -30,6 +33,8 @@ public class GUIMain extends Application {
 		BorderPane pane = new BorderPane();
 		TestListPane testLists = new TestListPane(pane);
 		pane.setLeft(testLists);
+		pane.setCenter(new IntroPane());
+
 		Scene scene = new Scene(pane, 640, 480);
 		stage.setScene(scene);
 		scene.getWindow().setOnCloseRequest(new EventHandler<WindowEvent>() {
@@ -40,30 +45,15 @@ public class GUIMain extends Application {
 			}
 		});
 
+		new Thread(new MemoryMonitor(this, testLists)).start();
+
+		stage.setTitle("Java JAR Security Tester");
 		stage.show();
 
-		new Thread(new Runnable() {
-			@Override
-			public void run() {
-				while (GUIMain.this.isRunning) {
-					try {
-						Thread.sleep(2000);
-					} catch (InterruptedException ie) {
-					}
-					Runtime runtime = Runtime.getRuntime();
-					BigDecimal free = new BigDecimal(runtime.freeMemory() + ".00");
-					BigDecimal total = new BigDecimal(runtime.totalMemory() + ".00");
-					BigDecimal percent = free.divide(total, BigDecimal.ROUND_HALF_UP);
-					Platform.runLater(new Runnable() {
-						@Override
-						public void run() {
-							System.out.println(percent);
-						}
-					});
-				}
-			}
+	}
 
-		}).start();
+	public boolean isRunning() {
+		return GUIMain.isRunning;
 	}
 
 	public static String getGuiID() {
@@ -77,4 +67,18 @@ public class GUIMain extends Application {
 		}
 		return guiID;
 	}
+}
+
+class IntroPane extends VBox {
+	public IntroPane() {
+		super();
+		this.setAlignment(Pos.CENTER);
+		Text information = new Text("Welcome to GUI of this Java JAR Security Tester. This center pane will show"
+				+ "\ncontent for testing once a jar is chosen to test. To start, drag a jar over the"
+				+ "\nspecified area to left, or click the \"Select Jar\" button, and select a jar.");
+		information.setTextAlignment(TextAlignment.CENTER);
+		information.setFont(new Font(14));
+		getChildren().add(information);
+	}
+
 }
