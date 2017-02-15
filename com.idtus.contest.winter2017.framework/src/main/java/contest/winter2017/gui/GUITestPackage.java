@@ -117,6 +117,7 @@ public class GUITestPackage {
 	 */
 	public void resumeTests() {
 		GUITestPackage.this.tester.setPaused(false);
+		this.mainPane.getRunPane().setResumed();
 		this.testInfo.getProgressBar().setDisable(false);
 	}
 
@@ -125,6 +126,7 @@ public class GUITestPackage {
 	 */
 	public void pauseTests() {
 		GUITestPackage.this.tester.setPaused(true);
+		this.mainPane.getRunPane().setPaused();
 		this.testInfo.getProgressBar().setDisable(true);
 	}
 

@@ -304,13 +304,19 @@ class RunPane extends BorderPane {
 					}
 				} else if (RunPane.this.runButton.getText().equals("Pause Testing")) {
 					RunPane.this.test.pauseTests();
-					RunPane.this.runButton.setText("Resume Testing");
 				} else {
 					RunPane.this.test.resumeTests();
-					RunPane.this.runButton.setText("Pause Testing");
 				}
 			}
 		});
+	}
+
+	public void setPaused() {
+		RunPane.this.runButton.setText("Resume Testing");
+	}
+
+	public void setResumed() {
+		RunPane.this.runButton.setText("Pause Testing");
 	}
 
 	/**
