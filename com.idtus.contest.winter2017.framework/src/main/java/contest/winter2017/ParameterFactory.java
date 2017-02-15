@@ -142,6 +142,10 @@ public class ParameterFactory {
 		return this.bounded;
 	}
 
+	public List<Parameter> getNext(List<String> previousParameterValues) {
+		return getNext(previousParameterValues, null);
+	}
+
 	/**
 	 * Method to deal with the complexity of dependent parameters. Also handles
 	 * fixed parameters. For more information about dependent and fixed
@@ -159,7 +163,7 @@ public class ParameterFactory {
 	 *         each Parameter
 	 */
 	@SuppressWarnings({ "rawtypes", "unchecked" })
-	public List<Parameter> getNext(List<String> previousParameterValues) {
+	public List<Parameter> getNext(List<String> previousParameterValues, Set<Parameter> previousParameters) {
 
 		// ultimately we are returning all possible parameters for a given index
 		// (since we could be dealing with dependent parameters
@@ -198,6 +202,14 @@ public class ParameterFactory {
 			if (previousParameterValues.size() < fixedParamList.size()) {
 				Map paramMap = (Map) fixedParamList.get(previousParameterValues.size());
 				possibleParamsList.add(new Parameter(paramMap));
+			}
+		}
+
+		if (previousParameters != null) {
+			for (int i = possibleParamsList.size() - 1; i >= 0; i--) {
+				if (previousParameters.contains(possibleParamsList.get(i))) {
+					possibleParamsList.remove(i);
+				}
 			}
 		}
 
