@@ -89,7 +89,7 @@ public class Tester {
 	/**
 	 * Minimum number of black box iterations to run.
 	 */
-	public static final int DEFAULT_BB_TESTS = 1000;
+	public static final int DEFAULT_BB_TESTS = 1_000;
 
 	//////////////////////////////////////////
 	// INSTANCE MEMBERS
@@ -138,7 +138,7 @@ public class Tester {
 	/**
 	 * Maximum time per test.
 	 */
-	private Integer maxMillisPerTest = 1000;
+	private Integer maxMillisPerTest = 15_000;
 
 	/**
 	 * Option to be silent.
@@ -476,7 +476,7 @@ public class Tester {
 	 */
 	public void executeSecurityTests() {
 		Long start = System.currentTimeMillis();
-		TestGenerator generator = new DummyTestGenerator(this.parameterFactory, this.outputs);
+		TestGenerator generator = new MonteCarloTestGenerator(this.parameterFactory, this.outputs);
 		for (int i = 0; i < this.bbTests; i++) {
 			if (isKilled.get()) {
 				return;
@@ -486,8 +486,6 @@ public class Tester {
 			instrumentAndExecuteCode(params);
 		}
 
-		System.out.println(minutesPassed(start));
-		System.out.println(this.timeGoal);
 		while (minutesPassed(start) < this.timeGoal) {
 			if (isKilled.get()) {
 				return;
@@ -619,7 +617,9 @@ public class Tester {
 	 */
 	private Output instrumentAndExecuteCode(Object[] parameters) {
 		while (this.isPaused.get()) {
-			// do nothing while testing paused
+			if (this.isKilled.get()) {
+				return null;
+			}
 		}
 
 		Process process = null;
@@ -732,14 +732,6 @@ public class Tester {
 		File toLoad = new File(this.jacocoOutputFilePath + "temp");
 		File toSave = new File(this.jacocoOutputFilePath);
 
-		// wait while the file is locked
-		while (!toSave.renameTo(toSave)) {
-			try {
-				Thread.sleep(10);
-			} catch (InterruptedException ie) {
-			}
-		}
-
 		try {
 			ExecFileLoader loader = new ExecFileLoader();
 			loader.load(toLoad);
@@ -747,19 +739,6 @@ public class Tester {
 			CoverageBuilder builder = new CoverageBuilder();
 			Analyzer analyzer = new Analyzer(loader.getExecutionDataStore(), builder);
 			analyzer.analyzeAll(new File(this.jarToTestPath));
-
-			// omit test bounds from coverage
-			IClassCoverage testBounds = null;
-			for (final IClassCoverage cc : builder.getClasses()) {
-				if (cc.getName().endsWith("TestBounds")) {
-					testBounds = cc;
-					break;
-				}
-			}
-			if (testBounds != null) {
-				builder.getClasses().remove(testBounds);
-			}
-
 			output.setCoverageBuilder(builder);
 		} catch (IOException e) {
 			if (!this.quiet) {
@@ -787,7 +766,7 @@ public class Tester {
 		String name = getClass().getName();
 		name = name.replace('.', '/');
 		String path = "" + Tester.class.getResource("/" + name + ".class");
-		System.out.println(path);
+
 		if (path.startsWith("jar:") || path.startsWith("rsrc:") || path.endsWith(".jar")) {
 			return true;
 		}
