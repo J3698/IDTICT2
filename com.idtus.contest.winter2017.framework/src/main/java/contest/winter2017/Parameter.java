@@ -1,8 +1,6 @@
 package contest.winter2017;
 
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -258,38 +256,26 @@ public class Parameter {
 	 * 
 	 * @return List of sub parameters
 	 */
-	public List<Parameter> getSubParameters() {
-		List<Parameter> parameterList = new ArrayList<Parameter>(getEnumerationValues().size());
-
-		if (isEnumeration()) {
-			Map<String, Object> parameterMap;
-			List<String> toAdd;
-			for (String str : getEnumerationValues()) {
-				parameterMap = new HashMap<String, Object>();
-				toAdd = new LinkedList<String>();
-				toAdd.add(str);
-				if (str.contains(REPLACE_STRING) || str.contains(REPLACE_INT) || str.contains(REPLACE_DOUBLE)
-						|| str.contains(REPLACE_LONG)) {
-
-					parameterMap.put("format", str);
-					if (str.contains(REPLACE_STRING)) {
-						parameterMap.put("type", String.class);
-					} else if (str.contains(REPLACE_INT)) {
-						parameterMap.put("type", Integer.class);
-					} else if (str.contains(REPLACE_LONG)) {
-						parameterMap.put("type", Long.class);
-					} else {
-						parameterMap.put("type", Double.class);
-					}
-				}
-				parameterMap.put("enumerated values", toAdd);
-				parameterList.add(new Parameter(parameterMap));
-			}
-		} else {
-			parameterList.add(this);
-		}
-		return parameterList;
-	}
+	/*
+	 * public List<Parameter> getSubParameters() { List<Parameter> parameterList
+	 * = new ArrayList<Parameter>(getEnumerationValues().size());
+	 * 
+	 * if (isEnumeration()) { Map<String, Object> parameterMap; List<String>
+	 * toAdd; for (String str : getEnumerationValues()) { parameterMap = new
+	 * HashMap<String, Object>(); toAdd = new LinkedList<String>();
+	 * toAdd.add(str); if (str.contains(REPLACE_STRING) ||
+	 * str.contains(REPLACE_INT) || str.contains(REPLACE_DOUBLE) ||
+	 * str.contains(REPLACE_LONG)) {
+	 * 
+	 * parameterMap.put("format", str); if (str.contains(REPLACE_STRING)) {
+	 * parameterMap.put("type", String.class); } else if
+	 * (str.contains(REPLACE_INT)) { parameterMap.put("type", Integer.class); }
+	 * else if (str.contains(REPLACE_LONG)) { parameterMap.put("type",
+	 * Long.class); } else { parameterMap.put("type", Double.class); } }
+	 * parameterMap.put("enumerated values", toAdd); parameterList.add(new
+	 * Parameter(parameterMap)); } } else { parameterList.add(this); } return
+	 * parameterList; }
+	 */
 
 	/**
 	 * Returns a string representation of this parameter.
