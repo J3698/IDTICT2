@@ -191,6 +191,12 @@ class TestListPane extends ScrollPane {
 		}
 	}
 
+	public void pauseTests() {
+		for (GUITestPackage test : this.tests) {
+			test.pauseTests();
+		}
+	}
+
 	/**
 	 * Selects the given test.
 	 * 
