@@ -56,23 +56,25 @@ class ParameterString implements Comparable<ParameterString> {
 		Parameter brancher = this.possibleParameters.get(0);
 		HashSet<Parameter> usedParameters = (HashSet<Parameter>) this.usedParameters.clone();
 		usedParameters.add(brancher);
-		if (brancher.isEnumeration()) {
-			List<String> enumVals = brancher.getEnumerationValues();
-			for (int i = 0; i < enumVals.size(); i++) {
-				String val = enumVals.get(i);
-				if (brancher.getFormatVariables(val)) {
 
-				}
-				if (brancher.getMin() instanceof List<?>) {
-
+		if (enum) {
+			for (i in enum) {
+				formatted = replaceDummyValues();
+				children.add(new ParameterString(formatted));
+			}
+		}else{
+			replace_all_but_first_replaceme_with_dummy_values();
+			if (first replaceme a number) {
+				for option in getNumOptions(getMin, getMax);
+					formatted = getformatted(dummyValedThing, List(option));
+					children.add(new ParameterString(formatted));
+			}else{
+				for (option in dummyStringVals()) {
+					formated = getFormated(dummyValedThing, List(option));
+					children.add(new ParamterString(formatted));
 				}
 			}
-		} else if (brancher.getType().isAssignableFrom(Number.class)) {
-			// check bounds, put le numbers!
-		} else if (brancher.getClass().isAssignableFrom(String.class)) {
-			// put le random strings!
 		}
-		// ~FINISH THIS OKAY~
 	}
 
 	public void getBranches() {
