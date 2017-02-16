@@ -45,13 +45,28 @@ class ParameterString implements Comparable<ParameterString> {
 		this(parameterFactory, null, null);
 	}
 
+	public boolean isExpandable() {
+		if (this.fertileChildren == null) {
+			this.possibleParameters = this.parameterFactory.getNext(parameters, usedParameters);
+		}
+		return !possibleParameters.isEmpty();
+	}
+
+	@SuppressWarnings("unchecked")
 	public void expand() {
 		if (this.fertileChildren == null) {
 			this.possibleParameters = this.parameterFactory.getNext(parameters, usedParameters);
 		}
+
+		this.isExpanded = true;
+
 		if (this.possibleParameters.size() == 0) {
 			return;
 		}
+
+		this.fertileChildren = new ArrayList<ParameterString>();
+		this.allChildren = new ArrayList<ParameterString>();
+
 		Collections.sort(this.possibleParameters, new BranchFactorComparator());
 
 		Parameter brancher = this.possibleParameters.get(0);
@@ -60,121 +75,16 @@ class ParameterString implements Comparable<ParameterString> {
 		usedParameters.add(brancher);
 
 		if (brancher.isEnumeration()) {
-			List<String> enumVals = brancher.getEnumerationValues();
-			for (int i = 0; i < enumVals.size(); i++) {
-				boolean numberFound = false;
-				Class type = null;
-				List<Object> formatVals = new LinkedList<Object>();
-				String toFormat = enumVals.get(i);
-
-				List<Class> formatTypes = Parameter.getFormatVariables(toFormat);
-				for (Class<?> c : formatTypes) {
-					if (Number.class.isAssignableFrom(c) && !numberFound) {
-						numberFound = true;
-						type = c;
-						// could instead keep track of insertion point
-						formatVals.add("<<LAST_NUMBER_TO_FORMAT>>");
-					} else {
-						if (Number.class.isAssignableFrom(c)) {
-							formatVals.add(1);
-						} else {
-							formatVals.add("\"The lazy dog jumped over the quick brown fox.\"");
-						}
-					}
-				}
-
-				toFormat = Parameter.getFormattedParameter(toFormat, formatVals);
-
-				if (toFormat.contains("<<LAST_NUMBER_TO_FORMAT>>")) {
-					Number min = null;
-					Number max = null;
-					if (brancher.getMin() instanceof List) {
-						min = ((List<Number>) brancher.getMin()).get(i);
-					}
-					if (brancher.getMax() instanceof List) {
-						max = ((List<Number>) brancher.getMax()).get(i);
-					}
-
-					String dummyValue = "";
-					if ((min == null || min.longValue() <= 1) && (max == null || max.longValue() <= 1)) {
-						dummyValue = "1";
-					} else if (min == null && max != null) {
-						dummyValue = "" + (max.longValue() - 1);
-					} else {
-						dummyValue = "" + (min.longValue() + 1);
-					}
-
-					toFormat.replace("<<LAST_NUMBER_TO_FORMAT>>", "1");
-				}
-
-				List<String> copy = new ArrayList<String>();
-				Collections.copy(this.parameters, copy);
-				copy.add(toFormat);
-				ParameterString newString = new ParameterString(this.parameterFactory, usedParameters, copy);
-				this.fertileChildren.add(newString);
-				this.allChildren.add(newString);
-			}
+			addEnumerationChildren(brancher);
 		} else {
 			if (brancher.isFormatted()) {
-				String toFormat = brancher.getFormat();
-				List<Class> formatTypes = Parameter.getFormatVariables(toFormat);
-				List<Object> formatVals = new ArrayList<Object>();
-				boolean numberFound = false;
-
-				if (formatTypes.get(0) != null) {
-					formatVals.add("<<LAST_THING_TO_FORMAT>>");
-					if (Number.class.isAssignableFrom(formatTypes.get(0))) {
-						numberFound = true;
-					}
-				}
-
-				for (int i = 1; i < formatTypes.size(); i++) {
-					Class<?> c = formatTypes.get(i);
-
-					if (Number.class.isAssignableFrom(c) && !numberFound) {
-						numberFound = true;
-						// format
-						formatVals.add("<<LAST_NUMBER_TO_FORMAT>>");
-					} else {
-						if (Number.class.isAssignableFrom(c)) {
-							formatVals.add(1);
-						} else {
-							formatVals.add("\"The lazy dog jumped over the quick brown fox.\"");
-						}
-					}
-				}
-
-				Number min = (Number) brancher.getMin();
-				Number max = (Number) brancher.getMax();
-
-				if (toFormat.contains("<<LAST_NUMBER_TO_FORMAT>>")) {
-					String dummyValue = "";
-					if ((min == null || min.longValue() <= 1) && (max == null || max.longValue() <= 1)) {
-						dummyValue = "1";
-					} else if (min == null && max != null) {
-						dummyValue = "" + (max.longValue() - 1);
-					} else {
-						dummyValue = "" + (min.longValue() + 1);
-					}
-
-					toFormat.replace("<<LAST_NUMBER_TO_FORMAT>>", "1");
-				}
-
-				if (!formatTypes.isEmpty()) {
-					if (Number.class.isAssignableFrom(formatTypes.get(0))) {
-						Set<Number> branches = new HashSet<Number>();
-
-					} else {
-
-					}
-				}
+				getFormattedChildren(brancher);
 			} else {
-				// not very hard is it
+				getRawChildren(brancher);
 			}
 			/*
-			 * replace_all_but_first_replaceme_with_dummy_values();
-			 * 
-			 * if (first_replaceme_a_number()) { for option in
+			 * replace_all_but_first_replaceme_with_dummy_values(); if
+			 * (first_replaceme_a_number()) { for option in
 			 * getNumOptions(getMin, getMax); formatted =
 			 * getformatted(dummyValedThing, List(option)); children.add(new
 			 * ParameterString(formatted)); } else { for (option in
@@ -184,14 +94,227 @@ class ParameterString implements Comparable<ParameterString> {
 		}
 	}
 
-	public void getBranches() {
+	public void addEnumerationChildren(Parameter brancher) {
+		List<String> enumVals = brancher.getEnumerationValues();
+		for (int i = 0; i < enumVals.size(); i++) {
+			boolean numberFound = false;
+			Class type = null;
+			List<Object> formatVals = new LinkedList<Object>();
+			String toFormat = enumVals.get(i);
 
+			List<Class> formatTypes = Parameter.getFormatVariables(toFormat);
+			for (Class<?> c : formatTypes) {
+				if (Number.class.isAssignableFrom(c) && !numberFound) {
+					numberFound = true;
+					type = c;
+					// could instead keep track of insertion point
+					formatVals.add("<<LAST_NUMBER_TO_FORMAT>>");
+				} else {
+					if (Number.class.isAssignableFrom(c)) {
+						formatVals.add(1);
+					} else {
+						formatVals.add("\"The lazy dog jumped over the quick brown fox.\"");
+					}
+				}
+			}
+
+			toFormat = Parameter.getFormattedParameter(toFormat, formatVals);
+
+			if (toFormat.contains("<<LAST_NUMBER_TO_FORMAT>>")) {
+				Number min = null;
+				Number max = null;
+				if (brancher.getMin() instanceof List) {
+					min = ((List<Number>) brancher.getMin()).get(i);
+				}
+				if (brancher.getMax() instanceof List) {
+					max = ((List<Number>) brancher.getMax()).get(i);
+				}
+
+				String dummyValue = "";
+				if ((min == null || min.longValue() <= 1) && (max == null || max.longValue() <= 1)) {
+					dummyValue = "1";
+				} else if (min == null && max != null) {
+					dummyValue = "" + (max.longValue() - 1);
+				} else {
+					dummyValue = "" + (min.longValue() + 1);
+				}
+
+				toFormat.replace("<<LAST_NUMBER_TO_FORMAT>>", "1");
+			}
+
+			List<String> copy = new ArrayList<String>();
+			Collections.copy(this.parameters, copy);
+			copy.add(toFormat);
+			ParameterString newString = new ParameterString(this.parameterFactory, usedParameters, copy);
+			newString.setParent(this);
+			this.fertileChildren.add(newString);
+			this.allChildren.add(newString);
+		}
+	}
+
+	public void getFormattedChildren(Parameter brancher) {
+		String toFormat = brancher.getFormat();
+		List<Class> formatTypes = Parameter.getFormatVariables(toFormat);
+		List<Object> formatVals = new ArrayList<Object>();
+		boolean numberFound = false;
+
+		if (formatTypes.get(0) != null) {
+			formatVals.add("<<LAST_THING_TO_FORMAT>>");
+			if (Number.class.isAssignableFrom(formatTypes.get(0))) {
+				numberFound = true;
+			}
+		}
+
+		for (int i = 1; i < formatTypes.size(); i++) {
+			Class<?> c = formatTypes.get(i);
+
+			if (Number.class.isAssignableFrom(c) && !numberFound) {
+				numberFound = true;
+				// format
+				formatVals.add("<<LAST_NUMBER_TO_FORMAT>>");
+			} else {
+				if (Number.class.isAssignableFrom(c)) {
+					formatVals.add(1);
+				} else {
+					formatVals.add("\"The lazy dog jumped over the quick brown fox.\"");
+				}
+			}
+		}
+
+		if (toFormat.contains("<<LAST_NUMBER_TO_FORMAT>>")) {
+			Number min = (Number) brancher.getMin();
+			Number max = (Number) brancher.getMax();
+			String dummyValue = "";
+			if ((min == null || min.longValue() <= 1) && (max == null || max.longValue() <= 1)) {
+				dummyValue = "1";
+			} else if (min == null && max != null) {
+				dummyValue = "" + (max.longValue() - 1);
+			} else {
+				dummyValue = "" + (min.longValue() + 1);
+			}
+
+			toFormat.replace("<<LAST_NUMBER_TO_FORMAT>>", "1");
+		}
+
+		if (!formatTypes.isEmpty()) {
+			Set<Object> branches = new HashSet<Object>();
+			if (Number.class.isAssignableFrom(formatTypes.get(0))) {
+				branches.add(1);
+				if (formatTypes.get(0).isAssignableFrom(Long.class)) {
+					Long min = (Long) brancher.getMin();
+					Long max = (Long) brancher.getMax();
+					if (min != null) {
+						branches.add(min);
+						branches.add(min - 1);
+					}
+					if (max != null) {
+						branches.add(max);
+						branches.add(max + 1);
+					}
+				} else if (formatTypes.get(0).isAssignableFrom(Double.class)) {
+					Double min = (Double) brancher.getMin();
+					Double max = (Double) brancher.getMax();
+					if (min != null) {
+						branches.add(min);
+						branches.add(min - 1);
+					}
+					if (max != null) {
+						branches.add(max);
+						branches.add(max + 1);
+					}
+				} else if (formatTypes.get(0).isAssignableFrom(Integer.class)) {
+					Integer min = (Integer) brancher.getMin();
+					Integer max = (Integer) brancher.getMax();
+					if (min != null) {
+						branches.add(min);
+						branches.add(min - 1);
+					}
+					if (max != null) {
+						branches.add(max);
+						branches.add(max + 1);
+					}
+				}
+			} else {
+				branches.add("\"The l4zy dog jump3d 0ver the qu1ck brown fox.\"");
+				branches.add("\"hi \n hi \t } \\n hi { hey");
+				branches.add("brown fox");
+			}
+
+			for (Object branch : branches) {
+				String formatted = toFormat.replaceAll("<<LAST_THING_TO_FORMAT>>", "" + branch);
+				List<String> copy = new ArrayList<String>(this.parameters);
+				copy.add(formatted);
+				ParameterString newString = new ParameterString(this.parameterFactory, usedParameters, copy);
+				newString.setParent(this);
+				this.fertileChildren.add(newString);
+				this.allChildren.add(newString);
+
+			}
+		}
+	}
+
+	public void getRawChildren(Parameter brancher) {
+		Set<Object> branches = new HashSet<Object>();
+		if (Number.class.isAssignableFrom(brancher.getType())) {
+			branches.add(1);
+			if (brancher.getType().isAssignableFrom(Long.class)) {
+				Long min = (Long) brancher.getMin();
+				Long max = (Long) brancher.getMax();
+				if (min != null) {
+					branches.add(min);
+					branches.add(min - 1);
+				}
+				if (max != null) {
+					branches.add(max);
+					branches.add(max + 1);
+				}
+			} else if (brancher.getType().isAssignableFrom(Double.class)) {
+				Double min = (Double) brancher.getMin();
+				Double max = (Double) brancher.getMax();
+				if (min != null) {
+					branches.add(min);
+					branches.add(min - 1);
+				}
+				if (max != null) {
+					branches.add(max);
+					branches.add(max + 1);
+				}
+			} else if (brancher.getType().isAssignableFrom(Integer.class)) {
+				Integer min = (Integer) brancher.getMin();
+				Integer max = (Integer) brancher.getMax();
+				if (min != null) {
+					branches.add(min);
+					branches.add(min - 1);
+				}
+				if (max != null) {
+					branches.add(max);
+					branches.add(max + 1);
+				}
+			}
+
+		} else {
+			branches.add("\"The l4zy dog jump3d 0ver the qu1ck brown fox.\"");
+			branches.add("\"hi \n hi \t } \\n hi { hey");
+			branches.add("brown fox");
+		}
+
+		for (Object branch : branches) {
+			List<String> copy = new ArrayList<String>();
+			Collections.copy(this.parameters, copy);
+			copy.add("" + branch);
+			ParameterString newString = new ParameterString(this.parameterFactory, usedParameters, copy);
+			newString.setParent(this);
+			this.fertileChildren.add(newString);
+			this.allChildren.add(newString);
+		}
 	}
 
 	public void updateMean() {
 		double total = this.uniqueLines;
-		for (ParameterString child : this.allChildren) {
-			total += child.childTests * child.mean;
+		if (this.allChildren != null) {
+			for (ParameterString child : this.allChildren) {
+				total += child.childTests * child.mean;
+			}
 		}
 		this.mean = total / this.childTests;
 
@@ -241,6 +364,10 @@ class ParameterString implements Comparable<ParameterString> {
 	 */
 	public ParameterString getParent() {
 		return this.parent;
+	}
+
+	public void setParent(ParameterString parent) {
+		this.parent = parent;
 	}
 
 	/**
@@ -294,13 +421,6 @@ class ParameterString implements Comparable<ParameterString> {
 		if (this.parent != null) {
 			this.parent.setChildTested();
 		}
-	}
-
-	public boolean isExpandable() {
-		if (this.fertileChildren == null) {
-			this.possibleParameters = this.parameterFactory.getNext(parameters, usedParameters);
-		}
-		return !possibleParameters.isEmpty();
 	}
 
 	public boolean isExpanded() {
