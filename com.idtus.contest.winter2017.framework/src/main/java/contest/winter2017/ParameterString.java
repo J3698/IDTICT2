@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
@@ -54,26 +55,132 @@ class ParameterString implements Comparable<ParameterString> {
 		Collections.sort(this.possibleParameters, new BranchFactorComparator());
 
 		Parameter brancher = this.possibleParameters.get(0);
+		@SuppressWarnings("unchecked")
 		HashSet<Parameter> usedParameters = (HashSet<Parameter>) this.usedParameters.clone();
 		usedParameters.add(brancher);
 
-		if (enum) {
-			for (i in enum) {
-				formatted = replaceDummyValues();
-				children.add(new ParameterString(formatted));
-			}
-		}else{
-			replace_all_but_first_replaceme_with_dummy_values();
-			if (first replaceme a number) {
-				for option in getNumOptions(getMin, getMax);
-					formatted = getformatted(dummyValedThing, List(option));
-					children.add(new ParameterString(formatted));
-			}else{
-				for (option in dummyStringVals()) {
-					formated = getFormated(dummyValedThing, List(option));
-					children.add(new ParamterString(formatted));
+		if (brancher.isEnumeration()) {
+			List<String> enumVals = brancher.getEnumerationValues();
+			for (int i = 0; i < enumVals.size(); i++) {
+				boolean numberFound = false;
+				Class type = null;
+				List<Object> formatVals = new LinkedList<Object>();
+				String toFormat = enumVals.get(i);
+
+				List<Class> formatTypes = Parameter.getFormatVariables(toFormat);
+				for (Class<?> c : formatTypes) {
+					if (Number.class.isAssignableFrom(c) && !numberFound) {
+						numberFound = true;
+						type = c;
+						// could instead keep track of insertion point
+						formatVals.add("<<LAST_NUMBER_TO_FORMAT>>");
+					} else {
+						if (Number.class.isAssignableFrom(c)) {
+							formatVals.add(1);
+						} else {
+							formatVals.add("\"The lazy dog jumped over the quick brown fox.\"");
+						}
+					}
 				}
+
+				toFormat = Parameter.getFormattedParameter(toFormat, formatVals);
+
+				if (toFormat.contains("<<LAST_NUMBER_TO_FORMAT>>")) {
+					Number min = null;
+					Number max = null;
+					if (brancher.getMin() instanceof List) {
+						min = ((List<Number>) brancher.getMin()).get(i);
+					}
+					if (brancher.getMax() instanceof List) {
+						max = ((List<Number>) brancher.getMax()).get(i);
+					}
+
+					String dummyValue = "";
+					if ((min == null || min.longValue() <= 1) && (max == null || max.longValue() <= 1)) {
+						dummyValue = "1";
+					} else if (min == null && max != null) {
+						dummyValue = "" + (max.longValue() - 1);
+					} else {
+						dummyValue = "" + (min.longValue() + 1);
+					}
+
+					toFormat.replace("<<LAST_NUMBER_TO_FORMAT>>", "1");
+				}
+
+				List<String> copy = new ArrayList<String>();
+				Collections.copy(this.parameters, copy);
+				copy.add(toFormat);
+				ParameterString newString = new ParameterString(this.parameterFactory, usedParameters, copy);
+				this.fertileChildren.add(newString);
+				this.allChildren.add(newString);
 			}
+		} else {
+			if (brancher.isFormatted()) {
+				String toFormat = brancher.getFormat();
+				List<Class> formatTypes = Parameter.getFormatVariables(toFormat);
+				List<Object> formatVals = new ArrayList<Object>();
+				boolean numberFound = false;
+
+				if (formatTypes.get(0) != null) {
+					formatVals.add("<<LAST_THING_TO_FORMAT>>");
+					if (Number.class.isAssignableFrom(formatTypes.get(0))) {
+						numberFound = true;
+					}
+				}
+
+				for (int i = 1; i < formatTypes.size(); i++) {
+					Class<?> c = formatTypes.get(i);
+
+					if (Number.class.isAssignableFrom(c) && !numberFound) {
+						numberFound = true;
+						// format
+						formatVals.add("<<LAST_NUMBER_TO_FORMAT>>");
+					} else {
+						if (Number.class.isAssignableFrom(c)) {
+							formatVals.add(1);
+						} else {
+							formatVals.add("\"The lazy dog jumped over the quick brown fox.\"");
+						}
+					}
+				}
+
+				Number min = (Number) brancher.getMin();
+				Number max = (Number) brancher.getMax();
+
+				if (toFormat.contains("<<LAST_NUMBER_TO_FORMAT>>")) {
+					String dummyValue = "";
+					if ((min == null || min.longValue() <= 1) && (max == null || max.longValue() <= 1)) {
+						dummyValue = "1";
+					} else if (min == null && max != null) {
+						dummyValue = "" + (max.longValue() - 1);
+					} else {
+						dummyValue = "" + (min.longValue() + 1);
+					}
+
+					toFormat.replace("<<LAST_NUMBER_TO_FORMAT>>", "1");
+				}
+
+				if (!formatTypes.isEmpty()) {
+					if (Number.class.isAssignableFrom(formatTypes.get(0))) {
+						Set<Number> branches = new HashSet<Number>();
+
+					} else {
+
+					}
+				}
+			} else {
+				// not very hard is it
+			}
+			/*
+			 * replace_all_but_first_replaceme_with_dummy_values();
+			 * 
+			 * if (first_replaceme_a_number()) { for option in
+			 * getNumOptions(getMin, getMax); formatted =
+			 * getformatted(dummyValedThing, List(option)); children.add(new
+			 * ParameterString(formatted)); } else { for (option in
+			 * dummyStringVals()) { formated = getFormated(dummyValedThing,
+			 * List(option)); children.add(new ParamterString(formatted)); } }
+			 */
 		}
 	}
 

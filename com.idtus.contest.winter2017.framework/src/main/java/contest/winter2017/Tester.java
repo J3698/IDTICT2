@@ -476,7 +476,14 @@ public class Tester {
 	 */
 	public void executeSecurityTests() {
 		Long start = System.currentTimeMillis();
-		TestGenerator generator = new MonteCarloTestGenerator(this.parameterFactory, this.outputs);
+
+		TestGenerator generator;
+		if (this.parameterFactory.isBounded()) {
+			generator = new RandomTestGenerator(this.parameterFactory, this.outputs);
+		} else {
+			generator = new MonteCarloTestGenerator(this.parameterFactory, this.outputs);
+		}
+
 		for (int i = 0; i < this.bbTests; i++) {
 			if (isKilled.get()) {
 				return;

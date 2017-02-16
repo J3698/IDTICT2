@@ -21,6 +21,11 @@ public class Parameter {
 			REPLACE_DOUBLE };
 
 	/**
+	 * Pattern to replace if this parameter is formatted.
+	 */
+	private static Pattern replaceMePattern = Pattern.compile("<<REPLACE_ME_(STRING|INT|DOUBLE|LONG)>>");
+
+	/**
 	 * String representation of this parameter.
 	 */
 	private String toString = null;
@@ -30,11 +35,6 @@ public class Parameter {
 	 */
 	@SuppressWarnings("rawtypes")
 	private Map inputMap;
-
-	/**
-	 * Pattern to replace if this parameter is formatted.
-	 */
-	private Pattern replaceMePattern = null;
 
 	/**
 	 * Constructs a new Paraneter using the specified input map.
@@ -170,7 +170,7 @@ public class Parameter {
 	 *         <<REPLACE_ME_...>> in the format string
 	 */
 	@SuppressWarnings("rawtypes")
-	public List<Class> getFormatVariables(String format) {
+	public static List<Class> getFormatVariables(String format) {
 
 		if (format == null) {
 			return null;
@@ -178,8 +178,7 @@ public class Parameter {
 
 		List<Class> typeList = new ArrayList<Class>();
 
-		this.replaceMePattern = Pattern.compile("<<REPLACE_ME_(STRING|INT|DOUBLE|LONG)>>");
-		Matcher replaceMeMatcher = replaceMePattern.matcher(format);
+		Matcher replaceMeMatcher = Parameter.replaceMePattern.matcher(format);
 		while (replaceMeMatcher.find()) {
 			switch (replaceMeMatcher.group()) {
 			case REPLACE_STRING: {
@@ -235,7 +234,7 @@ public class Parameter {
 	 * @return String containing the parameter with <<REPLACE_ME_...>>
 	 *         placeholders replaced with the passed in values
 	 */
-	public String getFormattedParameter(String format, List<Object> formatVariableValues) {
+	public static String getFormattedParameter(String format, List<Object> formatVariableValues) {
 		Matcher replaceMeMatcher = replaceMePattern.matcher(format);
 		StringBuffer sb = new StringBuffer();
 		for (Object variable : formatVariableValues) {
