@@ -20,6 +20,11 @@ public abstract class TestGenerator {
 	private List<Output> outputs;
 
 	/**
+	 * Last output to help keep track of last test
+	 */
+	private Output lastOutput = null;
+
+	/**
 	 * Constructs a TestGenerator with the given parameter factory and list of
 	 * outputs.
 	 * 
@@ -33,36 +38,56 @@ public abstract class TestGenerator {
 	public TestGenerator(ParameterFactory parameterFactory, List<Output> outputs) {
 		this.parameterFactory = parameterFactory;
 		this.outputs = outputs;
+		if (this.outputs.size() != 0) {
+			this.lastOutput = outputs.get(0);
+		}
 	}
 
 	/**
 	 * Gets the next test to be run.
 	 * <p>
-	 * 
 	 * When a test is run, the associated Output object is added to the end of
 	 * this class's outputs list.
 	 * 
-	 * Some algo ideas:
-	 * https://www.tutorialspoint.com/software_testing_dictionary/black_box_testing.htm
-	 * 
-	 * Parameters may come with a min and max for their numbers:
-	 * https://www.tutorialspoint.com/software_testing_dictionary/boundary_testing.htm
-	 * 
-	 * Another idea: Test simple cases, dedicate more time to those which cover
-	 * more code (using Jacoco).
+	 * Some algorithm ideas:
+	 * <ul>
+	 * <li>https://www.tutorialspoint.com/software_testing_dictionary/black_box_testing.htm</li>
+	 * <li>https://www.tutorialspoint.com/software_testing_dictionary/boundary_testing.htm</li>
+	 * <li>weighted tree-search</li>
+	 * </ul>
 	 * 
 	 * @return an array of objects which represents parameters to be tested.
 	 */
 	public abstract Object[] nextTest();
 
-	//
-	// Utility method to get a random integer number. If the passed
-	// Parameter has an associated min or max, these values are used
-	// as the bounds of the random number.
-	//
-	// @param param - parameter to get possible min and max from
-	// @return Integer within bounds given by param
-	//
+	/**
+	 * Updates the list of outputs.
+	 */
+	public void updateOutputs() {
+		Output end;
+		if (this.outputs.isEmpty()) {
+			end = null;
+		} else {
+			end = this.outputs.get(this.outputs.size() - 1);
+		}
+
+		if (lastOutput != end) {
+			this.lastOutput = end;
+			this.outputs.add(end);
+		}
+	}
+
+	/**
+	 * Returns a random integer number.
+	 * <p>
+	 * If the passed Parameter has an associated minimum or maximum, these
+	 * values are used as the bounds of the random number.
+	 * 
+	 * @param param
+	 *            - parameter to get possible minimum and maximum from
+	 * 
+	 * @return an integer within the bounds given by the parameter
+	 */
 	private Integer getIntegerNumber(Parameter param) {
 		Random rand = new Random();
 		Integer min;
@@ -93,14 +118,17 @@ public abstract class TestGenerator {
 		return min + rand.nextInt(max - min + 1);
 	}
 
-	//
-	// Utility method to get a random double number. If the passed
-	// Parameter has an associated min or max, these values are used
-	// as the bounds of the random number.
-	//
-	// @param param - parameter to get possible min and max from
-	// @return Double within bounds given by param
-	//
+	/**
+	 * Returns a random double number.
+	 * <p>
+	 * If the passed Parameter has an associated minimum or maximum, these
+	 * values are used as the bounds of the random number.
+	 * 
+	 * @param param
+	 *            - parameter to get possible minimum and maximum from
+	 * 
+	 * @return a double within the bounds given by the parameter
+	 */
 	private Double getDoubleNumber(Parameter param) {
 		Random rand = new Random();
 		Double min;
@@ -131,10 +159,20 @@ public abstract class TestGenerator {
 		return min + (max - min) * rand.nextDouble();
 	}
 
+	/**
+	 * Returns the parameter factory of this test generator.
+	 * 
+	 * @return the parameter factory of this test generator
+	 */
 	public ParameterFactory getParameterFactory() {
 		return this.parameterFactory;
 	}
 
+	/**
+	 * Returns the list of outputs held by this test generator.
+	 * 
+	 * @return the list of outputs held by this test generator
+	 */
 	public List<Output> getOutputs() {
 		return this.outputs;
 	}

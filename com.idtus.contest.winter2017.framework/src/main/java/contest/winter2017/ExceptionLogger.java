@@ -11,14 +11,15 @@ import org.apache.commons.cli.Option;
 
 /**
  * This static class is for saving logs with information pertaining to
- * exceptions. This class is static to prmote low coupling, i.e. diminish
- * interdependence with other classes.
+ * exceptions. It provides a dialog asking command line users whether they want
+ * to save exception logs. This class is static in order to promote low
+ * coupling, i.e. diminish interdependence with other classes.
  * 
  * @author ICT-2
  */
 class ExceptionLogger {
 	/**
-	 * CommandLine to get arguments to log.
+	 * Command line to get arguments to log.
 	 */
 	private static CommandLine cliArgs;
 
@@ -33,10 +34,10 @@ class ExceptionLogger {
 	private static File currentDir;
 
 	/**
-	 * Initializes the ExceptionLog.
+	 * Initializes the exception log with the given command line.
 	 * 
 	 * @param initCliArgs
-	 *            - CommandLine to include in reports
+	 *            - command line to include in reports
 	 */
 	static void init(CommandLine initCliArgs) {
 		cliArgs = initCliArgs;
@@ -52,13 +53,14 @@ class ExceptionLogger {
 	 * directory.
 	 *
 	 * @param re
-	 *            - RuntimeException encountered
+	 *            - runtime exception encountered
 	 * @param now
 	 *            - date and time of exception
 	 */
 	static void errorLogDialog(RuntimeException re, LocalDateTime now) {
 		System.out.println("The tester has encountered an exception.");
 		System.out.println("Save error log to jacoco output directory? (Y/n) ");
+
 		@SuppressWarnings("resource")
 		Scanner in = new Scanner(System.in);
 		if (!in.nextLine().equalsIgnoreCase("n")) {
@@ -76,7 +78,7 @@ class ExceptionLogger {
 	}
 
 	/**
-	 * Saves the specefied exception to the specified error log file.
+	 * Saves the given exception to the specified error log file.
 	 * <p>
 	 * This method attempts to log an error file. A number is appended to error
 	 * logs so that previous logs are not overwritten.
@@ -84,11 +86,11 @@ class ExceptionLogger {
 	 * @param dir
 	 *            - directory to save file into
 	 * @param re
-	 *            - RuntimeEception encountered
+	 *            - runtime exception encountered
 	 * @param now
 	 *            - date and time of exception
 	 * 
-	 * @return boolean whether the log was succesfully saved
+	 * @return boolean whether the log was successfully saved
 	 */
 	private static boolean saveErrorLog(File dir, RuntimeException re, LocalDateTime now) {
 		if (!dir.exists()) {
@@ -108,6 +110,7 @@ class ExceptionLogger {
 			// print date
 			pw = new PrintWriter(toWrite);
 			pw.println("Recorded at: " + now.toLocalDate() + " " + now.toLocalTime());
+
 			// print arguments
 			pw.println("");
 			pw.println("\nArguments:");
@@ -119,7 +122,8 @@ class ExceptionLogger {
 					pw.println("  - " + value);
 				}
 			}
-			// print stacktrace
+
+			// print stack trace
 			pw.println("");
 			pw.println("Trace:");
 			re.printStackTrace(pw);
@@ -130,6 +134,7 @@ class ExceptionLogger {
 				pw.close();
 			}
 		}
+
 		System.out.println("File saved succesfully as " + toWrite.getPath() + ".");
 		return true;
 	}

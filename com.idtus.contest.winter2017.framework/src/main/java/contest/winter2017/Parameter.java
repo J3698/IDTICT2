@@ -31,13 +31,32 @@ public class Parameter {
 	private String toString = null;
 
 	/**
-	 * Input Map associated with this parameter.
+	 * Input map associated with this parameter.
 	 */
 	@SuppressWarnings("rawtypes")
 	private Map inputMap;
 
 	/**
-	 * Constructs a new Paraneter using the specified input map.
+	 * String regex key associated with this parameter.
+	 */
+	private String regexKey = null;
+
+	/**
+	 * Constructs a new parameter using the specified input map and key.
+	 * 
+	 * @param inputMap
+	 *            - map containing parameter meta data
+	 * @param key
+	 *            - key for this parameter
+	 */
+	@SuppressWarnings("rawtypes")
+	public Parameter(Map inputMap, String regexKey) {
+		this.inputMap = inputMap;
+		this.regexKey = regexKey;
+	}
+
+	/**
+	 * Constructs a new parameter using the specified input map.
 	 * 
 	 * @param inputMap
 	 *            - map containing parameter meta data
@@ -48,10 +67,10 @@ public class Parameter {
 	}
 
 	/**
-	 * Gets the type of the parameter (integer, long, double, float, String,
+	 * Returns the type of the parameter (integer, long, double, float, String,
 	 * etc).
 	 * 
-	 * @return Class type of the parameter
+	 * @return the class type of the parameter
 	 */
 	@SuppressWarnings("rawtypes")
 	public Class getType() {
@@ -62,8 +81,7 @@ public class Parameter {
 	 * Returns whether this parameter is an enumeration or not, i.e. whether
 	 * multiple options are associated with this parameter.
 	 * 
-	 * @return boolean true if this parameter is an enumeration, false if it is
-	 *         not
+	 * @return true if this parameter is an enumeration, false if it is not
 	 */
 	public boolean isEnumeration() {
 		if (inputMap.get("enumerated values") != null) {
@@ -74,10 +92,10 @@ public class Parameter {
 	}
 
 	/**
-	 * Gets enumeration values if this parameter is an enumeration.
+	 * Returns the enumeration values if this parameter is an enumeration.
 	 * 
-	 * @return List<String> containing multiple options associated with this
-	 *         parameter
+	 * @return a string list containing the enumeration values associated with
+	 *         this parameter
 	 */
 	@SuppressWarnings("unchecked")
 	public List<String> getEnumerationValues() {
@@ -85,9 +103,9 @@ public class Parameter {
 	}
 
 	/**
-	 * Gets the min value associated with this parameter (if one exists).
+	 * Returns the minimum value associated with this parameter (if one exists).
 	 * 
-	 * @return Object representing the minimum value associated with this
+	 * @return an object representing the minimum value associated with this
 	 *         parameter
 	 */
 	public Object getMin() {
@@ -95,9 +113,9 @@ public class Parameter {
 	}
 
 	/**
-	 * Gets the max value associated with this parameter (if one exists).
+	 * Returns the maximum value associated with this parameter (if one exists).
 	 * 
-	 * @return Object representing the maximum value associated with this
+	 * @return an object representing the maximum value associated with this
 	 *         parameter
 	 */
 	public Object getMax() {
@@ -105,9 +123,9 @@ public class Parameter {
 	}
 
 	/**
-	 * Gets the optionality of this parameter.
+	 * Returns whether this parameter is optional.
 	 * 
-	 * @return boolean true indicates the parameter is optional
+	 * @return true if the parameter is optional, otherwise false
 	 */
 	public boolean isOptional() {
 		if (inputMap.get("optional") != null) {
@@ -118,10 +136,10 @@ public class Parameter {
 	}
 
 	/**
-	 * Gets the flag indicating whether or not the parameter has a specific
-	 * format
+	 * Returns the flag indicating whether or not the parameter has a specific
+	 * format.
 	 * 
-	 * @return boolean true indicates the parameter has a specific format
+	 * @return true if the parameter has a specific format, otherwise false
 	 */
 	public boolean isFormatted() {
 		if (isEnumeration()) {
@@ -140,7 +158,7 @@ public class Parameter {
 	}
 
 	/**
-	 * Gets this parameter's format string if one exists
+	 * Returns this parameter's format string if one exists.
 	 * 
 	 * @return String with the parameters format <<REPLACE_ME_...>> are included
 	 */
@@ -149,8 +167,8 @@ public class Parameter {
 	}
 
 	/**
-	 * Gets the types of the variables (eg. <<REPLACE_ME_STRING>>) in the format
-	 * string
+	 * Returns the types of the variables (eg. <<REPLACE_ME_STRING>>) in the
+	 * format string
 	 * 
 	 * @return List<Class> that contains the types of each of the
 	 *         <<REPLACE_ME_...>> in the format string
@@ -161,13 +179,15 @@ public class Parameter {
 	}
 
 	/**
-	 * Gets the types of the variables (eg. <<REPLACE_ME_STRING>>) in the format
-	 * string... useful for formatted enumerated values
+	 * Returns the types of the variables (e.g. <<REPLACE_ME_STRING>>) in the
+	 * format string.
+	 * <p>
+	 * This method is useful for formatting formatted enumerated values.
 	 * 
 	 * @param format
 	 *            - string containing the format for this parameter
-	 * @return List<Class> that contains the types of each of the
-	 *         <<REPLACE_ME_...>> in the format string
+	 * @return string list that contains the types of each <<REPLACE_ME_...>> in
+	 *         the format string
 	 */
 	@SuppressWarnings("rawtypes")
 	public static List<Class> getFormatVariables(String format) {
@@ -208,13 +228,13 @@ public class Parameter {
 	}
 
 	/**
-	 * Builds a valid formatted parameter by replacing all of the
-	 * <<REPLACE_ME_...>> in the format parameter string
+	 * Builds a valid formatted parameter by replacing each <<REPLACE_ME_...>>
+	 * in the format parameter string
 	 * 
 	 * @param List<Object>
 	 *            - containing the values that will replace the format for
 	 *            <<REPLACE_ME_...>> placeholders of this formatted parameter
-	 * @return String containing the parameter with <<REPLACE_ME_...>>
+	 * @return a string containing the parameter with <<REPLACE_ME_...>>
 	 *         placeholders replaced with the passed in values
 	 */
 	public String getFormattedParameter(List<Object> formatVariableValues) {
@@ -226,12 +246,12 @@ public class Parameter {
 	 * <<REPLACE_ME_...>> in the format parameter string
 	 * 
 	 * @param String
-	 *            - containing the orginial format strin with the
+	 *            - containing the original format string with the
 	 *            <<REPLACE_ME_...>> in it
 	 * @param List<Object>
 	 *            - containing the values that will replace the format for
 	 *            <<REPLACE_ME_...>> placeholders of this formatted parameter
-	 * @return String containing the parameter with <<REPLACE_ME_...>>
+	 * @return a string containing the parameter with <<REPLACE_ME_...>>
 	 *         placeholders replaced with the passed in values
 	 */
 	public static String getFormattedParameter(String format, List<Object> formatVariableValues) {
@@ -247,53 +267,28 @@ public class Parameter {
 	}
 
 	/**
-	 * Gets the sub parameters of this parameter.
-	 * <p>
-	 * An enumerated parameter has multiple values, and more than one of them
-	 * could be used. Therefore, it's useful to split a enumeration parameter
-	 * into single-value sub-parameters to get different parameter combinations.
-	 * 
-	 * @return List of sub parameters
-	 */
-	/*
-	 * public List<Parameter> getSubParameters() { List<Parameter> parameterList
-	 * = new ArrayList<Parameter>(getEnumerationValues().size());
-	 * 
-	 * if (isEnumeration()) { Map<String, Object> parameterMap; List<String>
-	 * toAdd; for (String str : getEnumerationValues()) { parameterMap = new
-	 * HashMap<String, Object>(); toAdd = new LinkedList<String>();
-	 * toAdd.add(str); if (str.contains(REPLACE_STRING) ||
-	 * str.contains(REPLACE_INT) || str.contains(REPLACE_DOUBLE) ||
-	 * str.contains(REPLACE_LONG)) {
-	 * 
-	 * parameterMap.put("format", str); if (str.contains(REPLACE_STRING)) {
-	 * parameterMap.put("type", String.class); } else if
-	 * (str.contains(REPLACE_INT)) { parameterMap.put("type", Integer.class); }
-	 * else if (str.contains(REPLACE_LONG)) { parameterMap.put("type",
-	 * Long.class); } else { parameterMap.put("type", Double.class); } }
-	 * parameterMap.put("enumerated values", toAdd); parameterList.add(new
-	 * Parameter(parameterMap)); } } else { parameterList.add(this); } return
-	 * parameterList; }
-	 */
-
-	/**
 	 * Returns a string representation of this parameter.
 	 * <p>
-	 * If this Parameter is an enumeration, this method returns the toString of
-	 * the corresponding list of values. Otherwise, this method returns the
-	 * format string of this Parameter.
+	 * If this parameter has a key, the key is prefixed to the to string. The to
+	 * string is created using enumerated values if they exist, otherwise the
+	 * format string if it exists, otherwise the parameter type.
 	 * 
-	 * @return String representing this parameter
+	 * @return a string representing this parameter
 	 */
 	@Override
 	public String toString() {
 		if (this.toString != null) {
 			return this.toString;
 		} else {
+			if (this.regexKey != null) {
+				this.toString = this.regexKey + "=";
+			}
 			if (isEnumeration()) {
-				this.toString = "" + this.inputMap.get("enumerated values");
+				this.toString += "" + this.inputMap.get("enumerated values");
+			} else if (getFormat() != null) {
+				this.toString += getFormat();
 			} else {
-				this.toString = getFormat();
+				this.toString += "" + this.getType();
 			}
 			return this.toString;
 		}
@@ -302,10 +297,10 @@ public class Parameter {
 	/**
 	 * Returns a hash code value for this parameter.
 	 * <p>
-	 * The hash code is generated using the hashcode of this parameter's
+	 * The hash code is generated using the hash code of this parameter's
 	 * toString.
 	 * 
-	 * @return an integer hashcode for this parameter
+	 * @return an integer hash-code for this parameter
 	 */
 	@Override
 	public int hashCode() {
@@ -316,9 +311,9 @@ public class Parameter {
 	 * Returns whether this parameter is equal to another parameter.
 	 * <p>
 	 * Equality testing is done by comparing the string representation of the
-	 * parameters being compared.
+	 * parameters.
 	 * 
-	 * @return boolean whether this parameter and the other parameter are equal
+	 * @return true if this parameter and the other are equal, otherwise false
 	 */
 	@Override
 	public boolean equals(Object other) {

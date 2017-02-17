@@ -26,7 +26,7 @@ import javafx.stage.FileChooser.ExtensionFilter;
 import javafx.stage.Window;
 
 /**
- * ScrollPane to hold the test infos.
+ * ScrollPane to hold the test-infos.
  * 
  * This component is a scrollable pane containing test infos which show
  * information about different tests. Test infos can be selected to show a test
@@ -37,17 +37,17 @@ import javafx.stage.Window;
  */
 class TestListPane extends ScrollPane {
 	/**
-	 * Int width of the ScrollPane.
+	 * Int width of the scroll pane.
 	 */
 	public static final double WIDTH = 150;
 
 	/**
-	 * Double spacing between components in the TestListPane.
+	 * Double spacing between components in the test list pane.
 	 */
 	private static final double SPACING = 0;
 
 	/**
-	 * MainPane of the GUI.
+	 * Main pane of the GUI.
 	 */
 	private BorderPane mainPane;
 
@@ -62,17 +62,17 @@ class TestListPane extends ScrollPane {
 	private Set<String> testNames = new HashSet<String>();
 
 	/**
-	 * Int position where to place new TestInfo components.
+	 * Int position where to place new test info components.
 	 */
 	private int infoAdderIndex;
 
 	/**
-	 * ContentPane for test info.
+	 * Content pane for test info.
 	 */
 	private VBox contentPane = new VBox(SPACING);
 
 	/**
-	 * Constructs a TestListPane with the specified parent BorderPane.
+	 * Constructs a test list pane with the specified parent border pane.
 	 */
 	public TestListPane(BorderPane mainPane) {
 		this.mainPane = mainPane;
@@ -89,7 +89,7 @@ class TestListPane extends ScrollPane {
 	}
 
 	/**
-	 * Makes the component to add more tests.
+	 * Makes the component used to add more tests.
 	 */
 	public void makeTestAdder() {
 		VBox adder = new VBox();
@@ -213,7 +213,7 @@ class TestListPane extends ScrollPane {
 	}
 
 	/**
-	 * Adds a test.
+	 * Adds a test with the given file.
 	 * 
 	 * @param toTest
 	 *            - jar file to add
@@ -256,5 +256,19 @@ class TestListPane extends ScrollPane {
 	 */
 	public Set<String> getTestNames() {
 		return this.testNames;
+	}
+
+	/**
+	 * Removes the given test.
+	 * 
+	 * @param guiTestPackage
+	 *            - test to remove
+	 */
+	public void remove(GUITestPackage guiTestPackage) {
+		this.mainPane.setCenter(null);
+		this.tests.remove(guiTestPackage);
+		this.contentPane.getChildren().remove(guiTestPackage.getTestInfo());
+		this.infoAdderIndex--;
+		this.testNames.remove(guiTestPackage.getName());
 	}
 }

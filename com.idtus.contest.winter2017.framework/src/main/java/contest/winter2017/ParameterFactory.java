@@ -33,9 +33,6 @@ import java.util.Set;
  * build up the parameter definition dynamically). The method that we wrote to
  * help is called getNext(List<String> previousParameterValues);
  * 
- * YOU ARE WELCOME TO CHANGE THIS CLASS, INCLUDING THE APPROACH. KEEP IN MIND
- * THAT YOU CAN'T CHANGE THE EXISTING FORMAT IN THE BLACK-BOX JARS THOUGH.
- * 
  * @author IDT
  */
 public class ParameterFactory {
@@ -57,7 +54,7 @@ public class ParameterFactory {
 	private boolean bounded;
 
 	/**
-	 * ctr for Parameter Factory class
+	 * Constructs a parameter factory with the given inputMap.
 	 * 
 	 * @param inputMap
 	 *            - input map that describes all of the parameter data
@@ -73,6 +70,7 @@ public class ParameterFactory {
 		}
 		this.dependentParametersMap = (Map) this.inputMap.get("dependent parameters");
 
+		// debug for viewing parameters
 		boolean debug = false;
 		if (debug) {
 			System.out.println("______DEBUG______");
@@ -88,9 +86,10 @@ public class ParameterFactory {
 	}
 
 	/**
-	 * Prints a list for debeug purposes.
+	 * Prints a list for debug purposes.
 	 * <p>
-	 * Prints maps in the list using printMap.
+	 * This method allows for parameters to be viewed and therefore analyzed.
+	 * Maps in the list are printed using printMap.
 	 * 
 	 * @param list
 	 *            - list to print
@@ -108,7 +107,9 @@ public class ParameterFactory {
 	}
 
 	/**
-	 * Prints a map for debeug purposes.
+	 * Prints a map for debug purposes.
+	 * <p>
+	 * This method allows for parameters to be viewed and therefore analyzed.
 	 * 
 	 * @param map
 	 *            - map to print
@@ -132,38 +133,55 @@ public class ParameterFactory {
 	}
 
 	/**
-	 * Method to test if the parameters associated with this jar are fixed (aka
-	 * bounded)
+	 * Returns whether the parameters associated with this jar are fixed (i.e.
+	 * bounded).
 	 * 
-	 * @return true if the parameters are fixed (bounded) and false if they are
-	 *         not
+	 * @return true if the parameters are fixed and false if they are not
 	 */
 	public boolean isBounded() {
 		return this.bounded;
 	}
 
+	/**
+	 * Returns possible parameters to append to a list of parameters.
+	 * 
+	 * This method deals with the complexity of dependent parameters and with
+	 * fixed parameters. For more information about dependent and fixed
+	 * parameters, see explanation at the top of this class. Potential
+	 * parameters for a given index are determined, and that index is determined
+	 * by the values in previous ParameterValues (hence, this method is called
+	 * iteratively to build parameter lists).
+	 * 
+	 * @param previousParameterValues
+	 *            - the accumulated parameters that have been passed in until
+	 *            now
+	 * @return a list of parameter objects containing all metadata known about
+	 *         the each parameter
+	 */
 	public List<Parameter> getNext(List<String> previousParameterValues) {
 		return getNext(previousParameterValues, null);
 	}
 
 	/**
-	 * Method to deal with the complexity of dependent parameters. Also handles
+	 * Returns possible parameters to append to a list of parameters.
+	 * 
+	 * This method deals with the complexity of dependent parameters and with
 	 * fixed parameters. For more information about dependent and fixed
-	 * parameters, see explanation at the top of this class. We are essentially
-	 * determining the potential parameters for a given index, and that index is
-	 * determined by the values in previous ParameterValues (hence, we call this
-	 * iteratively and build the definition). This code is certainly fair game
-	 * for change.
+	 * parameters, see explanation at the top of this class. Potential
+	 * parameters for a given index are determined, and that index is determined
+	 * by the values in previous ParameterValues (hence, this method is called
+	 * iteratively to build parameter lists).
 	 * 
 	 * @param previousParameterValues
-	 *            - since this method is used iteratively to build up the
-	 *            parameter definitions, this is the accumulated parameters that
-	 *            have been passed in until now
-	 * @return List of Parameter objects containing all metadata known about the
-	 *         each Parameter
+	 *            - the accumulated parameters that have been passed in until
+	 *            now
+	 * @param usedParameters
+	 *            - parameters to exclude from the potential parameters list
+	 * @return a list of parameter objects containing all metadata known about
+	 *         the each parameter
 	 */
 	@SuppressWarnings({ "rawtypes", "unchecked" })
-	public List<Parameter> getNext(List<String> previousParameterValues, Set<Parameter> previousParameters) {
+	public List<Parameter> getNext(List<String> previousParameterValues, Set<Parameter> usedParameters) {
 
 		// ultimately we are returning all possible parameters for a given index
 		// (since we could be dealing with dependent parameters
@@ -185,11 +203,19 @@ public class ParameterFactory {
 						|| (mapEntry.getKey().isEmpty() && currentParamsString.isEmpty())) {
 					Object obj = mapEntry.getValue();
 					if (obj instanceof Map) {
-						possibleParamsList.add(new Parameter((Map) mapEntry.getValue()));
+						possibleParamsList.add(new Parameter((Map) mapEntry.getValue(), mapEntry.getKey()));
 					} else {
 						for (Map paramMap : (List<Map>) obj) {
-							possibleParamsList.add(new Parameter(paramMap));
+							possibleParamsList.add(new Parameter(paramMap, mapEntry.getKey()));
 						}
+					}
+				}
+			}
+
+			if (usedParameters != null) {
+				for (int i = possibleParamsList.size() - 1; i >= 0; i--) {
+					if (usedParameters.contains(possibleParamsList.get(i))) {
+						possibleParamsList.remove(i);
 					}
 				}
 			}
@@ -205,18 +231,15 @@ public class ParameterFactory {
 			}
 		}
 
-		if (previousParameters != null) {
-			for (int i = possibleParamsList.size() - 1; i >= 0; i--) {
-				if (previousParameters.contains(possibleParamsList.get(i))) {
-					possibleParamsList.remove(i);
-				}
-			}
-		}
-
 		// return the list of possible parameters for this index
 		return possibleParamsList;
 	}
 
+	/**
+	 * Returns the parameter map of this parameter factory.
+	 * 
+	 * @return the parameter map of this parameter factory
+	 */
 	public Map<?, ?> getParameterMap() {
 		return inputMap;
 	}

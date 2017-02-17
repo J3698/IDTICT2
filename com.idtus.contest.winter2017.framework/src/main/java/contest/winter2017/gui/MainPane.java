@@ -21,44 +21,54 @@ import javafx.scene.text.Text;
 /**
  * TabPane to control testing from. This component has three tabs. The first tab
  * is for running tests, the second is for test output, and the third is for
- * controlling parameter bounds to test with. This pane Takes up the majority of
+ * controlling parameter bounds to test with. This pane takes up the majority of
  * the GUI real estate.
  * 
  * @author ICT-2
  */
 public class MainPane extends TabPane {
 	/**
-	 * Test of this MainPane.
+	 * Test of this main pane.
 	 */
 	private GUITestPackage test;
 
 	/**
-	 * ParameterPane of this MainPane.
+	 * Parameter pane of this main pane.
 	 */
 	private ParameterPane parameterPane = new ParameterPane();;
 
 	/**
-	 * RunPane of this MainPane.
+	 * Run pane of this main pane.
 	 */
 	private RunPane runPane;
 
 	/**
-	 * TabPane of this MainPane.
+	 * Tab pane of this main pane.
 	 */
 	private TabPane outputPane = new TabPane();
 
 	/**
-	 * TextArea for this test's std out.
+	 * Text area for this test's inputs.
+	 */
+	private TextArea inputText = new TextArea();
+
+	/**
+	 * Text area for this test's standard out.
 	 */
 	private TextArea stdOutText = new TextArea();
 
 	/**
-	 * TextArea for this test's std err.
+	 * Text area for this test's standard err.
 	 */
 	private TextArea stdErrText = new TextArea();
 
 	/**
-	 * TextArea for this test's permissions.
+	 * Text area for this test's tool-chain output.
+	 */
+	private TextArea toolchainOutput = new TextArea();
+
+	/**
+	 * Text area for this test's permissions.
 	 */
 	private PermissionPane permissionsPane = new PermissionPane();
 
@@ -68,39 +78,54 @@ public class MainPane extends TabPane {
 	private int testsAdded = 0;
 
 	/**
-	 * Constructs a MainPane with the given test.
+	 * Constructs a main pane with the given test.
 	 */
 	public MainPane(GUITestPackage test) {
 		this.test = test;
 
-		// runpane
+		// run pane
 		this.runPane = new RunPane(this.test);
 		Tab runTab = new Tab("Run", this.runPane);
 
-		// three tabs of output pane
-		stdOutText.setEditable(false);
-		stdOutText.setWrapText(true);
-		stdOutText.setFocusTraversable(false);
-		Tab stdOut = new Tab("Standard Out", stdOutText);
-		stdErrText.setEditable(false);
-		stdErrText.setWrapText(true);
-		stdErrText.setFocusTraversable(false);
-		Tab stdErr = new Tab("Standard Error", stdErrText);
-		Tab permissions = new Tab("Permissions", permissionsPane);
-		outputPane.getTabs().addAll(stdOut, stdErr, permissions);
-		outputPane.setTabClosingPolicy(TabClosingPolicy.UNAVAILABLE);
-		Tab outputTab = new Tab("Output", outputPane);
+		// tabs of output pane
+
+		this.inputText.setEditable(false);
+		this.inputText.setWrapText(false);
+		this.inputText.setFocusTraversable(false);
+		Tab input = new Tab("Input Commands", this.inputText);
+
+		this.stdOutText.setEditable(false);
+		this.stdOutText.setWrapText(true);
+		this.stdOutText.setFocusTraversable(false);
+		Tab stdOut = new Tab("Standard Out", this.stdOutText);
+
+		this.stdErrText.setEditable(false);
+		this.stdErrText.setWrapText(true);
+		this.stdErrText.setFocusTraversable(false);
+		Tab stdErr = new Tab("Standard Error", this.stdErrText);
+
+		this.toolchainOutput.setEditable(false);
+		this.toolchainOutput.setWrapText(true);
+		this.toolchainOutput.setFocusTraversable(false);
+		Tab toolChain = new Tab("Toolchain", this.toolchainOutput);
+
+		Tab permissions = new Tab("Permissions", this.permissionsPane);
+
+		this.outputPane.getTabs().addAll(input, stdOut, stdErr, permissions, toolChain);
+
+		this.outputPane.setTabClosingPolicy(TabClosingPolicy.UNAVAILABLE);
+		Tab outputTab = new Tab("Output", this.outputPane);
 
 		// parameter pane
-		Tab parameterTab = new Tab("Parameter Bounds", parameterPane);
 
-		// add undeletable tabs
+		Tab parameterTab = new Tab("Parameter Bounds", this.parameterPane);
+
 		getTabs().addAll(runTab, outputTab, parameterTab);
 		setTabClosingPolicy(TabClosingPolicy.UNAVAILABLE);
 	}
 
 	/**
-	 * Adds an output to this MainPane's output pane.
+	 * Adds an output to this main-pane's output pane.
 	 * 
 	 * @param output
 	 *            - output to add
@@ -108,9 +133,20 @@ public class MainPane extends TabPane {
 	public void addOutput(Output output) {
 		this.testsAdded++;
 		String prefix = "Test " + this.testsAdded + ":\n";
-		this.stdErrText.appendText(prefix + output.getStdErrString() + "\n\n");
-		this.stdOutText.appendText(prefix + output.getStdOutString() + "\n\n");
+		this.inputText.appendText(prefix + output.getCommand().replace('\n', ' ') + "\n\n");
+		this.stdErrText.appendText(prefix + output.getStdErrString().replace('\n', ' ') + "\n\n");
+		this.stdOutText.appendText(prefix + output.getStdOutString().replace('\n', ' ') + "\n\n");
 		this.permissionsPane.addPermission(output.getPermissionMap());
+	}
+
+	/**
+	 * Sets the tool chain output text.
+	 * 
+	 * @param toolChainOut
+	 *            - toolChainOut to set
+	 */
+	public void setToolChainOut(String toolChainOut) {
+		this.toolchainOutput.setText(toolChainOut);
 	}
 
 	/**
@@ -141,18 +177,18 @@ public class MainPane extends TabPane {
 	}
 
 	/**
-	 * Returns this test's std out text.
+	 * Returns this test's standard out text.
 	 * 
-	 * @return this test's std out text
+	 * @return this test's standard out text
 	 */
 	public TextArea getStdOutText() {
 		return this.stdOutText;
 	}
 
 	/**
-	 * Returns this test's std err text.
+	 * Returns this test's standard err text.
 	 * 
-	 * @return this test's std err text
+	 * @return this test's standard err text
 	 */
 	public TextArea getStdErrText() {
 		return this.stdErrText;
@@ -168,25 +204,46 @@ public class MainPane extends TabPane {
 	}
 
 	/**
-	 * Returns this MainPane's test.
+	 * Returns this main-pane's test.
 	 * 
-	 * @return test of this MainPane
+	 * @return test of this main pane
 	 */
 	public GUITestPackage getTest() {
 		return this.test;
 	}
 }
 
+/**
+ * This scroll pane is meant for displaying the permissions encountered during
+ * testing.
+ * 
+ * @author ICT-2
+ */
 class PermissionPane extends ScrollPane {
+	/**
+	 * Map of permission names to their permission info panes
+	 */
 	private Map<String, PermissionInfoPane> permissionInfosMap = new HashMap<String, PermissionInfoPane>();
 
+	/**
+	 * Accordion view of permission info panes
+	 */
 	private Accordion permissionInfos = new Accordion();
 
+	/**
+	 * Constructs a permission pane.
+	 */
 	public PermissionPane() {
 		setContent(permissionInfos);
 		setFitToWidth(true);
 	}
 
+	/**
+	 * Adds the given permission to this permission pane.
+	 * 
+	 * @param permissionLog
+	 *            - permission log map to use
+	 */
 	public void addPermission(Map<String, Integer> permissionLog) {
 		for (Entry<String, Integer> entry : permissionLog.entrySet()) {
 			PermissionInfoPane info = this.permissionInfosMap.get(entry.getKey());
@@ -200,11 +257,37 @@ class PermissionPane extends ScrollPane {
 	}
 }
 
+/**
+ * Titled pane to hold information about a permission. Title shows the
+ * permission and how many times it was encountered.
+ * 
+ * @author ICT-2
+ */
 class PermissionInfoPane extends TitledPane {
-	private int occurances = 0;
+	/**
+	 * Number of occurrences of this permission.
+	 */
+	private int occurrences = 0;
+
+	/**
+	 * Name of this permission.
+	 */
 	private String name;
+
+	/**
+	 * Parent permission pane of this permission info pane.
+	 */
 	private PermissionPane permissionPane;
 
+	/**
+	 * Constructs a permission info pane with the given name and permission
+	 * pane.
+	 * 
+	 * @param name
+	 *            - name of this permission
+	 * @param permissionPane
+	 *            - parent permission pane of this permission info pane
+	 */
 	public PermissionInfoPane(String name, PermissionPane permissionPane) {
 		VBox content = new VBox();
 		setContent(content);
@@ -240,8 +323,14 @@ class PermissionInfoPane extends TitledPane {
 		content.getChildren().addAll(allowsSpacer, allows, riskSpacer, risks);
 	}
 
-	public void addOccurance(int occurances) {
-		this.occurances += occurances;
-		setText(name + " (" + this.occurances + " occurances)");
+	/**
+	 * Adds occurrences of this permission to this panes title.
+	 * 
+	 * @param occurrences
+	 *            - occurrences to add
+	 */
+	public void addOccurance(int occurrences) {
+		this.occurrences += occurrences;
+		setText(name + " (" + this.occurrences + " occurances)");
 	}
 }

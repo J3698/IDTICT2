@@ -14,6 +14,7 @@ import javafx.scene.control.Button;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import javafx.scene.text.Font;
 
 /**
  * Box for holding a specific format string for a parameter.
@@ -21,39 +22,56 @@ import javafx.scene.layout.VBox;
  * @author ICT-2
  */
 public class FormatString extends VBox {
-	// constants which represent different errors
+	/**
+	 * Error string for when the minimum of the format string could not be
+	 * parsed.
+	 */
 	private static final String minErrorString = "Illegal: Min bound could not be parsed.";
+
+	/**
+	 * Error string for when the maximum of the format string could not be
+	 * parsed.
+	 */
 	private static final String maxErrorString = "Illegal: Max bound could not be parsed.";
+
+	/**
+	 * Error string for when a parameter has two number replace me values.
+	 */
 	private static final String replaceMeErrorString = "Illegal: Two replace-me numbers in one format string.";
+
+	/**
+	 * Error string for when the minimum and maximum of the format string
+	 * overlap.
+	 */
 	private static final String overlapErrorString = "Illegal: Min and max overlap.";
 
 	/**
-	 * Whether there is an error in the min field.
+	 * Whether there is an error in the minimum field.
 	 */
 	private boolean minError = false;
 
 	/**
-	 * Whether there is an error in the max field.
+	 * Whether there is an error in the maximum field.
 	 */
 	private boolean maxError = false;
 
 	/**
-	 * Whether the min and max fields overlap.
+	 * Whether the minimum and maximum fields overlap.
 	 */
 	private boolean overlapError = false;
 
 	/**
-	 * Whether the field has two number replace-mes.
+	 * Whether the field has two number replace me values.
 	 */
 	private boolean replaceMeError = false;
 
 	/**
-	 * Min value for replace-me number.
+	 * Minimum value for a replace-me number.
 	 */
 	private BigDecimal min = null;
 
 	/**
-	 * Max value for replace-me number.
+	 * Maximum value for a replace-me number.
 	 */
 	private BigDecimal max = null;
 
@@ -63,12 +81,12 @@ public class FormatString extends VBox {
 	private String formatString;
 
 	/**
-	 * The text field for min.
+	 * The text field for the minimum.
 	 */
 	private TextField minField = new TextField();
 
 	/**
-	 * The text field for max.
+	 * The text field for maximum.
 	 */
 	private TextField maxField = new TextField();
 
@@ -98,12 +116,12 @@ public class FormatString extends VBox {
 	private VBox bounds = new VBox();
 
 	/**
-	 * Labeled text field for min bound of replace-me numbers
+	 * Labeled text field for minimum bound of replace-me numbers
 	 */
 	private LabeledNode minLabel = new LabeledNode("Min", minField);
 
 	/**
-	 * Labeled text field for max bound of replace-me numbers
+	 * Labeled text field for maximum bound of replace-me numbers
 	 */
 	private LabeledNode maxLabel = new LabeledNode("Max", maxField);
 
@@ -122,6 +140,7 @@ public class FormatString extends VBox {
 		HBox withString = new HBox(2);
 		withString.setAlignment(Pos.CENTER);
 		Button closeButton = new Button("X");
+		closeButton.setFont(new Font(8));
 		this.formatField.setPrefColumnCount(20);
 
 		// min and max fields for number replace-mes
@@ -309,9 +328,7 @@ public class FormatString extends VBox {
 	}
 
 	/**
-	 * Enables this format field.
-	 * <p>
-	 * Adds back error statuses from error stash.
+	 * Enables this format field and adds back errors it caused.
 	 */
 	public void enable() {
 		if (!this.enabled) {
@@ -372,9 +389,9 @@ public class FormatString extends VBox {
 	}
 
 	/**
-	 * Returns the min for the replace-me number.
+	 * Returns the minimum for the replace-me number.
 	 * 
-	 * @return the min for the replace-me number or null if there is none
+	 * @return the maximum for the replace-me number or null if there is none
 	 */
 	public Number getMin() {
 		return this.min;

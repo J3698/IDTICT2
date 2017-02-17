@@ -12,12 +12,12 @@ import javafx.scene.layout.HBox;
  */
 public class LabeledNode extends HBox {
 	/**
-	 * Int default space between elements.
+	 * Int default space between the label and the node.
 	 */
 	private static final int DEFAULT_SPACE = 10;
 
 	/**
-	 * Label for this labeled thing.
+	 * Label for this labeled node.
 	 */
 	private Label label;
 
@@ -27,12 +27,12 @@ public class LabeledNode extends HBox {
 	private Node node;
 
 	/**
-	 * Constructs a LabeledNode with the specified label and node.
+	 * Constructs a labeled node with the specified label and node.
 	 * 
 	 * @param label
 	 *            - label to use
 	 * @param node
-	 *            - node to use
+	 *            - node to label
 	 */
 	public LabeledNode(String label, Node node) {
 		super(DEFAULT_SPACE);
@@ -43,18 +43,18 @@ public class LabeledNode extends HBox {
 	}
 
 	/**
-	 * Returns this LabeledTextField's label.
+	 * Returns this labeled node's label.
 	 * 
-	 * @return label of this labeled text-field
+	 * @return label of this labeled node
 	 */
 	public Label getLabel() {
 		return this.label;
 	}
 
 	/**
-	 * Returns this LabeledTextField's text field.
+	 * Returns this labeled node's node.
 	 * 
-	 * @return text field of this labeled text-field
+	 * @return node of this labeled node.
 	 */
 	public Node getNode() {
 		return this.node;

@@ -10,38 +10,44 @@ import java.net.URLClassLoader;
 import java.util.jar.Attributes;
 
 /**
- * This class installs a security manager to monitor a test instance, and then
+ * This class installs a security manager to monitor a jar under test, and then
  * runs that test instance.
+ * <p>
+ * Currently, this approach expects that the standard err and out will not be
+ * changed by the jar under test. A fix for this could be to replace the
+ * standard error and out, and send err and out from a separate thread, which
+ * monitors and sends output form the "fake" standard err and out.
  * 
  * @author ICT-2
  *
  */
 public class SecurityWatchdog {
 	/**
-	 * Int exit code to signify whether the jar under test is trying to
+	 * Random int exit code to signify whether the jar under test is trying to
 	 * terminate the program.
 	 */
 	private static final int WATCHDOG_EXIT_CODE = 302590835;
 
 	/**
-	 * boolean whether the watchdog has already been started.
+	 * Whether the watch dog has already been started.
 	 */
 	private static boolean watchdogStarted = false;
 
 	/**
-	 * boolean whether toolchain output mode is enabled.
+	 * Whether tool chain output mode is enabled.
 	 */
 	private static boolean toolChain = true;
 
 	/**
 	 * Runs an executable jar under test with the specified options.
+	 * <p>
 	 *
 	 * @param args
-	 *            - args with information for the executable jar under test
+	 *            - arguments with information for the executable jar under test
 	 * @throws Exception
 	 *             - any uncaught exceptions thrown
 	 */
-	public static void main(String[] args) throws Exception {
+	public static void main(String[] args) throws Throwable {
 		try {
 			// ensure this code is being called properly
 			if (watchdogStarted) {
@@ -55,13 +61,13 @@ public class SecurityWatchdog {
 			// testing arguments
 			File jarFileToTest = new File(args[0]);
 			toolChain = args[1].equalsIgnoreCase("true");
-			// get the args to pass to the next jar
+			// get the arguments to pass to the next jar
 			String[] argsToPass = new String[args.length - 2];
 			for (int i = 2; i < args.length; i++) {
 				argsToPass[i - 2] = args[i];
 			}
 
-			// laod the jar
+			// load the jar
 			URL fileURL = null;
 			URL jarURL = null;
 			JarURLConnection jarURLconn = null;
@@ -77,21 +83,19 @@ public class SecurityWatchdog {
 				watchdogError("LOAD JAR");
 			}
 
-			// figure out where the entry-point (main class) is in the jar under
-			// test
+			// figure out the entry-point (main class) is in the jar under test
 			Attributes attr = null;
 			try {
 				attr = jarURLconn.getMainAttributes();
 			} catch (IOException ioe) {
 				watchdogError("LOAD MANIFEST");
 			}
-
 			String mainClassName = attr.getValue(Attributes.Name.MAIN_CLASS);
 			if (mainClassName == null) {
 				watchdogError("GET MAIN CLASS");
 			}
 
-			// load the Main class from the jar under test
+			// load the main class from the jar under test
 			Class<?> mainClass = null;
 			try {
 				mainClass = cl.loadClass(mainClassName);
@@ -108,21 +112,20 @@ public class SecurityWatchdog {
 				watchdogError("ERROR: Could not load main method of jar to test.");
 			}
 
-			// set security manager if not using toolchain
-			if (!toolChain) {
-				try {
-					System.setSecurityManager(new SecurityReporter(System.out));
-				} catch (SecurityException se) {
-					watchdogError("ERROR: Could not set security manager.");
-				}
+			try {
+				System.setSecurityManager(new SecurityReporter(System.out));
+			} catch (SecurityException se) {
+				watchdogError("ERROR: Could not set security manager.");
 			}
 
 			// invoke main method
 			try {
 				mainMethod.invoke(null, (Object) argsToPass);
 			} catch (InvocationTargetException e) {
-				// notify of exception, not just system err
-				e.getCause().printStackTrace();
+				// invocation target exceptions don't supply from which thread
+				// they occurred, the main thread is assumed here
+				Thread curr = Thread.currentThread();
+				curr.getUncaughtExceptionHandler().uncaughtException(curr, e.getCause());
 			} catch (IllegalAccessException | IllegalArgumentException e) {
 				watchdogError("INVOKE MAIN METHOD", e);
 			}
@@ -135,7 +138,7 @@ public class SecurityWatchdog {
 	}
 
 	/**
-	 * Notifies the tester of errorss.
+	 * Notifies the tester of errors.
 	 * 
 	 * @param error
 	 *            - error to pass to tester
@@ -153,7 +156,7 @@ public class SecurityWatchdog {
 	}
 
 	/**
-	 * Notifies the tester of errorss.
+	 * Notifies the tester of errors.
 	 * 
 	 * @param error
 	 *            - error to pass to tester
@@ -162,13 +165,3 @@ public class SecurityWatchdog {
 		watchdogError(error, null);
 	}
 }
-
-/*
- * 
- * IDEAS: have thread with REAL sys out/err read the "fake" out/err
- * 
- * Wrapper class for protecting the std out/err streams from being closed.
- * Documentation for overriden methods can be found in the PrintStream javadoc.
- * The close method only flushes this PrintStream.
- * 
- */

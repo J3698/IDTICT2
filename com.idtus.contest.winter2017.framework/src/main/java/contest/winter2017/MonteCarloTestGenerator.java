@@ -6,16 +6,36 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.TreeSet;
 
-import org.jacoco.core.analysis.CoverageBuilder;
 import org.jacoco.core.analysis.IClassCoverage;
 import org.jacoco.core.analysis.ICounter;
 
+/**
+ * Test generator which used the UCB1 Monte-Carlo tree-search algorithm to find
+ * promising tests. This algorithm iteratively builds a tree of possible
+ * parameter lists. When faced with a branch, UCB1 weighs the score of a child
+ * node with how many times it or its children have been tested. Nodes which
+ * introduce unique lines of code are valued, but so are neglected branches.
+ * <p>
+ * Improvements to this algorithm include anything from changing how nodes are
+ * scored, to using a different technique such as Thompson sampling.
+ * 
+ * @author ICT-2
+ */
 public class MonteCarloTestGenerator extends TestGenerator {
+	/**
+	 * List of classes encountered by tests run from this test generator.
+	 */
 	private HashMap<String, ClassCounter> classes = new HashMap<String, ClassCounter>();
-	private ParameterString lastParameterString = null;
+
+	/**
+	 * The root parameter string of the search tree.
+	 */
 	private ParameterString root;
+
+	/**
+	 * The test generator to fall back on if this generator fails.
+	 */
 	private RandomTestGenerator fallBack;
-	private int outputSize;
 
 	/**
 	 * Constructs a Monte-Carlo test generator with the given parameter factory
@@ -31,61 +51,51 @@ public class MonteCarloTestGenerator extends TestGenerator {
 	public MonteCarloTestGenerator(ParameterFactory parameterFactory, List<Output> outputs) {
 		super(parameterFactory, outputs);
 		this.fallBack = new RandomTestGenerator(parameterFactory, outputs);
-		this.outputSize = getOutputs().size();
 		this.root = new ParameterString(parameterFactory);
 	}
 
 	/**
 	 * Gets the next test to be run.
 	 * <p>
-	 * Uses a modified Monte-Carlo tree search to generate promising tests.
+	 * Uses a modified Monte-Carlo tree-search algorithm to generate promising
+	 * tests.
 	 * 
-	 * When a test is run, the associated Output object is added to the end of
-	 * this class's outputs list. If the test failed, the same test is run
-	 * again.
+	 * When a test is run, the associated output object is added to the end of
+	 * this class's outputs list.
 	 * 
 	 * @return an array of objects which represent parameters to be tested.
 	 */
 	@Override
 	public Object[] nextTest() {
-		// next: if monte-carlo fails for some reason, switch to random fizzing.
+		try {
+			// update tree with last test
+			updateOutputs();
 
-		// update tree with last test
-		if (getOutputs().size() != this.outputSize) {
-			Output lastOutput = getOutputs().get(getOutputs().size() - 1);
-			if (lastOutput != null) {
-				lastParameterString.setOutput(lastOutput);
-				CoverageBuilder builder = lastOutput.getCoverageBuilder();
-				for (IClassCoverage cc : builder.getClasses()) {
-					updateClassUniquenesses(lastParameterString, cc);
+			// get next test from the tree if there is one
+			ParameterString curr = this.root;
+			boolean hasTest = true;
+			while (hasTest) {
+				if (curr.isTestable() && !curr.isTested()) {
+					curr.setTested();
+					return curr.toString().split(" ");
+				} else if (curr.isExpandable()) {
+					if (!curr.isExpanded()) {
+						curr.expand();
+					}
+					curr = curr.bestChild();
+				} else {
+					curr.removeFromParent();
+					curr = curr.getParent();
 				}
-				lastParameterString.updateMean();
-			}
-		}
-
-		// get next test from the tree if there is one
-		ParameterString curr = this.root;
-		boolean hasTest = true;
-		while (hasTest) {
-			if (curr.isTestable() && !curr.isTested()) {
-				curr.setTested();
-				lastParameterString = curr;
-				return curr.toString().split(" ");
-			} else if (curr.isExpandable()) {
-				if (!curr.isExpanded()) {
-					curr.expand();
+				if (curr == null) {
+					hasTest = false;
 				}
-				curr = curr.bestChild();
-			} else {
-				curr.removeFromParent();
-				curr = curr.getParent();
 			}
-			if (curr == null) {
-				hasTest = false;
-			}
+		} catch (Exception e) {
+			e.printStackTrace();
 		}
-
-		// fall-back test if there are no more monte carlo tests
+		// fall-back test if monte carlo generation fails
+		System.out.println("ERROR: Monte-Carlo test generation failed, generating random test.");
 		return this.fallBack.nextTest();
 	}
 
@@ -187,13 +197,36 @@ public class MonteCarloTestGenerator extends TestGenerator {
 	}
 }
 
+/**
+ * Class to keep track of what tests have touched which lines of code in a given
+ * class.
+ * 
+ * @author ICT-2
+ */
 class ClassCounter {
+	/**
+	 * Ranges of code touched by different tests
+	 */
 	TreeSet<Range> ranges = new TreeSet<Range>();
 
+	/**
+	 * Constructs a class counter with the given initial range of lines.
+	 * 
+	 * @param first
+	 *            - first valid line of this class
+	 * @param last
+	 *            - last valid line of this class
+	 */
 	public ClassCounter(int first, int last) {
 		this.ranges.add(new Range(null, first, last));
 	}
 
+	/**
+	 * UPdates a range given a new visitor.
+	 * 
+	 * @param r
+	 *            - range to update the visitor of
+	 */
 	public void updateMiddleRange(Range r) {
 		if (!rangeOfNextEnd(r.getEnd()).equals(r)) {
 			// dead spot, do nothing
@@ -210,6 +243,16 @@ class ClassCounter {
 		}
 	}
 
+	/**
+	 * Updates a range given a new visitor.
+	 * <p>
+	 * A start range may not fully overlap a range which is already contained in
+	 * the class counter. Thus updating a start range may require splitting an
+	 * existing range in the class counter in two.
+	 * 
+	 * @param r
+	 *            - range to update the visitor of
+	 */
 	public void updateStartRange(Range r) {
 		if (rangeOfNextEnd(r.getStart()).getEnd() > r.getEnd()) {
 			return;
@@ -239,6 +282,16 @@ class ClassCounter {
 		}
 	}
 
+	/**
+	 * Updates a range given a new visitor.
+	 * <p>
+	 * An end range may not fully overlap a range which is already contained in
+	 * the class counter. Thus updating an end range may require splitting an
+	 * existing range in the class counter in two.
+	 * 
+	 * @param r
+	 *            - range to update the visitor of
+	 */
 	public void updateEndRange(Range r) {
 		if (rangeOfNextEnd(r.getStart()).getEnd() != r.getEnd()) {
 			return;
@@ -268,6 +321,12 @@ class ClassCounter {
 		}
 	}
 
+	/**
+	 * Adds a range to this class counter.
+	 * 
+	 * @param range
+	 *            - range to add to this class counter.
+	 */
 	public void addRange(Range range) {
 		this.ranges.add(range);
 	}
@@ -304,30 +363,83 @@ class ClassCounter {
 		return this.ranges.first();
 	}
 
+	/**
+	 * Returns the ranges of this class counter.
+	 * 
+	 * @return the ranges of this class counter
+	 */
 	public TreeSet<Range> getRanges() {
 		return this.ranges;
 	}
 
+	/**
+	 * Returns the first line of this class counter.
+	 * 
+	 * @return the first line of this class counter
+	 */
 	public int getFirstLine() {
 		return this.ranges.first().getStart();
 	}
 
+	/**
+	 * Returns the last line of this class counter.
+	 * 
+	 * @return the last line of this class counter
+	 */
 	public int getLastLine() {
 		return this.ranges.last().getEnd();
 	}
 }
 
+/**
+ * This class represents a range of code in a class.
+ * <p>
+ * Ranges are sorted by their start points.
+ * 
+ * @author ICT-2
+ */
 class Range implements Comparable<Range> {
+	/**
+	 * The parameter string which covered this range of code.
+	 */
 	private ParameterString visitor;
+
+	/**
+	 * The first line of code covered by this range of code.
+	 */
 	private int start;
+
+	/**
+	 * The last line of code covered by this range of code.
+	 */
 	private int end;
 
+	/**
+	 * Constructs a range with the given visitor parameter string, start line,
+	 * and end line.
+	 * 
+	 * @param visitor
+	 *            - parameter string which covered this range of code.
+	 * @param start
+	 *            - the first line of code covered by this range of code.
+	 * @param end
+	 *            - the last line of code covered by this range of code
+	 */
 	public Range(ParameterString visitor, int start, int end) {
 		this.visitor = visitor;
 		this.start = start;
 		this.end = end;
 	}
 
+	/**
+	 * Returns this range split at a given line in list form.
+	 * <p>
+	 * The split line is included in the second range returned.
+	 * 
+	 * @param line
+	 *            - line to split this range at
+	 * @return a list with the resulting ranges
+	 */
 	public List<Range> split(int line) {
 		Range first = new Range(this.visitor, start, line - 1);
 		Range second = new Range(this.visitor, line, end);
@@ -337,11 +449,26 @@ class Range implements Comparable<Range> {
 		return split;
 	}
 
+	/**
+	 * Compares this range to another range.
+	 * <p>
+	 * Equivalent to comparing the starts of the two ranges.
+	 * 
+	 * @return an int whose sign represents the ordering of the two ranges
+	 */
 	@Override
 	public int compareTo(Range other) {
 		return this.start - other.start;
 	}
 
+	/**
+	 * Returns whether this range is equal to another object.
+	 * 
+	 * @param other
+	 *            - object to compare
+	 * @return true if the object is a range with the same start, otherwise
+	 *         false
+	 */
 	@Override
 	public boolean equals(Object other) {
 		if (other instanceof Range) {
@@ -350,22 +477,48 @@ class Range implements Comparable<Range> {
 		return false;
 	}
 
+	/**
+	 * Returns the visitor of this range.
+	 * 
+	 * @return the visitor of this range
+	 */
 	public ParameterString getVisitor() {
 		return this.visitor;
 	}
 
+	/**
+	 * Sets the visitor of this range.
+	 * 
+	 * @param visitor
+	 *            - the visitor of this range
+	 */
 	public void setVisitor(ParameterString visitor) {
 		this.visitor = visitor;
 	}
 
+	/**
+	 * Returns the start line of this range.
+	 * 
+	 * @return the start line of this range
+	 */
 	public int getStart() {
 		return this.start;
 	}
 
+	/**
+	 * Returns the end line of this range.
+	 * 
+	 * @return the end line of this range
+	 */
 	public int getEnd() {
 		return this.end;
 	}
 
+	/**
+	 * Returns the size of this range.
+	 * 
+	 * @return the size of this range
+	 */
 	public int size() {
 		return this.end - this.start + 1;
 	}

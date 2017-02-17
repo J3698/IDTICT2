@@ -6,36 +6,37 @@ import javafx.scene.Node;
 import javafx.scene.layout.VBox;
 
 /**
- * Class to space a Node vertically.
+ * Class to add vertical padding space to a node. This is most helpful when
+ * working with a VBox.
  * 
  * @author ICT-2
  */
 class VExternSpace extends VBox {
 	/**
-	 * Child to space.
+	 * Node to space.
 	 */
-	private Node child;
+	private Node node;
 
 	/**
-	 * Constructs a VExternSpace with the specefied child and space.
+	 * Constructs a VExternSpace with the specified node and space.
 	 * 
-	 * @param child
+	 * @param node
 	 *            - child to space
 	 * @param space
-	 *            - space to surround child with
+	 *            - space to surround node with
 	 */
-	public VExternSpace(Node child, double spaceTop, double spaceBottom) {
-		getChildren().add(child);
+	public VExternSpace(Node node, double spaceTop, double spaceBottom) {
+		getChildren().add(node);
 		setAlignment(Pos.CENTER);
 		setPadding(new Insets(spaceTop, 0, spaceBottom, 0));
 	}
 
 	/**
-	 * Returns this spacers child.
+	 * Returns this spacers node.
 	 * 
-	 * @return this spacers child
+	 * @return this spacers node
 	 */
-	public Node getChild() {
-		return this.child;
+	public Node getNode() {
+		return this.node;
 	}
 }

@@ -4,26 +4,30 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.StringTokenizer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.jacoco.core.analysis.CoverageBuilder;
 
 /**
- * Class to hold output associated with a given test run. Output includes
- * standard err, standard out, and permissions requested during a test.
+ * Class to hold output associated with a given test run. Output includes the
+ * standard err, standard out, coverage builder, and permissions requested
+ * during a test.
  * 
  * @author IDT
  */
 public class Output {
-
 	/**
 	 * Pattern to find exceptions from the standard error associated with a
 	 * given test run.
 	 */
 	private static Pattern exceptionFinder = Pattern
 			.compile("(\\n|^).+Exception[^\\n]+(\\n\\t+\\Qat \\E.+)+(\n\\QCaused by\\E[^\\n]+(\\n\\t+\\Qat \\E.+)+)*");
+
+	/**
+	 * String command used for this test
+	 */
+	private String command;
 
 	/**
 	 * String of the standard out associated with a given test run.
@@ -36,7 +40,7 @@ public class Output {
 	private String stdErrString = null;
 
 	/**
-	 * Coeverage builder associated with a given test run.
+	 * Coverage builder associated with a given test run.
 	 */
 	private CoverageBuilder coverageBuilder;
 
@@ -47,40 +51,41 @@ public class Output {
 	private HashMap<String, Integer> permissionLogMap = null;
 
 	/**
-	 * Constructs a new Output object with the specified output and error
+	 * Constructs a new output object with the specified output and error
 	 * strings.
 	 * 
 	 * @param stdOutString
-	 *            - std out string to store
+	 *            - standard out string to store
 	 * @param stdErrString
-	 *            - std err string to store
+	 *            - standard err string to store
 	 */
-	public Output(String stdOutString, String stdErrString) {
+	public Output(String command, String stdOutString, String stdErrString) {
+		this.command = command;
 		this.stdOutString = stdOutString;
 		this.stdErrString = stdErrString;
 		this.permissionLogMap = new HashMap<String, Integer>();
 	}
 
 	/**
-	 * Constructs a new Output object with no initial output or error strings.
-	 * Ctr for the Output object.
+	 * Constructs a new output object with no initial command, output or error
+	 * strings, or coverage builder.
 	 */
 	public Output() {
-		this("", "");
+		this("", "", "");
 	}
 
 	/**
 	 * Logs the specified permission request to this output.
 	 * 
-	 * @param message
+	 * @param permission
 	 *            - permission to log to this output
 	 */
-	public void logPermission(String message) {
-		if (this.permissionLogMap.keySet().contains(message)) {
-			int num = this.permissionLogMap.get(message);
-			this.permissionLogMap.put(message, num + 1);
+	public void logPermission(String permission) {
+		if (this.permissionLogMap.keySet().contains(permission)) {
+			int num = this.permissionLogMap.get(permission);
+			this.permissionLogMap.put(permission, num + 1);
 		} else {
-			this.permissionLogMap.put(message, 1);
+			this.permissionLogMap.put(permission, 1);
 		}
 	}
 
@@ -116,27 +121,28 @@ public class Output {
 	/**
 	 * Returns a map of permissions used to their occurrences.
 	 * 
-	 * @return Map of permissions used to their occurrences
+	 * @return a map of permissions used to their occurrences
 	 */
 	public HashMap<String, Integer> getPermissionMap() {
 		return this.permissionLogMap;
 	}
 
 	/**
-	 * Gets the std out string.
+	 * Gets the standard out string.
 	 * 
-	 * @return String representation of std out associated with a given test run
+	 * @return String representation of standard out associated with a given
+	 *         test run
 	 */
 	public String getStdOutString() {
 		return stdOutString;
 	}
 
 	/**
-	 * Sets the std out string.
+	 * Sets the standard out string.
 	 * 
 	 * @param stdOutString
-	 *            - String representation of std out associated with a given
-	 *            test run
+	 *            - String representation of standard out associated with a
+	 *            given test run
 	 */
 	public void setStdOutString(String stdOutString) {
 		this.stdOutString = stdOutString;
@@ -151,52 +157,66 @@ public class Output {
 	 * other, and from other standard error output. Exceptions and other error
 	 * output are added to a set to remove duplicates.
 	 * 
-	 * @return List<String> representation of exceptions and error messages
+	 * @return a string list of representation of exceptions and error messages
 	 */
 	public Set<String> getExceptions() {
-		// work in progress
+		// find exceptions
 		String toSplit = this.stdErrString;
-		// System.out.println("Output 159: " + this.stdErrString);
 		Set<String> exceptions = new HashSet<String>();
 		Matcher matcher = exceptionFinder.matcher(toSplit);
 		while (matcher.find()) {
 			String match = matcher.group(0);
-			toSplit.replace(match, "<<SPLIT_ERROR_STRING>>");
+			toSplit = toSplit.replace(match, "SPLITERRORSTRING");
 			exceptions.add(match);
 		}
-		StringTokenizer tokenizer = new StringTokenizer(toSplit, "<<SPLIT_ERROR_STRING>>");
-		while (tokenizer.hasMoreTokens()) {
-			exceptions.add(tokenizer.nextToken());
+
+		// parse other standard error output
+		toSplit = toSplit.replace("\n", " ");
+		for (String err : toSplit.split("SPLITERRORSTRING")) {
+			if (!err.trim().equals("")) {
+				exceptions.add(err);
+			}
 		}
 
 		return exceptions;
-
 	}
 
 	/**
-	 * Gets the std err string.
+	 * Gets the standard err string.
 	 * 
-	 * @return String representation of std err associated with a given test run
+	 * @return String representation of standard err associated with a given
+	 *         test run
 	 */
 	public String getStdErrString() {
 		return stdErrString;
 	}
 
 	/**
-	 * Sets the std err string.
+	 * Sets the standard err string.
 	 * 
 	 * @param stdErrString
-	 *            - String representation of std err associated with a given
-	 *            test run
+	 *            - String representation of standard err associated with a
+	 *            given test run
 	 */
 	public void setStdErrString(String stdErrString) {
 		this.stdErrString = stdErrString;
 	}
 
 	/**
+	 * Deletes the coverage builder associated with this output.
+	 * 
+	 * @return true if there was a coverage builder to remove, otherwise false
+	 */
+	public boolean clearBuilder() {
+		boolean toReturn = (this.coverageBuilder != null);
+		this.coverageBuilder = null;
+		return toReturn;
+	}
+
+	/**
 	 * Returns this outputs coverage builder.
 	 * 
-	 * @return this outputs coverage builder
+	 * @return this output's coverage builder
 	 */
 	public CoverageBuilder getCoverageBuilder() {
 		return this.coverageBuilder;
@@ -210,5 +230,24 @@ public class Output {
 	 */
 	public void setCoverageBuilder(CoverageBuilder builder) {
 		this.coverageBuilder = builder;
+	}
+
+	/**
+	 * Returns the command that ran this output's test.
+	 * 
+	 * @return the command that ran this output's test
+	 */
+	public String getCommand() {
+		return this.command;
+	}
+
+	/**
+	 * Sets the command.
+	 * 
+	 * @param command
+	 *            - command to set
+	 */
+	public void setCommand(String command) {
+		this.command = command;
 	}
 }

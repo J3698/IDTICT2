@@ -12,6 +12,7 @@ import javafx.event.EventHandler;
 import javafx.geometry.Pos;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
+import javafx.scene.control.CheckBox;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
@@ -53,19 +54,59 @@ class RunPane extends BorderPane {
 	 */
 	private GUITestPackage test;
 
-	// textfieds for several settings
+	/**
+	 * Text showing percent of jar under test covered.
+	 */
+	private Text percentageText = new Text("0% Covered");
+
+	/**
+	 * Text field for setting the name of this test.
+	 */
 	private TextField name = new TextField();
+
+	/**
+	 * Text field for setting the number of tests to run.
+	 */
 	private TextField toRun = new TextField();
+
+	/**
+	 * Text field for setting the time goal of this test.
+	 */
 	private TextField timeGoal = new TextField();
 
-	// file paths for several settings
+	/**
+	 * CHeckbox for whether to watch for security permissions.
+	 */
+	private LabeledNode permissionCheckbox = new LabeledNode("Monitor Permissions", new CheckBox());
+
+	/**
+	 * File path to save jacoco output to.
+	 */
 	private File outputPathFile = null;
+
+	/**
+	 * File path for jacoco agent.
+	 */
 	private File jacocoPathFile = null;
 
-	// whether or not several settings are valid
+	/**
+	 * Whether the time goal is valid.
+	 */
 	private boolean validTimeGoal = true;
+
+	/**
+	 * Whether the number of tests is valid.
+	 */
 	private boolean validTestNumber = true;
+
+	/**
+	 * Whether the jacoco output path.
+	 */
 	private boolean validOutputPath = false;
+
+	/**
+	 * Whether the jacoco agent path is valid.
+	 */
 	private boolean validJacocoPath = false;
 
 	/**
@@ -74,7 +115,10 @@ class RunPane extends BorderPane {
 	private Button runButton = new Button("Start Testing");
 
 	/**
-	 * Constructs a RunPane.
+	 * Constructs a run pane with the given test.
+	 * 
+	 * @param test
+	 *            - test for this run pane
 	 */
 	public RunPane(GUITestPackage test) {
 		this.test = test;
@@ -95,7 +139,9 @@ class RunPane extends BorderPane {
 		Text jarName = new Text();
 		jarName.setText(test.getToTest().getName());
 		jarName.setFont(new Font(20));
-		VExternSpace jarNameSpacer = new VExternSpace(jarName, 0, 40);
+		VExternSpace jarNameSpacer = new VExternSpace(jarName, 0, 1);
+
+		VExternSpace percentageTextSpacer = new VExternSpace(percentageText, 0, 45);
 
 		// name setting
 		name.setPrefColumnCount(5);
@@ -111,6 +157,9 @@ class RunPane extends BorderPane {
 		timeGoal.setPrefColumnCount(5);
 		timeGoal.setText("" + Tester.DEFAULT_TIME_GOAL);
 		LabeledNode timeGoalInput = new LabeledNode("Time Goal", timeGoal);
+
+		// checkbox default
+		((CheckBox) this.permissionCheckbox.getNode()).setSelected(true);
 
 		// run and stop buttons
 		runButton.setFont(new Font(15));
@@ -141,8 +190,8 @@ class RunPane extends BorderPane {
 
 		addHandlers(outputPath, agentPath);
 
-		box.getChildren().addAll(jarNameSpacer, nameInput, testsToRunInput, timeGoalInput);
-		box.getChildren().addAll(outputPathButton, agentPathButton, runButtonSpacer);
+		box.getChildren().addAll(jarNameSpacer, percentageTextSpacer, nameInput, testsToRunInput, timeGoalInput);
+		box.getChildren().addAll(permissionCheckbox, outputPathButton, agentPathButton, runButtonSpacer);
 		setCenter(box);
 	}
 
@@ -150,13 +199,29 @@ class RunPane extends BorderPane {
 	 * Adds handlers to this component.
 	 * 
 	 * @param outputPath
-	 *            - componen to add handlers to
+	 *            - component to add handlers to
 	 * @param agentPath
-	 *            - componen to add handlers to
+	 *            - component to add handlers to
 	 * @param runButton
-	 *            - componen to add handlers to
+	 *            - component to add handlers to
 	 */
 	public void addHandlers(Button outputPath, Button agentPath) {
+		this.test.getTester().getPercentDone().addListener(new ChangeListener<Number>() {
+			private long changes = 0;
+
+			@Override
+			public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
+				changes++;
+				if (changes % 3 == 0) {
+					String percent = "" + RunPane.this.test.getTester().generateSummaryCodeCoverageResults();
+					if (percent.length() > 4) {
+						percent = percent.substring(0, 4);
+					}
+					RunPane.this.percentageText.setText(percent + "% Covered");
+				}
+			}
+		});
+
 		name.textProperty().addListener(new ChangeListener<String>() {
 			@Override
 			public void changed(ObservableValue<? extends String> arg0, String oldVal, String newVal) {
@@ -290,7 +355,8 @@ class RunPane extends BorderPane {
 					String bbTests = RunPane.this.toRun.getText();
 					String timeGoal = RunPane.this.timeGoal.getText();
 					boolean quiet = true;
-					boolean watchdog = true;
+					CheckBox cb = (CheckBox) RunPane.this.permissionCheckbox.getNode();
+					boolean watchdog = cb.isSelected();
 
 					// initialize and run tester
 					if (!RunPane.this.test.getTester().init(testBounds, jarPath, outputPath, agentPath, bbTests,
@@ -311,10 +377,16 @@ class RunPane extends BorderPane {
 		});
 	}
 
+	/**
+	 * Sets the run button text to paused.
+	 */
 	public void setPaused() {
 		RunPane.this.runButton.setText("Resume Testing");
 	}
 
+	/**
+	 * Sets the run button text to resumed.
+	 */
 	public void setResumed() {
 		RunPane.this.runButton.setText("Pause Testing");
 	}
@@ -340,6 +412,5 @@ class RunPane extends BorderPane {
 		} else {
 			return name;
 		}
-
 	}
 }

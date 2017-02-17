@@ -32,6 +32,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
+import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 
 /**
@@ -45,6 +46,9 @@ class ParameterPane extends ScrollPane {
 	 */
 	private VBox content = new VBox();
 
+	/**
+	 * Checkbox for whether to use user defined parameters.
+	 */
 	private CheckBox userDefinedBounds = new CheckBox(
 			"Use Custom Parameter Bounds\n(Predefined tests will not be run)");
 
@@ -54,7 +58,7 @@ class ParameterPane extends ScrollPane {
 	private FormatBuilder formatBuilder = new FormatBuilder();
 
 	/**
-	 * Constructs a ParameterPane with the given test.
+	 * Constructs a Parameter pane with the given test.
 	 * 
 	 * @param test
 	 *            - test for the parameters
@@ -121,7 +125,7 @@ class FormatBuilder extends VBox {
 	private static final String keyConflictErrorString = "Illegal: Duplicate parameter keys.";
 
 	/**
-	 * List of keys
+	 * List of parameter keys for the parameters.
 	 */
 	private List<String> keys = new ArrayList<String>();
 
@@ -151,10 +155,7 @@ class FormatBuilder extends VBox {
 	private List<ParameterEditor> parameterEditors = new LinkedList<ParameterEditor>();
 
 	/**
-	 * Constructs a format builder with the given test.
-	 * 
-	 * @param test
-	 *            - test for this format builder.
+	 * Constructs a format builder.
 	 */
 	public FormatBuilder() {
 		setVisible(false);
@@ -342,8 +343,8 @@ class FormatBuilder extends VBox {
 	/**
 	 * Returns whether this parameter builder has dynamic parameters.
 	 * 
-	 * @return true if this parameter builder has dynamic parameters or false
-	 *         otherwise
+	 * @return true if this parameter builder has dynamic parameters, otherwise
+	 *         false
 	 */
 	public boolean isDynamic() {
 		return this.dynamic;
@@ -386,7 +387,7 @@ class ParameterEditor extends TitledPane {
 	private boolean keyError = false;
 
 	/**
-	 * The string regex key for this parameter.
+	 * The regex key for this parameter.
 	 */
 	private String regexKey = "";
 
@@ -411,17 +412,17 @@ class ParameterEditor extends TitledPane {
 	private boolean isOptional = false;
 
 	/**
-	 * List of format strings for this paramter.
+	 * List of format strings for this parameter.
 	 */
 	private List<FormatString> formatStrings = new LinkedList<FormatString>();
 
 	/**
-	 * Components to hide if this parameter is fixed.
+	 * List of components to hide if this parameter is fixed.
 	 */
 	private List<Node> dynamicSettings = new ArrayList<Node>();
 
 	/**
-	 * Components to hide if this parameter is fixed.
+	 * Box for components to hide if this parameter is fixed.
 	 */
 	private HBox initialSettings = new HBox(45);
 
@@ -448,6 +449,7 @@ class ParameterEditor extends TitledPane {
 		AnchorPane exitPane = new AnchorPane();
 		exitPane.setPickOnBounds(false);
 		Button exitButton = new Button("X");
+		exitButton.setFont(new Font(8));
 		AnchorPane.setTopAnchor(exitButton, 0.0);
 		AnchorPane.setLeftAnchor(exitButton, 0.0);
 		exitPane.getChildren().add(exitButton);
@@ -599,7 +601,7 @@ class ParameterEditor extends TitledPane {
 				for (Node node : this.dynamicSettings) {
 					initialSettings.getChildren().remove(node);
 				}
-				// disable all but first formst strings
+				// disable all but first format strings
 				boolean first = true;
 				for (Node node : this.content.getChildren()) {
 					if (node instanceof FormatString) {
@@ -640,7 +642,7 @@ class ParameterEditor extends TitledPane {
 	/**
 	 * Returns this parameter editor's parameter builder.
 	 * 
-	 * @return this parameter editor's parameter builder
+	 * @return the parameter builder for this parameter editor
 	 */
 	public FormatBuilder getBuilder() {
 		return formatBuilder;

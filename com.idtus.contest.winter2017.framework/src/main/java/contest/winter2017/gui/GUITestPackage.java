@@ -11,18 +11,7 @@ import contest.winter2017.Output;
 import contest.winter2017.Tester;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleStringProperty;
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
 import javafx.concurrent.Task;
-import javafx.event.EventHandler;
-import javafx.geometry.Insets;
-import javafx.geometry.Pos;
-import javafx.scene.control.ProgressBar;
-import javafx.scene.input.MouseButton;
-import javafx.scene.input.MouseEvent;
-import javafx.scene.layout.VBox;
-import javafx.scene.text.Font;
-import javafx.scene.text.Text;
 
 /**
  * Class encapsulating a test run in the GUI interface.
@@ -34,17 +23,17 @@ import javafx.scene.text.Text;
  */
 public class GUITestPackage {
 	/**
-	 * TestListPane of this test.
+	 * Test list pane of this test.
 	 */
 	private TestListPane testListPane;
 
 	/**
-	 * TestInfo GUI component of this test.
+	 * Test info GUI component of this test.
 	 */
 	private TestInfo testInfo;
 
 	/**
-	 * MainPane of this test.
+	 * Main pane of this test.
 	 */
 	private MainPane mainPane;
 
@@ -71,7 +60,7 @@ public class GUITestPackage {
 	private boolean testsKilled = false;
 
 	/**
-	 * Constructs a GUITestPackage with the given testListPane, name, and file
+	 * Constructs a GUI test package with the given testListPane, name, and file
 	 * to test.
 	 * 
 	 * @param testListPane
@@ -97,8 +86,20 @@ public class GUITestPackage {
 		Task<Void> task = new Task<Void>() {
 			@Override
 			protected Void call() {
-				GUITestPackage.this.tester.executeBasicTests();
-				GUITestPackage.this.tester.executeSecurityTests();
+				try {
+					GUITestPackage.this.tester.executeBasicTests();
+					GUITestPackage.this.tester.executeSecurityTests();
+					String toolChainOut = GUITestPackage.this.tester.getYAMLOutput();
+					GUITestPackage.this.mainPane.setToolChainOut(toolChainOut);
+				} catch (Exception e) {
+					Platform.runLater(new Runnable() {
+						@Override
+						public void run() {
+							throw e;
+						}
+					});
+				}
+
 				Platform.runLater(new Runnable() {
 					@Override
 					public void run() {
@@ -109,7 +110,7 @@ public class GUITestPackage {
 				return null;
 			}
 		};
-		new Thread(task).start();
+		new Thread(task, "Test Runner").start();
 	}
 
 	/**
@@ -131,11 +132,19 @@ public class GUITestPackage {
 	}
 
 	/**
-	 * Ungracefully Kills testing for this test.
+	 * Kills testing for this test.
 	 */
 	public void killTests() {
 		this.testsKilled = true;
 		this.tester.killTests();
+	}
+
+	/**
+	 * Removes this test from the GUI.
+	 */
+	public void remove() {
+		killTests();
+		this.testListPane.remove(this);
 	}
 
 	/**
@@ -175,7 +184,7 @@ public class GUITestPackage {
 	/**
 	 * Returns whether user bounds are to be used.
 	 * 
-	 * @return true if user bounds are to be used, false if they are not
+	 * @return true if user bounds are to be used, otherwise false
 	 */
 	public boolean hasUserTestBounds() {
 		return this.getMainPane().getParameterPane().hasUserTestBounds();
@@ -184,7 +193,7 @@ public class GUITestPackage {
 	/**
 	 * Returns whether user bounds valid.
 	 * 
-	 * @return true if user bounds are valid, false if they are not
+	 * @return true if user bounds are valid, otherwise false
 	 */
 	public boolean hasValidUserTestBounds() {
 		ParameterPane pane = this.getMainPane().getParameterPane();
@@ -251,188 +260,47 @@ public class GUITestPackage {
 	}
 
 	/**
-	 * Returns this test's TestListPane.
+	 * Returns this test's test list pane.
 	 * 
-	 * @return TestListPane parent
+	 * @return the test list pane parent of this test
 	 */
 	public TestListPane getTestListPane() {
 		return this.testListPane;
 	}
 
 	/**
-	 * Returns this test's TestInfo.
+	 * Returns this test's test info.
 	 * 
-	 * @return this test's TestInfo
+	 * @return this test's test info
 	 */
 	public TestInfo getTestInfo() {
 		return this.testInfo;
 	}
 
 	/**
-	 * Returns this test's MainPane.
+	 * Returns this test's main pane.
 	 * 
-	 * @return this test's MainPane
+	 * @return this test's main pane
 	 */
 	public MainPane getMainPane() {
 		return this.mainPane;
 	}
 
 	/**
-	 * Returns this test's Tester.
+	 * Returns this test's tester.
 	 * 
-	 * @return this test's Tester
+	 * @return this test's tester
 	 */
 	public Tester getTester() {
 		return this.tester;
 	}
 
 	/**
-	 * Returns this test's Jar to test.
+	 * Returns this test's jar to test.
 	 * 
-	 * @return this test's Jar to test
+	 * @return this test's jar to test
 	 */
 	public File getToTest() {
 		return this.toTest;
 	}
-}
-
-/**
- * VBox used to hold basic info for a given test.
- * 
- * This component may be selected to show the test in the main pane.
- * 
- * This component shows the name of the test, a status string for the test, and
- * a progress bar for the test. The text shows the percent of tests done, the
- * fact that extra tests are being run, or "done". The progress bar changes
- * accordingly.
- * 
- * @author ICT-2
- */
-class TestInfo extends VBox {
-	/**
-	 * Test to represent.
-	 */
-	private GUITestPackage test;
-
-	/**
-	 * Progress bar for this test.
-	 */
-	private ProgressBar progressBar = new ProgressBar(0);
-
-	/**
-	 * Completion status of this test.
-	 */
-	private Text percent = new Text("0%");
-
-	/**
-	 * Constructs a TestInfo with the given test.
-	 */
-	public TestInfo(GUITestPackage test) {
-		this.test = test;
-
-		// styling and buttons
-		setAlignment(Pos.CENTER);
-		setStyle("-fx-border-color: lightgray; -fx-border-width: 1;");
-		Text name = new Text("");
-		name.textProperty().bind(this.test.getName());
-		name.setFont(new Font(20));
-		this.percent.setFont(new Font(10));
-		this.progressBar.setMouseTransparent(true);
-		this.progressBar.setPadding(new Insets(3, 0, 0, 2));
-
-		addHandlers();
-
-		getChildren().addAll(name, this.percent, progressBar);
-	}
-
-	/**
-	 * Adds handlers to this component.
-	 */
-	public void addHandlers() {
-		// keep track of progress
-		this.test.getTester().getPercentDone().addListener(new ChangeListener<Number>() {
-			/**
-			 * Tracks the percent of testing done.
-			 * <p>
-			 * If required tests are not completed, progress bar shows the
-			 * percent completed. If required tests are completed, but the time
-			 * goal has not been fulfilled, the progress bar shows indeterminate
-			 * (bounces back and forth).
-			 * 
-			 * @param observable
-			 *            - percent complete being obsesrved
-			 * @param oldValue
-			 *            - the previous percent complete
-			 * @param newValue
-			 *            - the new percent complete.
-			 */
-			public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
-				TestInfo.this.test.updateOutput();
-
-				// don't update a disabled progress bar
-				if (TestInfo.this.progressBar.isDisabled()) {
-					if (TestInfo.this.progressBar.isIndeterminate()) {
-						Platform.runLater(new Runnable() {
-							@Override
-							public void run() {
-								TestInfo.this.progressBar.setProgress(0);
-							}
-						});
-					}
-					return;
-				}
-
-				double progress = newValue.doubleValue();
-				if (progress <= 1) {
-					Platform.runLater(new Runnable() {
-						@Override
-						public void run() {
-							TestInfo.this.progressBar.setProgress(progress);
-							String progressRep = "" + (100 * progress);
-							if (progressRep.length() > 4) {
-								progressRep = progressRep.substring(0, 4);
-							}
-							TestInfo.this.percent.setText(progressRep + "%");
-						}
-					});
-				} else if (!TestInfo.this.progressBar.isIndeterminate()) {
-					TestInfo.this.percent.setText("Extra Tests");
-					Platform.runLater(new Runnable() {
-						@Override
-						public void run() {
-							TestInfo.this.progressBar.setProgress(ProgressBar.INDETERMINATE_PROGRESS);
-						}
-					});
-				}
-			}
-		});
-
-		// grabs focus if testinfo is selected
-		setOnMouseClicked(new EventHandler<MouseEvent>() {
-			@Override
-			public void handle(MouseEvent event) {
-				if (event.getButton() == MouseButton.PRIMARY) {
-					TestInfo.this.test.getTestListPane().selectTest(TestInfo.this.test);
-				}
-			}
-		});
-	}
-
-	/**
-	 * Signify that testing has ended.
-	 */
-	void endTests() {
-		this.progressBar.setProgress(1.0);
-		this.percent.setText("Done");
-	}
-
-	/**
-	 * Returns this test info's progress bar.
-	 * 
-	 * @return progress bar for this test info
-	 */
-	public ProgressBar getProgressBar() {
-		return this.progressBar;
-	}
-
 }

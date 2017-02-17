@@ -3,6 +3,14 @@ package contest.winter2017;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * A dummy test generator. This class encapsulates the example code IDT wrote
+ * for security tests. It returns the same test every time for a given jar. The
+ * returned test will be valid, however this test generator should only be used
+ * in the event that no other test generators are functional.
+ * 
+ * @author ICT-2
+ */
 public class DummyTestGenerator extends TestGenerator {
 	/**
 	 * Constructs a dummy test generator with the given parameter factory and
@@ -25,11 +33,13 @@ public class DummyTestGenerator extends TestGenerator {
 	 * Returns the same test every time for a given jar.
 	 * 
 	 * When a test is run, the associated Output object is added to the end of
-	 * this class's outputs list.
+	 * this class's outputs list via updateOutputs.
 	 * 
 	 * @return an array of objects which represent parameters to be tested.
 	 */
 	public Object[] nextTest() {
+		updateOutputs();
+
 		/////////// START EXAMPLE CODE /////////////
 		// This example demonstrates how to use the ParameterFactory to figure
 		// out the parameter types of parameters
@@ -134,5 +144,4 @@ public class DummyTestGenerator extends TestGenerator {
 		}
 		return previousParameterStrings.toArray();
 	}
-
 }

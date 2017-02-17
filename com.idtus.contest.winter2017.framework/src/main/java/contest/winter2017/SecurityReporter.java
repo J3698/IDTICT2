@@ -7,9 +7,9 @@ import java.util.LinkedList;
 import java.util.PropertyPermission;
 
 /**
- * Class to watch for security permission requests. This class is not meant to
- * curtail actions requested by executable jars under test, but to keep track of
- * them, and to report them to the tester.
+ * This class watches for security permission requests. This class is not meant
+ * to curtail actions requested by executable jars under test, but to keep track
+ * of them, and to report them to the tester.
  * 
  * @author ICT-2
  */
@@ -21,7 +21,7 @@ public class SecurityReporter extends SecurityManager {
 	private static final int WATCHDOG_EXIT_CODE = 302590835;
 
 	/**
-	 * LinkedList of permissions attempted by the jar under test.
+	 * List of permissions attempted by the jar under test.
 	 */
 	private LinkedList<PermissionEvent> permissionEvents;
 
@@ -31,9 +31,9 @@ public class SecurityReporter extends SecurityManager {
 	private PrintStream stdOut;
 
 	/**
-	 * Constructs a new SecurityReporter with the specified stdOut.
+	 * Constructs a new security reporter with the specified standard out.
 	 * 
-	 * @param stdOutu
+	 * @param stdOut
 	 *            - output stream to print log to
 	 */
 	public SecurityReporter(PrintStream stdOut) {
@@ -44,14 +44,14 @@ public class SecurityReporter extends SecurityManager {
 	/**
 	 * Logs a permission requested.
 	 * <p>
-	 * This method attempts to allow the SecurityReporter to circumvent itself,
+	 * This method attempts to allow the security reporter to circumvent itself,
 	 * disabling the security manager if the permission to check originated from
-	 * the SecurityReporter.
+	 * the security reporter.
 	 * <p>
 	 * Note, it is possible for a jar under test to perform unlogged operations
 	 * using a different thread while the SecurityReporter has disabled itself.
-	 * This could be prevented by granting permissions by looking at the
-	 * stacktrace, instead of disabling the security manager.
+	 * This could be prevented by granting permissions by looking at the stack
+	 * trace, instead of disabling the security manager.
 	 * 
 	 * @param toCheck
 	 *            - permission to check and possibly log
@@ -70,11 +70,11 @@ public class SecurityReporter extends SecurityManager {
 			}
 		}
 
-		// disable manager
+		// disable manager to do real work
 		System.setSecurityManager(null);
 
 		if (toCheck instanceof RuntimePermission && toCheck.getName().contains("exitVM")) {
-			// log exit codes if they use the special int
+			// log exit permissions if they dont use the special int
 			if (toCheck.getName().contains("" + WATCHDOG_EXIT_CODE)) {
 				outputSecurityLog();
 			} else {
@@ -91,9 +91,6 @@ public class SecurityReporter extends SecurityManager {
 
 	/**
 	 * Outputs security events seen so far.
-	 * <p>
-	 * Certain permissions, such as file permissions, are abbreviated, otherwie
-	 * they would be hard to deal with.
 	 */
 	public void outputSecurityLog() {
 		PrintStream out = System.out;
@@ -115,9 +112,9 @@ public class SecurityReporter extends SecurityManager {
 }
 
 /**
- * Class to encapsulate a permission request. Holds a permission and the stack
- * trace when the permission was requested. In the future, the stack trace could
- * be parsed to find where dubious permissions are executed from.
+ * Class to encapsulate a permission request. In the future, this could also
+ * hold the stack trace at the permission. This could be parsed to find where
+ * dubious permissions are executed from.
  * 
  * @author ICT-2
  */
@@ -149,9 +146,3 @@ class PermissionEvent {
 		return this.permission;
 	}
 }
-
-// on possible security issues :
-// get stack trace
-// make sure it's not the
-// securitymanager making the call
-// save the warning

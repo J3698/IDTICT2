@@ -2,7 +2,6 @@ package contest.winter2017;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -13,7 +12,6 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Date;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -24,12 +22,6 @@ import java.util.jar.Attributes;
 import org.jacoco.core.analysis.Analyzer;
 import org.jacoco.core.analysis.CoverageBuilder;
 import org.jacoco.core.analysis.IClassCoverage;
-import org.jacoco.core.analysis.ICounter;
-import org.jacoco.core.data.ExecutionData;
-import org.jacoco.core.data.ExecutionDataReader;
-import org.jacoco.core.data.IExecutionDataVisitor;
-import org.jacoco.core.data.ISessionInfoVisitor;
-import org.jacoco.core.data.SessionInfo;
 import org.jacoco.core.tools.ExecFileLoader;
 
 import javafx.beans.property.SimpleDoubleProperty;
@@ -42,11 +34,11 @@ import javafx.beans.property.SimpleDoubleProperty;
  * found @ http://www.eclemma.org/jacoco/trunk/doc/api.html
  * 
  * ICT-2 has made several changes to this class. Many of them are documentation
- * based, or were meant to improve code quality. In addition, toolchain mode has
- * been implemented. Print statements directed to standard out are silenced if
- * toolchain mode is used. ICT-2 has also changed how tests are run. ICT-2 has
- * taken advantage of java's security structure to monitor potentially nefarious
- * behavior.
+ * based, or were meant to improve code quality. In addition, tool chain mode
+ * has been implemented. Print statements directed to standard out are silenced
+ * if tool chain mode is used. ICT-2 has also changed how tests are run. ICT-2
+ * has taken advantage of java's security structure to monitor potentially
+ * nefarious behavior.
  * 
  * @author IDT
  */
@@ -187,7 +179,7 @@ public class Tester {
 
 	/**
 	 * ParameterFactory that can be used to help figure out parameter signatures
-	 * from the blackbox jars.
+	 * from the black-box jars.
 	 */
 	private ParameterFactory parameterFactory = null;
 
@@ -200,10 +192,6 @@ public class Tester {
 	 * Set to hold unique exceptions that have thus far been encountered.
 	 */
 	private HashSet<String> exceptionSet = new HashSet<String>();
-
-	//////////////////////////////////////////
-	// PUBLIC METHODS
-	//////////////////////////////////////////
 
 	/**
 	 * Initialize the tester by loading up the jar to test, and then extracting
@@ -389,6 +377,17 @@ public class Tester {
 	}
 
 	/**
+	 * Prints an initialization error.
+	 * 
+	 * @param message
+	 *            - information about the initialization error
+	 */
+	private void initError(String message) {
+		System.out.println("ERROR: " + INIT_ERROR_MSSG);
+		System.out.println(message);
+	}
+
+	/**
 	 * Executes predefined tests on the jar under test.
 	 * <p>
 	 * This is the half of the framework that IDT has completed. We are able to
@@ -429,7 +428,7 @@ public class Tester {
 
 					if (!this.quiet) {
 						// since we have a failed basic test, show the
-						// expectation for the stdout
+						// expectation for the standard out
 						if (!output.getStdOutString().matches(test.getStdOutExpectedResultRegex())) {
 							System.out.println("\t ->stdout: " + output.getStdOutString());
 							System.out.println(
@@ -437,7 +436,7 @@ public class Tester {
 						}
 
 						// since we have a failed basic test, show the
-						// expectation for the stderr
+						// expectation for the standard err
 						if (!output.getStdErrString().matches(test.getStdErrExpectedResultRegex())) {
 							System.out.println("\t ->stderr: " + output.getStdErrString());
 							System.out.println(
@@ -457,11 +456,26 @@ public class Tester {
 		}
 		// print the basic test results and the code coverage associated with
 		// the basic tests
+
 		double percentCovered = generateSummaryCodeCoverageResults();
 		if (!this.quiet) {
 			System.out.println("basic test results: " + (passCount + failCount) + " total, " + passCount + " pass, "
 					+ failCount + " fail, " + percentCovered + " percent covered");
 			System.out.println(HORIZONTAL_LINE);
+		}
+	}
+
+	/**
+	 * Prints the basic test output (standard out/err).
+	 * 
+	 * @param output
+	 *            - Output object containing standard out/err to print
+	 */
+	private void printBasicTestOutput(Output output) {
+		if (!this.quiet) {
+			System.out.println("stdout of execution: " + output.getStdOutString());
+			System.out.println("stderr of execution: " + output.getStdErrString());
+			System.out.println("permissions used: " + output.getPermissionLogString());
 		}
 	}
 
@@ -491,8 +505,16 @@ public class Tester {
 
 			Object[] params = generator.nextTest();
 			instrumentAndExecuteCode(params);
+
+			// trash all but latest coverage builders in order to save memory
+			for (int j = this.outputs.size() - 5; j >= 0; j--) {
+				if (!this.outputs.get(j).clearBuilder()) {
+					break;
+				}
+			}
 		}
 
+		// run extra tests
 		while (minutesPassed(start) < this.timeGoal) {
 			if (isKilled.get()) {
 				return;
@@ -500,32 +522,14 @@ public class Tester {
 
 			Object[] params = generator.nextTest();
 			instrumentAndExecuteCode(params);
-		}
-	}
 
-	/**
-	 * Returns YAML toolchain output for this tester.
-	 * 
-	 * @return String output of this tester
-	 */
-	public String getYAMLOutput() {
-		StringBuffer buffer = new StringBuffer(1000);
-		buffer.append("Total predefined tests run: ");
-		buffer.append(this.failCount + this.passCount + "\n");
-		buffer.append("Number of predefined tests that passed: ");
-		buffer.append(this.passCount + "\n");
-		buffer.append("Number of predefined tests that failed: ");
-		buffer.append(this.failCount + "\n");
-		buffer.append("Total code coverage percentage: ");
-		buffer.append(percentCovered + "\n");
-		buffer.append("Unique error count: ");
-		buffer.append(this.exceptionSet.size() + "\n");
-		buffer.append("Errors seen:\n");
-		for (String error : this.exceptionSet) {
-			buffer.append("  -" + error.replace('\n', ' ') + "\n");
+			// trash all but latest coverage builders in order to save memory
+			for (int j = this.outputs.size() - 5; j >= 0; j--) {
+				if (!this.outputs.get(j).clearBuilder()) {
+					break;
+				}
+			}
 		}
-
-		return buffer.toString();
 	}
 
 	/**
@@ -572,19 +576,84 @@ public class Tester {
 		this.isPaused.set(paused);
 	}
 
-	//////////////////////////////////////////
-	// PRIVATE METHODS
-	//////////////////////////////////////////
+	/**
+	 * Returns YAML tool chain output for this tester.
+	 * 
+	 * @return String output of this tester
+	 */
+	public String getYAMLOutput() {
+		StringBuffer buffer = new StringBuffer(1000);
+		buffer.append("Total predefined tests run: ");
+		buffer.append(this.failCount + this.passCount + "\n");
+		buffer.append("Number of predefined tests that passed: ");
+		buffer.append(this.passCount + "\n");
+		buffer.append("Number of predefined tests that failed: ");
+		buffer.append(this.failCount + "\n");
+		buffer.append("Total code coverage percentage: ");
+		buffer.append(percentCovered + "\n");
+		buffer.append("Unique error count: ");
+		buffer.append(this.exceptionSet.size() + "\n");
+		buffer.append("Errors seen:\n");
+		for (String error : this.exceptionSet) {
+			buffer.append("  -" + error.replace('\n', ' ') + "\n");
+		}
+
+		return buffer.toString();
+	}
 
 	/**
-	 * Prints an initialization error.
+	 * Generates a double code coverage metric.
+	 * <p>
+	 * Code coverage metric is percentage of instructions, branches, lines,
+	 * methods, and complexity covered.
 	 * 
-	 * @param message
-	 *            - information about the initialization error
+	 * @return a double representation of the percentage of code covered during
+	 *         testing
 	 */
-	private void initError(String message) {
-		System.out.println("ERROR: " + INIT_ERROR_MSSG);
-		System.out.println(message);
+	public double generateSummaryCodeCoverageResults() {
+		long total = 0;
+		long covered = 0;
+
+		try {
+			// creating a new file for output in the jacoco output directory
+			// (one of the application arguments)
+			File executionDataFile = new File(this.jacocoOutputFilePath);
+			ExecFileLoader execFileLoader = new ExecFileLoader();
+			execFileLoader.load(executionDataFile);
+
+			// use CoverageBuilder and Analyzer to assess code coverage from
+			// jacoco output file
+			final CoverageBuilder coverageBuilder = new CoverageBuilder();
+			final Analyzer analyzer = new Analyzer(execFileLoader.getExecutionDataStore(), coverageBuilder);
+
+			// analyzeAll is the way to go to analyze all classes inside a
+			// container (jar or zip or directory)
+			analyzer.analyzeAll(new File(this.jarToTestPath));
+
+			for (final IClassCoverage cc : coverageBuilder.getClasses()) {
+
+				// report code coverage from all classes that are not the
+				// TestBounds class within the jar
+				if (!cc.getName().endsWith("TestBounds")) {
+					total += cc.getInstructionCounter().getTotalCount();
+					total += cc.getBranchCounter().getTotalCount();
+					total += cc.getLineCounter().getTotalCount();
+					total += cc.getMethodCounter().getTotalCount();
+					total += cc.getComplexityCounter().getTotalCount();
+
+					covered += cc.getInstructionCounter().getCoveredCount();
+					covered += cc.getBranchCounter().getCoveredCount();
+					covered += cc.getLineCounter().getCoveredCount();
+					covered += cc.getMethodCounter().getCoveredCount();
+					covered += cc.getComplexityCounter().getCoveredCount();
+				}
+			}
+		} catch (IOException ioe) {
+			ioe.printStackTrace();
+		}
+
+		percentCovered = ((double) covered / (double) total) * 100.0;
+		return percentCovered;
 	}
 
 	/**
@@ -593,7 +662,7 @@ public class Tester {
 	 * 
 	 * @param start
 	 *            - last return of System.currentTimeMillis()
-	 * @return minutes since start
+	 * @return the minutes since start
 	 */
 	private int minutesPassed(long start) {
 		long diff = (System.currentTimeMillis() - start) / 1_000 / 60;
@@ -618,8 +687,8 @@ public class Tester {
 	 *            - array of Objects to use as parameters for this execution of
 	 *            the jar under test
 	 * 
-	 * @return Output representation of the std out, std error, and security
-	 *         notifications encountered during this test
+	 * @return Output representation of the standard out, standard error, and
+	 *         security notifications encountered during this test
 	 * 
 	 */
 	private Output instrumentAndExecuteCode(Object[] parameters) {
@@ -641,6 +710,7 @@ public class Tester {
 		cmdBuffer.append("java");
 		try {
 			if (this.watchdog) {
+				// change the clss path if running from a jar
 				if (runningFromJar()) {
 					System.out.println("Running from Jar.");
 					cmdBuffer.append(" -javaagent:" + this.jacocoAgentJarPath + "=destfile=");
@@ -656,23 +726,26 @@ public class Tester {
 					cmdBuffer.append(" \"" + this.jarToTestPath + "\" " + this.quiet);
 				}
 			} else {
+				// use a more simple command if we don't want to watch
+				// permissions
 				cmdBuffer.append(" -javaagent:" + this.jacocoAgentJarPath + "=destfile=");
 				cmdBuffer.append(this.jacocoOutputFilePath + "temp");
 				cmdBuffer.append(" -jar " + this.jarToTestPath);
 			}
 
+			// append parameters to the command
+			StringBuffer testCommand = new StringBuffer(200);
 			for (Object o : parameters) {
-				cmdBuffer.append(" " + o.toString());
+				testCommand.append(" " + o.toString());
 			}
-
+			output.setCommand("" + testCommand);
+			cmdBuffer.append(testCommand);
 			command = "" + cmdBuffer;
-
-			// show the user the command to run and prepare the process using
-			// the command
 			if (!this.quiet) {
 				System.out.println("command to run: " + command);
 			}
 
+			// prepare the process
 			process = Runtime.getRuntime().exec(command);
 
 			InputStream isOut = process.getInputStream();
@@ -687,6 +760,7 @@ public class Tester {
 			stdOutReader.start();
 			stdErrReader.start();
 
+			// allow the process to run for a given time
 			long start = System.currentTimeMillis();
 			while ((System.currentTimeMillis() - start) < this.maxMillisPerTest) {
 				String outLine = stdOutReader.pollLine();
@@ -748,6 +822,7 @@ public class Tester {
 			analyzer.analyzeAll(new File(this.jarToTestPath));
 			output.setCoverageBuilder(builder);
 		} catch (IOException e) {
+			// if this happens, try lengthening this.maxMillisPerTest
 			if (!this.quiet) {
 				System.out.println("ERROR: Unable to save and load Jacoco output.");
 			}
@@ -765,27 +840,14 @@ public class Tester {
 	}
 
 	/**
-	 * Returns whether this class is running from a Jar.
-	 * 
-	 * @return boolean whether this class is running from a jar.
-	 */
-	private boolean runningFromJar() {
-		String name = getClass().getName();
-		name = name.replace('.', '/');
-		String path = "" + Tester.class.getResource("/" + name + ".class");
-
-		if (path.startsWith("jar:") || path.startsWith("rsrc:") || path.endsWith(".jar")) {
-			return true;
-		}
-		return false;
-	}
-
-	/**
 	 * Handles standard output specifically for the tester.
 	 * 
 	 * @param brOut
+	 *            - the reader to get input from
 	 * @param output
+	 *            - the output to save permissions to
 	 * @throws IOException
+	 *             - an exception encountered
 	 */
 	private void handleWatchdogOutput(ProcessStreamReader brOut, Output output) throws IOException {
 		String next;
@@ -801,10 +863,12 @@ public class Tester {
 	/**
 	 * Handles standard error output specifically for the tester.
 	 * 
-	 * Method used to handle errors passed by the security watchdog
-	 * 
-	 * @param error
-	 *            - the error to handle
+	 * @param brErr
+	 *            - the reader to get input from
+	 * @throws IOException
+	 *             - an IO exception encountered
+	 * @throws WatchdogException
+	 *             - a watch-dog exception encountered
 	 */
 	private void handleWatchdogError(ProcessStreamReader brErr) throws IOException, WatchdogException {
 		String next;
@@ -816,249 +880,25 @@ public class Tester {
 			errBuff.append(next + "\n");
 		}
 
-		// TODO: handle Watchdog Error
+		// TODO: handle watch dog exceptions
 		throw new WatchdogException("" + errBuff);
 	}
 
 	/**
-	 * Prints the basic test output (std out/err).
+	 * Returns whether this class is running from a Jar.
 	 * 
-	 * @param output
-	 *            - Output object containing std out/err to print
+	 * @return true if this class is running from a jar, otherwise false.
 	 */
-	private void printBasicTestOutput(Output output) {
-		if (!this.quiet) {
-			System.out.println("stdout of execution: " + output.getStdOutString());
-			System.out.println("stderr of execution: " + output.getStdErrString());
-			System.out.println("permissions used: " + output.getPermissionLogString());
+	private boolean runningFromJar() {
+		String name = getClass().getName();
+		name = name.replace('.', '/');
+		String path = "" + Tester.class.getResource("/" + name + ".class");
+
+		if (path.startsWith("jar:") || path.startsWith("rsrc:") || path.endsWith(".jar")) {
+			return true;
 		}
+		return false;
 	}
-
-	/**
-	 * Prints raw code coverage stats including hits/probes
-	 * 
-	 * @throws IOException
-	 */
-	@SuppressWarnings("unused")
-	@Deprecated
-	private void printRawCoverageStats() {
-		if (!this.quiet) {
-			System.out.printf("exec file: %s%n", this.jacocoOutputFilePath);
-			System.out.println("CLASS ID         HITS/PROBES   CLASS NAME");
-		}
-
-		try {
-			File executionDataFile = new File(this.jacocoOutputFilePath);
-			final FileInputStream in = new FileInputStream(executionDataFile);
-			final ExecutionDataReader reader = new ExecutionDataReader(in);
-			reader.setSessionInfoVisitor(new ISessionInfoVisitor() {
-				public void visitSessionInfo(final SessionInfo info) {
-					if (!Tester.this.quiet) {
-						System.out.printf("Session \"%s\": %s - %s%n", info.getId(), new Date(info.getStartTimeStamp()),
-								new Date(info.getDumpTimeStamp()));
-					}
-				}
-			});
-			reader.setExecutionDataVisitor(new IExecutionDataVisitor() {
-				public void visitClassExecution(final ExecutionData data) {
-					if (!Tester.this.quiet) {
-						System.out.printf("%016x  %3d of %3d   %s%n", Long.valueOf(data.getId()),
-								Integer.valueOf(getHitCount(data.getProbes())),
-								Integer.valueOf(data.getProbes().length), data.getName());
-					}
-				}
-			});
-			reader.read();
-			in.close();
-		} catch (IOException e) {
-			if (!this.quiet) {
-				System.out.println("Unable to display raw coverage stats due to IOException related to "
-						+ this.jacocoOutputFilePath);
-			}
-			e.printStackTrace();
-		}
-		if (!this.quiet) {
-			System.out.println();
-		}
-	}
-
-	/**
-	 * Gets the hit count from the code coverage metrics.
-	 * 
-	 * @param data
-	 *            - boolean array of coverage data where true indicates hits
-	 * @return int representation of count of total hits from supplied data
-	 */
-	private int getHitCount(final boolean[] data) {
-		int count = 0;
-		for (final boolean hit : data) {
-			if (hit) {
-				count++;
-			}
-		}
-		return count;
-	}
-
-	/**
-	 * Generates code coverage metrics including instructions, branches, lines,
-	 * methods and complexity.
-	 * 
-	 * @return double representation of the percentage of code covered during
-	 *         testing
-	 */
-	private double generateSummaryCodeCoverageResults() {
-		long total = 0;
-		long covered = 0;
-		try {
-			// creating a new file for output in the jacoco output directory
-			// (one of the application arguments)
-			File executionDataFile = new File(this.jacocoOutputFilePath);
-			ExecFileLoader execFileLoader = new ExecFileLoader();
-			execFileLoader.load(executionDataFile);
-
-			// use CoverageBuilder and Analyzer to assess code coverage from
-			// jacoco output file
-			final CoverageBuilder coverageBuilder = new CoverageBuilder();
-			final Analyzer analyzer = new Analyzer(execFileLoader.getExecutionDataStore(), coverageBuilder);
-
-			// analyzeAll is the way to go to analyze all classes inside a
-			// container (jar or zip or directory)
-			analyzer.analyzeAll(new File(this.jarToTestPath));
-
-			for (final IClassCoverage cc : coverageBuilder.getClasses()) {
-
-				// report code coverage from all classes that are not the
-				// TestBounds class within the jar
-				if (!cc.getName().endsWith("TestBounds")) {
-					total += cc.getInstructionCounter().getTotalCount();
-					total += cc.getBranchCounter().getTotalCount();
-					total += cc.getLineCounter().getTotalCount();
-					total += cc.getMethodCounter().getTotalCount();
-					total += cc.getComplexityCounter().getTotalCount();
-
-					covered += cc.getInstructionCounter().getCoveredCount();
-					covered += cc.getBranchCounter().getCoveredCount();
-					covered += cc.getLineCounter().getCoveredCount();
-					covered += cc.getMethodCounter().getCoveredCount();
-					covered += cc.getComplexityCounter().getCoveredCount();
-				}
-			}
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-
-		percentCovered = ((double) covered / (double) total) * 100.0;
-		return percentCovered;
-	}
-
-	/**
-	 * Shows an example of how to generate code coverage metrics from Jacoco.
-	 * 
-	 * @return String representing code coverage results
-	 */
-	@SuppressWarnings("unused")
-	@Deprecated
-	private String generateDetailedCodeCoverageResults() {
-		String executionResults = "";
-		try {
-			File executionDataFile = new File(this.jacocoOutputFilePath);
-			ExecFileLoader execFileLoader = new ExecFileLoader();
-			execFileLoader.load(executionDataFile);
-
-			final CoverageBuilder coverageBuilder = new CoverageBuilder();
-			final Analyzer analyzer = new Analyzer(execFileLoader.getExecutionDataStore(), coverageBuilder);
-
-			analyzer.analyzeAll(new File(this.jarToTestPath));
-
-			for (final IClassCoverage cc : coverageBuilder.getClasses()) {
-				executionResults += "Coverage of class " + cc.getName() + ":\n";
-				executionResults += getMetricResultString("instructions", cc.getInstructionCounter());
-				executionResults += getMetricResultString("branches", cc.getBranchCounter());
-				executionResults += getMetricResultString("lines", cc.getLineCounter());
-				executionResults += getMetricResultString("methods", cc.getMethodCounter());
-				executionResults += getMetricResultString("complexity", cc.getComplexityCounter());
-
-				// adding this to a string is a little impractical with the size
-				// of some of the files, so we are commenting it out, but it
-				// shows that you can get the coverage status of each line if
-				// you wanted to add debug argument to display this level of
-				// detail at command line level....
-				//
-				// for (int i = cc.getFirstLine(); i <= cc.getLastLine(); i++) {
-				// executionResults += "Line " + Integer.valueOf(i) + ": " +
-				// getStatusString(cc.getLine(i).getStatus()) + "\n";
-				// }
-			}
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-
-		return executionResults;
-	}
-
-	/**
-	 * Translates the Jacoco line coverage status integers to Strings.
-	 * 
-	 * @param status
-	 *            - integer representation of line coverage status provided by
-	 *            Jacoco
-	 * @return String representation of line coverage status (not covered,
-	 *         partially covered, fully covered)
-	 */
-	@SuppressWarnings("unused")
-	@Deprecated
-	private String getStatusString(final int status) {
-		switch (status) {
-		case ICounter.NOT_COVERED:
-			return "not covered";
-		case ICounter.PARTLY_COVERED:
-			return "partially covered";
-		case ICounter.FULLY_COVERED:
-			return "fully covered";
-		}
-		return "";
-	}
-
-	/**
-	 * Translates the counter data and units into a human readable metric result
-	 * String.
-	 * 
-	 * @param unit
-	 * @param counter
-	 * @return
-	 */
-	private String getMetricResultString(final String unit, final ICounter counter) {
-		final Integer missedCount = Integer.valueOf(counter.getMissedCount());
-		final Integer totalCount = Integer.valueOf(counter.getTotalCount());
-		return missedCount.toString() + " of " + totalCount.toString() + " " + unit + " missed\n";
-	}
-
-	/*
-	 * Is not meant to be part of the final framework. It was included to
-	 * demonstrate three different ways to tap into the code coverage
-	 * results/metrics using jacoco.
-	 * 
-	 * This method is deprecated and will be removed from the final product
-	 * after your team completes development. Please do not add additional
-	 * dependencies to this method.
-	 */
-
-	/*
-	 * @Deprecated private void showCodeCoverageResultsExample() {
-	 * 
-	 * // Below is the first example of how to tap into code coverage metrics
-	 * double result = generateSummaryCodeCoverageResults(); if
-	 * (!this.toolChain) { System.out.println("\n");
-	 * System.out.println("percent covered: " + result); }
-	 * 
-	 * // Below is the second example of how to tap into code coverage metrics
-	 * if (!this.toolChain) { System.out.println("\n"); }
-	 * printRawCoverageStats();
-	 * 
-	 * // Below is the third example of how to tap into code coverage metrics if
-	 * (!this.toolChain) { System.out.println("\n");
-	 * System.out.println(generateDetailedCodeCoverageResults()); } }
-	 */
 }
 
 /**
@@ -1074,12 +914,12 @@ class ProcessStreamReader extends Thread {
 	private InputStream iStream;
 
 	/**
-	 * Boolean whether this thread should stop due to time constraints.
+	 * Whether this thread should stop due to time constraints.
 	 */
 	private AtomicBoolean timeUp;
 
 	/**
-	 * Boolean whether this thread is done reading.
+	 * Whether this thread is done reading.
 	 */
 	private AtomicBoolean isDone;
 
@@ -1089,7 +929,7 @@ class ProcessStreamReader extends Thread {
 	private List<String> lines;
 
 	/**
-	 * Constructs a proces stream reader with the given input stream.
+	 * Constructs a process stream reader with the given input stream.
 	 * 
 	 * @param iStream
 	 *            - input stream to read from
@@ -1128,7 +968,7 @@ class ProcessStreamReader extends Thread {
 	}
 
 	/**
-	 * Gets and removes the next line from the proess stream reader.
+	 * Returns and removes the next line from the process stream reader.
 	 * 
 	 * @return the next line from the process stream reader
 	 */
@@ -1151,14 +991,13 @@ class ProcessStreamReader extends Thread {
 }
 
 /**
- * This class represents an exception thrown by the security watchdog, and not
+ * This class represents an exception thrown by the security watch dog, and not
  * the jar under test.
  * 
  * @author ICT-2
  */
 @SuppressWarnings("serial")
 class WatchdogException extends Exception {
-	// no overriden methods
 	public WatchdogException(String error) {
 		super(error);
 	}

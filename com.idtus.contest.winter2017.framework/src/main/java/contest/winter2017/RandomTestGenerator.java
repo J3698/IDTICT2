@@ -23,6 +23,8 @@ public class RandomTestGenerator extends TestGenerator {
 
 	@Override
 	public Object[] nextTest() {
+		updateOutputs();
+
 		/////////// START EXAMPLE CODE /////////////
 		// This example demonstrates how to use the ParameterFactory to figure
 		// out the parameter types of parameters
@@ -61,7 +63,7 @@ public class RandomTestGenerator extends TestGenerator {
 					// loop over the areas of the format that must be replaced
 					// and choose values
 					List<Object> formatVariableValues = new ArrayList<Object>();
-					for (Class<?> type : potentialParameter.getFormatVariables(parameterString)) {
+					for (Class<?> type : Parameter.getFormatVariables(parameterString)) {
 						if (type == Integer.class) {
 							// dumb logic - always use 1 for an integer
 							formatVariableValues.add(new Integer(1));
@@ -73,7 +75,7 @@ public class RandomTestGenerator extends TestGenerator {
 
 					// build the formatted parameter string with the chosen
 					// values (eg. 1:1PM EST)
-					parameterString = potentialParameter.getFormattedParameter(parameterString, formatVariableValues);
+					parameterString = Parameter.getFormattedParameter(parameterString, formatVariableValues);
 				}
 				previousParameterStrings.add(parameterString);
 				// if it is not an enumeration parameter, it is either an
@@ -126,9 +128,5 @@ public class RandomTestGenerator extends TestGenerator {
 			potentialParameters = getParameterFactory().getNext(previousParameterStrings);
 		}
 		return previousParameterStrings.toArray();
-	}
-
-	public void randomString() {
-
 	}
 }

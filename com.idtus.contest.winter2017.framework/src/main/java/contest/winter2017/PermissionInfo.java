@@ -9,8 +9,8 @@ import java.util.Set;
 import edu.emory.mathcs.backport.java.util.Collections;
 
 /**
- * Class to represent permission info. This class maps a permission to the risks
- * associated with programs which use that permission.
+ * Class to represent permission info. This class maps a permission to the
+ * allowances and risks associated with programs which use that permission.
  * 
  * @author ICT-2
  */
@@ -35,13 +35,13 @@ public class PermissionInfo {
 	private static HashMap<String, String> permissionRisks = new HashMap<String, String>();
 
 	/**
-	 * Method to get the allowances associated with a given permission.
+	 * Returns the allowance associated with a given permission.
 	 * 
 	 * @param permission
 	 *            - permission to get allowances for
-	 * @return allowance associated with the permission, contents of LOAD_ERROR
-	 *         if info could not load, or contents of NO_DOCUMENTATION if info
-	 *         for the permission does not exist
+	 * @return the allowance associated with the permission, contents of
+	 *         LOAD_ERROR if info could not load, or contents of
+	 *         NO_DOCUMENTATION if info for the permission does not exist
 	 */
 	public static String getAllowance(String permission) {
 		if (!isInitialized) {
@@ -57,13 +57,13 @@ public class PermissionInfo {
 	}
 
 	/**
-	 * Method to get the risk associated with a given permission.
+	 * Returns the risk associated with a given permission.
 	 * 
 	 * @param permission
 	 *            - permission to get risks for
-	 * @return risk associated with the permission, contents of LOAD_ERROR if
-	 *         info could not load, or contents of NO_DOCUMENTATION if info for
-	 *         the permission does not exist
+	 * @return the risk associated with the permission, contents of LOAD_ERROR
+	 *         if info could not load, or contents of NO_DOCUMENTATION if info
+	 *         for the permission does not exist
 	 */
 	public static String getRisk(String permission) {
 		if (!isInitialized) {
@@ -78,6 +78,12 @@ public class PermissionInfo {
 		}
 	}
 
+	/**
+	 * Returns the set of permission names.
+	 * 
+	 * @return the set of permission names
+	 */
+	@SuppressWarnings("unchecked")
 	public static Set<String> getPermissionNames() {
 		if (!isInitialized) {
 			init();
@@ -86,9 +92,7 @@ public class PermissionInfo {
 	}
 
 	/**
-	 * Initializes the permission info.
-	 * <p>
-	 * Initialization includes loading permission info from a text file.
+	 * Initializes the permission information from a text file.
 	 */
 	private static void init() {
 		PermissionInfo.isInitialized = true;
@@ -123,7 +127,7 @@ public class PermissionInfo {
 
 	/**
 	 * Private constructor for PermissionInfo. This ensures this class can only
-	 * be used as a static object.
+	 * be used in a static context.
 	 */
 	private PermissionInfo() {
 	}
