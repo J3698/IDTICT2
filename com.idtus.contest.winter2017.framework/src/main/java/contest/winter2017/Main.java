@@ -15,26 +15,6 @@ import javafx.application.Application;
 
 /**
  * Entry-point class for the black-box testing framework.
- * <p>
- * This application has five basic modes of operation, testing mode, help mode,
- * permission info mode, permission list mode, and GUI mode. If the arguments
- * for one of those modes is given, the modes further down the list are ignored.
- * <p>
- * The first operation mode is testing mode. In this mode required arguments are
- * the path to the executable jar, the path to the directory for jacoco output,
- * and the path to the jacoco agent jar.
- * <p>
- * The second mode of operation is help mode. In this mode help is supplied to
- * the user.
- * <p>
- * The third mode of operation is permission info mode. This mode supplies the
- * security risks associated with various java permissions to the user.
- * <p>
- * The fourth mode of operation is permission list mode. This mode lists the
- * different sorts of permissions.
- * <p>
- * The fifth mode of operation is GUI mode. In this mode, a JavaFX application
- * is run, which exposes much of the functionality in other modes.
  * 
  * @author IDT
  */
@@ -131,7 +111,6 @@ public class Main {
 				// black-box testing, initialize and execute the tester.
 				if (cliArgs.hasOption(JAR_TO_TEST_PATH) && cliArgs.hasOption(JACOCO_OUTPUT_PATH)
 						&& cliArgs.hasOption(JACOCO_AGENT_JAR_PATH)) {
-
 					ExceptionLogger.init(cliArgs);
 
 					String jarToTestPath = cliArgs.getOptionValue(JAR_TO_TEST_PATH);
@@ -190,7 +169,7 @@ public class Main {
 						System.out.println(PermissionInfo.getRisk(next));
 
 						System.out.println("-----------");
-						System.out.println(PermissionInfo.COPYRIGHT_NOTICE);
+						System.out.println("About Permission Information: " + PermissionInfo.COPYRIGHT_NOTICE);
 					}
 
 					// user requested a list of permission names
@@ -201,7 +180,7 @@ public class Main {
 					}
 
 					// user requested the GUI
-				} else if (cliArgs.hasOption(GUI)) {
+				} else if (cliArgs.hasOption(GUI) || cliArgs.getOptions() == null || cliArgs.getOptions().length == 0) {
 
 					Application.launch(GUIMain.class);
 
@@ -228,7 +207,7 @@ public class Main {
 	 */
 	private static void printHelp(Options options) {
 		String header = "\n";
-		String footer = "\nFor additional information about the testing framework, please see the documentation provided by IDT.";
+		String footer = "\nFor additional information about the testing framework, please see the documentation provided by IDT team ICT-2.";
 
 		HelpFormatter formatter = new HelpFormatter();
 		formatter.printHelp("com.idtus.contest.winter2017.framework", header, options, footer, true);

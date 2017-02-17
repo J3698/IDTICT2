@@ -231,8 +231,8 @@ class TestListPane extends ScrollPane {
 		newTest.getName().addListener(new ChangeListener<String>() {
 			@Override
 			public void changed(ObservableValue<? extends String> observable, String oldValue, String newValue) {
-				TestListPane.this.testNames.remove(oldValue);
-				TestListPane.this.testNames.add(newValue);
+				TestListPane.this.testNames.remove(oldValue.trim());
+				TestListPane.this.testNames.add(newValue.trim());
 			}
 		});
 

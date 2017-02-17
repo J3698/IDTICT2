@@ -226,6 +226,9 @@ class RunPane extends BorderPane {
 			@Override
 			public void changed(ObservableValue<? extends String> arg0, String oldVal, String newVal) {
 				newVal = newVal.trim();
+				if (newVal.equals(oldVal)) {
+					return;
+				}
 				Set<String> usedNames = RunPane.this.test.getTestListPane().getTestNames();
 				if (!usedNames.contains(newVal) && !newVal.equals("")) {
 					RunPane.this.test.setName(newVal);

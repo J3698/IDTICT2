@@ -105,6 +105,7 @@ public class PermissionInfo {
 
 			while ((next = br.readLine()) != null) {
 				permission = next.split("\\Q.\\E")[0];
+				br.readLine();
 
 				info = new StringBuffer();
 				while (!(next = br.readLine()).equals("Potential Risks:")) {

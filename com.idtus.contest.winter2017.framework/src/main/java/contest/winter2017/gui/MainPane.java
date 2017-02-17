@@ -234,7 +234,13 @@ class PermissionPane extends ScrollPane {
 	 * Constructs a permission pane.
 	 */
 	public PermissionPane() {
-		setContent(permissionInfos);
+		VBox box = new VBox(0);
+		Text copyright = new Text("About Permission Information: " + PermissionInfo.COPYRIGHT_NOTICE);
+		copyright.setWrappingWidth(300);
+		VExternSpace copyrightSpace = new VExternSpace(copyright, 5, 5);
+
+		box.getChildren().addAll(copyrightSpace, permissionInfos);
+		setContent(box);
 		setFitToWidth(true);
 	}
 
@@ -319,7 +325,6 @@ class PermissionInfoPane extends TitledPane {
 				risks.setWrappingWidth(arg2.doubleValue() - 30);
 			}
 		});
-
 		content.getChildren().addAll(allowsSpacer, allows, riskSpacer, risks);
 	}
 

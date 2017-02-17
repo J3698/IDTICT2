@@ -4,7 +4,9 @@ import java.util.List;
 import java.util.Random;
 
 /**
- * Abstract class to generate tests to be run from the Tester.
+ * Abstract class to generate tests to be run from the Tester. Note, due to
+ * memory constraints, all but the last five coverage builders are removed from
+ * their respective outputs.
  * 
  * @author ICT-2
  */
@@ -62,6 +64,8 @@ public abstract class TestGenerator {
 
 	/**
 	 * Updates the list of outputs.
+	 * <p>
+	 * This method should be called before every call to nextTest().
 	 */
 	public void updateOutputs() {
 		Output end;
