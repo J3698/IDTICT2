@@ -1,0 +1,17 @@
+Parameter Builder Help
+You have chosen to create your own parameter bounds. Note that if you make an error while creating you own parameter bounds, unexpected results may occur, such as no tests being generated.
+
+Fixed Parameters:
+Parameters are expected in order of creation. Parameters are not optional and do not have keys.
+
+Dynamic Parameters:
+Parameters have keys, or what parameters they follow. A blank key signifies a parameter which can occur at any point, such as the first parameter. Dynamic parameters may be optional.
+
+Format Strings
+Format strings are the actual parameter representations. If a parameter has more than one format string, it is considered an enumeration. Format strings may expect an argument, using any of the following:
+<<REPLACE_ME_STRING>>
+<<REPLACE_ME_INT>>
+<<REPLACE_ME_DOUBLE>>
+<<REPLACE_ME_LONG>>
+
+If a format string contains a replace-me for a number, an optional min and max value may be specified for that number. A format string may not contain more than one replace-me for numbers.

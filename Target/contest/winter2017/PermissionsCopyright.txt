@@ -1,0 +1,35 @@
+This program includes the risks of allowing certain java security permissions. These risks
+were written by Oracle. ICT-2 personally emailed Oracle requesting permission to quote Oracle
+on these risks. They gave ICT-2 permission to quote the risks, however IDT and other parties
+may have to separately request permission in order to use that information for other purposes.
+
+
+Below follows the correspondence between ICT-2 member Antioch Sanders and Oracle. Horizontal
+lines have been added for aesthetic purposes.
+
+
+
+ANTIOCH SANDERS:
+---------------------------------------------------------------------------------------------
+Hello, I have a question about using information in the technical notes, such as here:
+http://docs.oracle.com/javase/7/docs/technotes/guides/security/permissions.html
+
+My question is about copyright, please redirect me if I'm in the wrong place. I'm in high school,
+and I'm developing a java application for a security contest. I would like to quote information
+from the above link about permissions in my application. I'm not sure if that's allowed, and if
+it is, what must I do to credit oracle for the writing? Thanks for any help.
+---------------------------------------------------------------------------------------------
+
+
+COPYRIGHT_US@ORACLE.COM
+---------------------------------------------------------------------------------------------
+Thank you for contacting us.  When quoting information from Java SE Documentation, please use this
+copyright notice:
+
+Copyright © 1993, 2017, Oracle and/or its affiliates.  All rights reserved.  Used by permission.
+
+We appreciate you checking with us and we wish you the best on your Java application.
+
+Regards,
+Oracle Trademark & Copyright Legal Group
+---------------------------------------------------------------------------------------------
