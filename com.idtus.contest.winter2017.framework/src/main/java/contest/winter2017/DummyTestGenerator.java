@@ -38,8 +38,6 @@ public class DummyTestGenerator extends TestGenerator {
 	 * @return an array of objects which represent parameters to be tested.
 	 */
 	public Object[] nextTest() {
-		updateOutputs();
-
 		/////////// START EXAMPLE CODE /////////////
 		// This example demonstrates how to use the ParameterFactory to figure
 		// out the parameter types of parameters

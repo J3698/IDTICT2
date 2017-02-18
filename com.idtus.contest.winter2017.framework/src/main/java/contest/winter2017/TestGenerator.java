@@ -22,11 +22,6 @@ public abstract class TestGenerator {
 	private List<Output> outputs;
 
 	/**
-	 * Last output to help keep track of last test
-	 */
-	private Output lastOutput = null;
-
-	/**
 	 * Constructs a TestGenerator with the given parameter factory and list of
 	 * outputs.
 	 * 
@@ -40,9 +35,6 @@ public abstract class TestGenerator {
 	public TestGenerator(ParameterFactory parameterFactory, List<Output> outputs) {
 		this.parameterFactory = parameterFactory;
 		this.outputs = outputs;
-		if (this.outputs.size() != 0) {
-			this.lastOutput = outputs.get(0);
-		}
 	}
 
 	/**
@@ -61,25 +53,6 @@ public abstract class TestGenerator {
 	 * @return an array of objects which represents parameters to be tested.
 	 */
 	public abstract Object[] nextTest();
-
-	/**
-	 * Updates the list of outputs.
-	 * <p>
-	 * This method should be called before every call to nextTest().
-	 */
-	public void updateOutputs() {
-		Output end;
-		if (this.outputs.isEmpty()) {
-			end = null;
-		} else {
-			end = this.outputs.get(this.outputs.size() - 1);
-		}
-
-		if (lastOutput != end) {
-			this.lastOutput = end;
-			this.outputs.add(end);
-		}
-	}
 
 	/**
 	 * Returns a random integer number.

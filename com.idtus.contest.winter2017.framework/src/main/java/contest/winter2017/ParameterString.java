@@ -348,7 +348,7 @@ class ParameterString implements Comparable<ParameterString> {
 				}
 			} else {
 				branches.add("\"The l4zy dog jump3d 0ver the qu1ck brown fox.\"");
-				branches.add("\"hi \n hi \t } \\n hi { hey");
+				branches.add("\"hi \n hi \t } \\n hi { hey\"");
 				branches.add("\"brown fox\"");
 			}
 
@@ -414,7 +414,7 @@ class ParameterString implements Comparable<ParameterString> {
 
 		} else {
 			branches.add("\"The l4zy dog jump3d 0ver the qu1ck brown fox.\"");
-			branches.add("\"hi \n hi \t } \\n hi { hey");
+			branches.add("\"hi \n hi \t } \\n hi { hey\"");
 			branches.add("\"brown fox\"");
 		}
 
@@ -473,6 +473,20 @@ class ParameterString implements Comparable<ParameterString> {
 	 */
 	public void subUniqueness(int uniqueLines) {
 		this.uniqueLines -= uniqueLines;
+	}
+
+	/**
+	 * Returns this parameter string's list of parameters as a string.
+	 * 
+	 * @return this parameter string's list of parameters as a string
+	 */
+	@Override
+	public String toString() {
+		String rep = "";
+		for (String str : this.parameters) {
+			rep += " " + str;
+		}
+		return rep;
 	}
 
 	/**

@@ -1,7 +1,6 @@
 package contest.winter2017;
 
 import java.time.LocalDateTime;
-import java.util.Scanner;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
@@ -156,21 +155,15 @@ public class Main {
 					// user requested permission information
 				} else if (cliArgs.hasOption(PERMISSION_INFO)) {
 
-					@SuppressWarnings("resource")
-					Scanner sc = new Scanner(System.in);
-					String next;
-					while (!(next = sc.nextLine()).equals("exit")) {
-						String info = next;
+					String permission = cliArgs.getOptionValue(PERMISSION_INFO);
+					System.out.println("Allowances:");
+					System.out.println(PermissionInfo.getAllowance(permission));
 
-						System.out.println("Allowances:");
-						System.out.println(PermissionInfo.getAllowance(next));
+					System.out.println("Risks:");
+					System.out.println(PermissionInfo.getRisk(permission));
 
-						System.out.println("Risks:");
-						System.out.println(PermissionInfo.getRisk(next));
-
-						System.out.println("-----------");
-						System.out.println("About Permission Information: " + PermissionInfo.COPYRIGHT_NOTICE);
-					}
+					System.out.println("-----------");
+					System.out.println("About Permission Information: " + PermissionInfo.COPYRIGHT_NOTICE);
 
 					// user requested a list of permission names
 				} else if (cliArgs.hasOption(PERMISSION_LIST)) {
@@ -193,7 +186,9 @@ public class Main {
 				}
 			}
 
-		} catch (ParseException exp) {
+		} catch (
+
+		ParseException exp) {
 			System.out.println("ERROR: An error occurred during command line parsing: " + exp.getMessage());
 			printHelp(options);
 		}

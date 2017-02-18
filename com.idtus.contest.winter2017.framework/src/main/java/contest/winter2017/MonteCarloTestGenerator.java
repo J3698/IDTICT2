@@ -6,6 +6,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.TreeSet;
 
+import org.jacoco.core.analysis.CoverageBuilder;
 import org.jacoco.core.analysis.IClassCoverage;
 import org.jacoco.core.analysis.ICounter;
 
@@ -28,6 +29,11 @@ public class MonteCarloTestGenerator extends TestGenerator {
 	private HashMap<String, ClassCounter> classes = new HashMap<String, ClassCounter>();
 
 	/**
+	 * The last parameter string tested.
+	 */
+	private ParameterString lastParameterString = null;
+
+	/**
 	 * The root parameter string of the search tree.
 	 */
 	private ParameterString root;
@@ -36,6 +42,11 @@ public class MonteCarloTestGenerator extends TestGenerator {
 	 * The test generator to fall back on if this generator fails.
 	 */
 	private RandomTestGenerator fallBack;
+
+	/**
+	 * The size of the outputs
+	 */
+	private int outputSize;
 
 	/**
 	 * Constructs a Monte-Carlo test generator with the given parameter factory
@@ -52,6 +63,7 @@ public class MonteCarloTestGenerator extends TestGenerator {
 		super(parameterFactory, outputs);
 		this.fallBack = new RandomTestGenerator(parameterFactory, outputs);
 		this.root = new ParameterString(parameterFactory);
+		this.outputSize = outputs.size();
 	}
 
 	/**
@@ -69,7 +81,16 @@ public class MonteCarloTestGenerator extends TestGenerator {
 	public Object[] nextTest() {
 		try {
 			// update tree with last test
-			updateOutputs();
+			if (getOutputs().size() != this.outputSize && this.lastParameterString != null) {
+				Output lastOutput = getOutputs().get(getOutputs().size() - 1);
+				if (lastOutput != null) {
+					CoverageBuilder builder = lastOutput.getCoverageBuilder();
+					for (IClassCoverage cc : builder.getClasses()) {
+						updateClassUniquenesses(this.lastParameterString, lastOutput, cc);
+					}
+					this.lastParameterString.updateMean();
+				}
+			}
 
 			// get next test from the tree if there is one
 			ParameterString curr = this.root;
@@ -77,7 +98,8 @@ public class MonteCarloTestGenerator extends TestGenerator {
 			while (hasTest) {
 				if (curr.isTestable() && !curr.isTested()) {
 					curr.setTested();
-					return curr.toString().split(" ");
+					this.lastParameterString = curr;
+					return ("" + curr).split(" ");
 				} else if (curr.isExpandable()) {
 					if (!curr.isExpanded()) {
 						curr.expand();
@@ -105,7 +127,7 @@ public class MonteCarloTestGenerator extends TestGenerator {
 	 * @param parameter
 	 * @param icc
 	 */
-	public void updateClassUniquenesses(ParameterString parameter, IClassCoverage icc) {
+	public void updateClassUniquenesses(ParameterString parameter, Output output, IClassCoverage icc) {
 		// add the class to our map if it hasn't been visited
 		if (this.classes.get(icc.getSignature()) == null) {
 			int first = icc.getFirstLine();

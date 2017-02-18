@@ -2,6 +2,7 @@ package contest.winter2017;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 public class RandomTestGenerator extends TestGenerator {
 
@@ -23,8 +24,6 @@ public class RandomTestGenerator extends TestGenerator {
 
 	@Override
 	public Object[] nextTest() {
-		updateOutputs();
-
 		/////////// START EXAMPLE CODE /////////////
 		// This example demonstrates how to use the ParameterFactory to figure
 		// out the parameter types of parameters
@@ -43,9 +42,10 @@ public class RandomTestGenerator extends TestGenerator {
 		List<String> previousParameterStrings = new ArrayList<String>();
 		List<Parameter> potentialParameters = getParameterFactory().getNext(previousParameterStrings);
 		Parameter potentialParameter;
+		Random rng = new Random();
 		while (!potentialParameters.isEmpty()) {
 			String parameterString = "";
-			potentialParameter = potentialParameters.get(0);
+			potentialParameter = potentialParameters.get(rng.nextInt(potentialParameters.size()));
 
 			// if(potentialParameter.isOptional()) //TODO? - your team might
 			// want to look at this flag and handle it as well!
@@ -54,7 +54,8 @@ public class RandomTestGenerator extends TestGenerator {
 			if (potentialParameter.isEnumeration()) {
 				// dumb logic - given a list of options, always use the first
 				// one
-				parameterString = potentialParameter.getEnumerationValues().get(0) + " ";
+				List<String> enumerationValues = potentialParameter.getEnumerationValues();
+				parameterString = enumerationValues.get(rng.nextInt(enumerationValues.size())) + " ";
 
 				// if the parameter has internal format (eg.
 				// "<number>:<number>PM EST")
@@ -66,10 +67,10 @@ public class RandomTestGenerator extends TestGenerator {
 					for (Class<?> type : Parameter.getFormatVariables(parameterString)) {
 						if (type == Integer.class) {
 							// dumb logic - always use 1 for an integer
-							formatVariableValues.add(new Integer(1));
+							formatVariableValues.add(new Integer(randomInt()));
 						} else if (type == String.class) {
 							// dumb logic - always use 'one' for an integer
-							formatVariableValues.add(new String("one"));
+							formatVariableValues.add(new String(randomString()));
 						}
 					}
 
@@ -83,11 +84,11 @@ public class RandomTestGenerator extends TestGenerator {
 			} else {
 				if (potentialParameter.getType() == Integer.class) {
 					// dumb logic - always use '1' for an Integer
-					parameterString = Integer.toString(1) + " ";
+					parameterString = Integer.toString(randomInt()) + " ";
 					previousParameterStrings.add(parameterString);
 				} else if (potentialParameter.getType() == Double.class) {
 					// dumb logic - always use '1.0' for a Double
-					parameterString = Double.toString(1.0) + " ";
+					parameterString = Double.toString(randomDouble()) + " ";
 					previousParameterStrings.add(parameterString);
 				} else if (potentialParameter.getType() == String.class) {
 
@@ -101,10 +102,10 @@ public class RandomTestGenerator extends TestGenerator {
 						for (Class<?> type : potentialParameter.getFormatVariables()) {
 							if (type == Integer.class) {
 								// dumb logic - always use '1' for an Integer
-								formatVariableValues.add(new Integer(1));
+								formatVariableValues.add(randomInt());
 							} else if (type == String.class) {
 								// dumb logic - always use 'one' for a string
-								formatVariableValues.add(new String("one"));
+								formatVariableValues.add(randomString());
 							}
 						}
 
@@ -113,7 +114,7 @@ public class RandomTestGenerator extends TestGenerator {
 						parameterString = potentialParameter.getFormattedParameter(formatVariableValues);
 					} else {
 						// dumb logic - always use 'one' for a String
-						parameterString = "one ";
+						parameterString = randomString();
 					}
 
 					previousParameterStrings.add(parameterString);
@@ -128,5 +129,47 @@ public class RandomTestGenerator extends TestGenerator {
 			potentialParameters = getParameterFactory().getNext(previousParameterStrings);
 		}
 		return previousParameterStrings.toArray();
+	}
+
+	/**
+	 * Returns a random int.
+	 * 
+	 * @return a random int
+	 */
+	public int randomInt() {
+		return new Random().nextInt();
+	}
+
+	/**
+	 * Returns a random double.
+	 * 
+	 * @return a random double
+	 */
+	public double randomDouble() {
+		Random rng = new Random();
+		return rng.nextInt() * rng.nextDouble();
+	}
+
+	/**
+	 * Returns a random string.
+	 * 
+	 * @return a random string
+	 */
+	public String randomString() {
+		Random r = new Random();
+		int choice = r.nextInt(5);
+		String str = "";
+		if (choice == 0) {
+			str = "\"}{\\\\s({\t0\"";
+		} else if (choice == 1) {
+			str = "\"~The d0g jump3d ov3r the cow~\"";
+		} else if (choice == 2) {
+			str = "\"\"";
+		} else {
+			for (int i = 0; i < 5; i++) {
+				str += "" + (char) (32 + r.nextInt(127 - 32));
+			}
+		}
+		return str;
 	}
 }

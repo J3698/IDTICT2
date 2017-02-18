@@ -151,15 +151,17 @@ public class GUITestPackage {
 	 * Updates the output for this test.
 	 */
 	public void updateOutput() {
-		while (outputs.size() < this.tester.getOutputs().size()) {
-			Output newOutput = this.tester.getOutputs().get(outputs.size());
-			outputs.add(newOutput);
+		int i = this.outputs.size();
+		while (i < this.tester.getOutputs().size()) {
+			Output newOutput = this.tester.getOutputs().get(i);
+			this.outputs.add(newOutput);
 			Platform.runLater(new Runnable() {
 				@Override
 				public void run() {
 					GUITestPackage.this.mainPane.addOutput(newOutput);
 				}
 			});
+			i++;
 		}
 	}
 

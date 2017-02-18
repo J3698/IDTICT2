@@ -712,7 +712,6 @@ public class Tester {
 			if (this.watchdog) {
 				// change the clss path if running from a jar
 				if (runningFromJar()) {
-					System.out.println("Running from Jar.");
 					cmdBuffer.append(" -javaagent:" + this.jacocoAgentJarPath + "=destfile=");
 					cmdBuffer.append(this.jacocoOutputFilePath + "temp");
 					cmdBuffer.append(" -cp" + " com.idtus.contest.winter2017.framework.jar ");

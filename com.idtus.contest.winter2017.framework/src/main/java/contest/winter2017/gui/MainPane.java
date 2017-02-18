@@ -116,11 +116,11 @@ public class MainPane extends TabPane {
 		this.outputPane.setTabClosingPolicy(TabClosingPolicy.UNAVAILABLE);
 		Tab outputTab = new Tab("Output", this.outputPane);
 
-		// parameter pane
+		// parameter pane, not done so not included in release
 
-		Tab parameterTab = new Tab("Parameter Bounds", this.parameterPane);
+		// Tab parameterTab = new Tab("Parameter Bounds", this.parameterPane);
 
-		getTabs().addAll(runTab, outputTab, parameterTab);
+		getTabs().addAll(runTab, outputTab);// , parameterTab);
 		setTabClosingPolicy(TabClosingPolicy.UNAVAILABLE);
 	}
 
