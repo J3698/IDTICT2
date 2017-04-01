@@ -186,9 +186,7 @@ public class Main {
 				}
 			}
 
-		} catch (
-
-		ParseException exp) {
+		} catch (ParseException exp) {
 			System.out.println("ERROR: An error occurred during command line parsing: " + exp.getMessage());
 			printHelp(options);
 		}

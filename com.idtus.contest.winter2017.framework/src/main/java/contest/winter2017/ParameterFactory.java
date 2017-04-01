@@ -71,7 +71,7 @@ public class ParameterFactory {
 		this.dependentParametersMap = (Map) this.inputMap.get("dependent parameters");
 
 		// debug for viewing parameters
-		boolean debug = false;
+		boolean debug = true;
 		if (debug) {
 			System.out.println("______DEBUG______");
 			if (dependentParametersMap == null) {
